@@ -13,9 +13,9 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  final Graph<Map> graph = Graph(
+  final Graph<Map> graph = Graph<Map>(
     boxSize: const Size(200, 100),
-    nodes: [
+    items: [
       {"title": 'S', "id": '1', "to": null},
       {
         "title": 'A',
@@ -37,11 +37,7 @@ class _MainAppState extends State<MainApp> {
         "id": '5',
         "to": '2',
       },
-    ]
-        .map((e) => Node(
-              data: e,
-            ))
-        .toList(),
+    ],
     idProvider: (data) => data["id"],
     toProvider: (data) => data["to"],
   );
@@ -73,14 +69,14 @@ class _MainAppState extends State<MainApp> {
                 const PopupMenuItem(child: Text('X2')),
               ];
             },
-            onOptionSelect: (node, value) {
+            onOptionSelect: (item, value) {
               if (value == 'Remove') {
-                graph.removeNode(node);
+                graph.removeItem(item["id"]);
                 setState(() {});
               }
             },
             onDrop: (dragged, target) {
-              dragged.data["to"] = target.data["id"];
+              dragged["to"] = target["id"];
               graph.calculatePosition();
               setState(() {});
             },

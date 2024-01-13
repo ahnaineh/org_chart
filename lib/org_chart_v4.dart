@@ -15,13 +15,10 @@ class OrgChart<E> extends StatefulWidget {
     Node<E> node,
     bool beingDragged,
     bool isOverlapped,
-    // Function calculatePosition,
-    // Size Function(Node<E> node)? sizeCalculator;
-    // void Function(VoidCallback fn) setState
   ) builder;
   final List<PopupMenuEntry<dynamic>> Function(Node<E> node)? optionsBuilder;
-  final void Function(Node<E> node, dynamic value)? onOptionSelect;
-  final void Function(Node<E> dragged, Node<E> target)? onDrop;
+  final void Function(E item, dynamic value)? onOptionSelect;
+  final void Function(E dragged, E target)? onDrop;
   final bool isDraggable;
   const OrgChart({
     super.key,
@@ -73,13 +70,10 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   List<CustomAnimatedPositioned> draw(context,
       {List<Node<E>>? nodesToDraw, bool hidden = false}) {
     nodesToDraw ??= widget.graph.roots;
-    // .cast<Node<E>>();
-    // List<Node<E>> roots = nodesToDraw.toList();
     List<CustomAnimatedPositioned> widgets = [];
 
     for (int i = 0; i < nodesToDraw.length; i++) {
       Node<E> node = nodesToDraw[i];
-      // if (widget.graph.idProvider(node.data) == draggedID) continue;
       widgets.add(CustomAnimatedPositioned(
           key: Key("ID: ${widget.graph.idProvider(node.data)}"),
           isBeingDragged: draggedID == widget.graph.idProvider(node.data),
@@ -119,7 +113,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     onPanEnd: widget.isDraggable
                         ? (details) {
                             if (overlapping.isNotEmpty) {
-                              widget.onDrop?.call(node, overlapping.first);
+                              widget.onDrop?.call(node.data, overlapping.first.data);
                             }
                             draggedID = null;
                             overlapping = [];
@@ -148,7 +142,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                   ),
                 )));
       widgets.addAll(draw(context,
-          nodesToDraw: widget.graph.nodes
+          nodesToDraw: widget.graph._nodes
               .where((n) =>
                   widget.graph.toProvider(n.data) ==
                   widget.graph.idProvider(node.data))
@@ -189,7 +183,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
 
   List<Node<E>> _getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
-    for (Node<E> n in widget.graph.nodes.cast<Node<E>>()) {
+    for (Node<E> n in widget.graph._nodes.cast<Node<E>>()) {
       Offset offset = node.position - n.position;
       if (offset.dx.abs() < 100 &&
           offset.dy.abs() < 100 &&
@@ -230,14 +224,15 @@ class Node<E> {
 }
 
 class Graph<E> {
-  List<Node<E>> nodes;
+  late List<Node<E>> _nodes;
   Size boxSize;
   Size spacing;
 
   String? Function(E data) idProvider;
   String? Function(E data) toProvider;
   Graph({
-    required this.nodes,
+    // required this.nodes,
+    required List<E> items,
     // required this.builder,
     // this.onDrop,
     // this.optionsBuilder,
@@ -249,12 +244,13 @@ class Graph<E> {
 
     // this.sizeCalculator,
   }) : super() {
+    _nodes = items.map((e) => Node(data: e)).toList();
     calculatePosition();
     // sizeCalculator ??= (node) => boxSize;
   }
 
-  void removeNode(Node<E> node) {
-    nodes.remove(node);
+  void removeItem(id) {
+    _nodes.removeWhere((element) => idProvider(element.data) == id);
     calculatePosition();
   }
 
@@ -263,7 +259,7 @@ class Graph<E> {
     Node<E>? next = node;
     while (next != null) {
       try {
-        next = nodes
+        next = _nodes
             .firstWhere((n) => idProvider(n.data) == toProvider(next!.data));
         level++;
       } catch (e) {
@@ -274,8 +270,8 @@ class Graph<E> {
   }
 
   List<Node<E>> get roots {
-    return nodes
-        .where((node) => nodes
+    return _nodes
+        .where((node) => _nodes
             .where(
                 (element) => idProvider(element.data) == toProvider(node.data))
             .isEmpty)
@@ -283,8 +279,8 @@ class Graph<E> {
   }
 
   void changeNodeIndex(Node<E> node, index) {
-    nodes.remove(node);
-    nodes.insert(index == -1 ? math.max(nodes.length - 1, 0) : index, node);
+    _nodes.remove(node);
+    _nodes.insert(index == -1 ? math.max(_nodes.length - 1, 0) : index, node);
   }
 
   double _getRelOffset(Node<E> node) {
@@ -321,7 +317,7 @@ class Graph<E> {
   }
 
   List<Node<E>> getSubNodes(Node<E> node) {
-    return nodes
+    return _nodes
         .where((element) => toProvider(element.data) == idProvider(node.data))
         .toList();
   }
@@ -367,13 +363,13 @@ class Graph<E> {
   }
 
   void calculatePosition() {
-    for (Node<E> node in nodes.where((element) => _getLevel(element) == 1)) {
+    for (Node<E> node in _nodes.where((element) => _getLevel(element) == 1)) {
       _calculateNP(node);
     }
   }
 
   getSize({Offset offset = const Offset(0, 0)}) {
-    for (Node node in nodes) {
+    for (Node node in _nodes) {
       offset = Offset(
         math.max(offset.dx, node.position.dx),
         math.max(offset.dy, node.position.dy),
@@ -395,7 +391,7 @@ class EdgePainter<E> extends CustomPainter {
   }
 
   List<Node> getSubNodes(Node node) {
-    return graph.nodes
+    return graph._nodes
         .where((element) =>
             graph.toProvider(element.data) == graph.idProvider(node.data))
         .toList();

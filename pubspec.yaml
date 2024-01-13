@@ -1,7 +1,9 @@
 name: org_chart
 description: A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse, expand, and easy customizations!
-version: 0.0.8
-homepage:
+version: 1.0.0
+repository: https://github.com/ahnaineh/org_chart
+issue_tracker: https://github.com/ahnaineh/org_chart/issues
+
 
 environment:
   sdk: ">=2.18.4 <4.0.0"
