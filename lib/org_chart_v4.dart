@@ -113,7 +113,8 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     onPanEnd: widget.isDraggable
                         ? (details) {
                             if (overlapping.isNotEmpty) {
-                              widget.onDrop?.call(node.data, overlapping.first.data);
+                              widget.onDrop
+                                  ?.call(node.data, overlapping.first.data);
                             }
                             draggedID = null;
                             overlapping = [];
