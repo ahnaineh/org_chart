@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+
+
+/// CustomAnimatedPositioned is almost identical to AnimatedPositioned
+/// only integrating the isBeingDragged property to enable us to set the node being dragged at front
 class CustomAnimatedPositioned extends AnimatedPositioned {
   final bool isBeingDragged;
   const CustomAnimatedPositioned({

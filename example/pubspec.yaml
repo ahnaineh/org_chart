@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   org_chart:
-    path: C://Users/ahnai.WIN-QAR3TP22QPD/MyProjects/org_chart
+    path: C://Users/Ali Hnaineh/MyProjects/org_chart
 
 dev_dependencies:
   flutter_test:
