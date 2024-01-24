@@ -9,6 +9,7 @@ A flutter orgranizational chart with drag and drop, zoom and pan, search, collap
 Built entirely in flutter, so it works on all platforms supported by it!
 
 [![Watch the example](https://img.youtube.com/vi/8pxS-MwHh9w/sddefault.jpg)](https://youtu.be/8pxS-MwHh9w)
+<video controls src="example.mp4" title="Title"></video>
 
 
 ## Usage
