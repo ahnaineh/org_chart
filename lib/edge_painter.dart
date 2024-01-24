@@ -1,10 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:org_chart/graph.dart';
 import 'package:org_chart/node.dart';
 // import 'package:org_chart/org_chart.dart';
 import 'dart:math' as math;
-
 
 ///The main Painter for drawing the arrows between the nodes.
 class EdgePainter<E> extends CustomPainter {
@@ -14,14 +12,13 @@ class EdgePainter<E> extends CustomPainter {
   /// the path to draw thew arrows with, we can add styling here later on.
   Path linePath = Path();
   EdgePainter({required this.graph});
-  
-  /// returns True if no nodes 
+
+  /// returns True if no nodes
   bool allLeaf(List<Node<E>> nodes) {
-    return nodes
-        .every((element) => graph.getSubNodes(element).isEmpty || element.hideNodes);
+    return nodes.every(
+        (element) => graph.getSubNodes(element).isEmpty || element.hideNodes);
   }
 
-  
   /// This function is called recursively to draw the arrows for each node and the nodes below it.
   /// i want to add a border radius to the arrows later on, the commented code is a wrong implementation of that.
   /// There is a lot of things i want to change here, the way the arrows are drawn, style, and animations.
@@ -50,7 +47,7 @@ class EdgePainter<E> extends CustomPainter {
           // bool b = maxx == node.position.dx;
 
           linePath.moveTo(node.position.dx + graph.boxSize.width / 2,
-              node.position.dy + graph.boxSize.height);
+              node.position.dy + graph.boxSize.height / 2);
 
           linePath.lineTo(
               node.position.dx + graph.boxSize.width / 2, miny + dy);

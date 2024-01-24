@@ -1,26 +1,56 @@
 library org_chart;
 
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'package:org_chart/edge_painter.dart';
 import 'package:org_chart/custom_animated_positioned.dart';
 import 'package:org_chart/graph.dart';
 import 'package:org_chart/node.dart';
 
+/// The details that are passed to the builder function
+/// contains supported properties that can be used to build the node
+class NodeBuilderDetails<T> {
+  final T item;
+  final void Function(bool? hide) hideNodes;
+  final bool nodesHidden;
+  final bool beingDragged;
+  final bool isOverlapped;
+
+  const NodeBuilderDetails({
+    required this.item,
+    required this.hideNodes,
+    required this.beingDragged,
+    required this.isOverlapped,
+    required this.nodesHidden,
+  });
+}
+
+/// This is the widget that the user adds to their build method
 class OrgChart<E> extends StatefulWidget {
+  /// The graph that contains all the data and utility functions that the user can run
   final Graph<E> graph;
-  final List<PopupMenuEntry<dynamic>> Function(Node<E> node)? optionsBuilder;
+
+  /// optionsbuilder to build the menu that appears when you long press or right click on a node
+  /// can be customized per item
+  final List<PopupMenuEntry<dynamic>> Function(E node)? optionsBuilder;
+
+  /// The function that is called when you select an option from the menu
+  /// inputs the item and the value of the chosen option
   final void Function(E item, dynamic value)? onOptionSelect;
+
+  /// The function that is called when you drop a node on another node
   final void Function(E dragged, E target)? onDrop;
+
+  /// Whether to allow dragging nodes or not
   final bool isDraggable;
-  
-  
-  final Widget Function(
-    Node<E> node,
-    bool beingDragged,
-    bool isOverlapped,
-  ) builder;
-  
+
+  /// The curve that is used when animating the nodes back to their position
+  final Curve curve;
+
+  /// The duration, in milliseconds, of the animation when animating the nodes back to their position
+  final int duration;
+
+  final Widget Function(NodeBuilderDetails<E> details) builder;
+
   const OrgChart({
     super.key,
     required this.graph,
@@ -29,6 +59,8 @@ class OrgChart<E> extends StatefulWidget {
     this.onOptionSelect,
     this.onDrop,
     this.isDraggable = true,
+    this.curve = Curves.elasticOut,
+    this.duration = 700,
   });
 
   @override
@@ -75,8 +107,9 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       widgets.add(CustomAnimatedPositioned(
           key: Key("ID: ${widget.graph.idProvider(node.data)}"),
           isBeingDragged: draggedID == widget.graph.idProvider(node.data),
-          curve: Curves.elasticOut,
-          duration: Duration(milliseconds: draggedID != null ? 0 : 700),
+          curve: widget.curve,
+          duration:
+              Duration(milliseconds: draggedID != null ? 0 : widget.duration),
           top: node.position.dy,
           left: node.position.dx,
           child: hidden
@@ -120,9 +153,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     onPanUpdate: widget.isDraggable
                         ? (details) {
                             overlapping = widget.graph.getOverlapping(node);
-                            overlapping.sort((a, b) =>
-                                _distance(a.position, node.position).compareTo(
-                                    _distance(b.position, node.position)));
+
                             setState(() => node.position += details.delta);
                           }
                         : null,
@@ -130,9 +161,20 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                       height: widget.graph.boxSize.height,
                       width: widget.graph.boxSize.width,
                       child: widget.builder(
-                        node,
-                        draggedID == widget.graph.idProvider(node.data),
-                        overlapping.isNotEmpty && overlapping.first == node,
+                        NodeBuilderDetails<E>(
+                          item: node.data,
+                          hideNodes: (hide) {
+                            setState(() {
+                              node.hideNodes = hide ?? !node.hideNodes;
+                              widget.graph.calculatePosition();
+                            });
+                          },
+                          nodesHidden: node.hideNodes,
+                          beingDragged:
+                              draggedID == widget.graph.idProvider(node.data),
+                          isOverlapped: overlapping.isNotEmpty &&
+                              overlapping.first == node,
+                        ),
                       ),
                     ),
                   ),
@@ -144,14 +186,9 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
     return widgets;
   }
 
-  double _distance(Offset a, Offset b) {
-    return math.sqrt(math.pow(a.dx - b.dx, 2) + math.pow(a.dy - b.dy, 2));
-  }
-
-
   _showMenu(context, node) async {
     List<PopupMenuEntry<dynamic>> options =
-        widget.optionsBuilder?.call(node) ?? [];
+        widget.optionsBuilder?.call(node.data) ?? [];
     if (options.isEmpty) return;
     final RenderObject? overlay =
         Overlay.of(context).context.findRenderObject();
@@ -165,7 +202,6 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       items: options,
     );
 
-    widget.onOptionSelect?.call(node, result);
+    widget.onOptionSelect?.call(node.data, result);
   }
-
 }
