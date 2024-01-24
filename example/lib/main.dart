@@ -16,26 +16,21 @@ class _MainAppState extends State<MainApp> {
   final Graph<Map> graph = Graph<Map>(
     boxSize: const Size(200, 100),
     items: [
-      {"title": 'S', "id": '1', "to": null},
+      {"title": 'CEO', "id": '1', "to": null},
       {
-        "title": 'A',
+        "title": 'HR Manager: John',
         "id": '2',
         "to": '1',
       },
       {
-        "title": 'V',
+        "title": 'HR Officer: Jane',
         "id": '3',
-        "to": '1',
+        "to": '2',
       },
       {
-        "title": 'K',
+        "title": 'Project Manager: Zuher',
         "id": '4',
         "to": '1',
-      },
-      {
-        "title": 'K',
-        "id": '5',
-        "to": '2',
       },
     ],
     idProvider: (data) => data["id"],
@@ -49,24 +44,41 @@ class _MainAppState extends State<MainApp> {
         body: Center(
           child: OrgChart<Map>(
             graph: graph,
-            builder: (node, beingDragged, isOverlapped) {
+            // curve: Curves.easeOut,
+            // duration: 500,
+            isDraggable: true,
+            builder: (details) {
               return Card(
-                color: beingDragged
+                color: details.beingDragged
                     ? Colors.blue
-                    : isOverlapped
+                    : details.isOverlapped
                         ? Colors.green
-                        : Colors.red,
+                        : null,
                 elevation: 10,
                 child: Center(
-                  child: Text(node.data["title"]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(details.item["title"]),
+                      ElevatedButton(
+                        onPressed: () {
+                          details.hideNodes(!details.nodesHidden);
+                        },
+                        child: Text(details.nodesHidden
+                            ? 'Press to Unhide'
+                            : 'Press to Hide'),
+                      )
+                    ],
+                  ),
                 ),
               );
             },
-            optionsBuilder: (node) {
+            optionsBuilder: (item) {
               return [
+                const PopupMenuItem(value: 'promote', child: Text('Promote')),
+                const PopupMenuItem(
+                    value: 'vacate', child: Text('Vacate Position')),
                 const PopupMenuItem(value: 'Remove', child: Text('Remove')),
-                const PopupMenuItem(child: Text('X1')),
-                const PopupMenuItem(child: Text('X2')),
               ];
             },
             onOptionSelect: (item, value) {
@@ -82,10 +94,12 @@ class _MainAppState extends State<MainApp> {
             },
           ),
         ),
-        floatingActionButton: FloatingActionButton(onPressed: () {
-          graph.calculatePosition();
-          setState(() {});
-        }),
+        floatingActionButton: FloatingActionButton(
+            child: Text('Reset Position'),
+            onPressed: () {
+              graph.calculatePosition();
+              setState(() {});
+            }),
       ),
     );
   }
