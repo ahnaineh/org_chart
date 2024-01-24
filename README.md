@@ -8,7 +8,7 @@ Openning an issue or a pull request is highly appreciated.
 A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse/expand, and exteremly easy to customize the node shape!
 Built entirely in flutter, so it works on all platforms supported by it!
 
-<video controls src="example.mp4" title="Title"></video>
+![](example.mp4)
 
 ## Usage
 To use this package add `org_chart` as a [dependency in your pubspec.yaml file](https://flutter.dev/docs/development/packages-and-plugins/using-packages).
