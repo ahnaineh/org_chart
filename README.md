@@ -8,7 +8,7 @@ Openning an issue or a pull request is highly appreciated.
 A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse/expand, and exteremly easy to customize the node shape!
 Built entirely in flutter, so it works on all platforms supported by it!
 
-[![Watch the example](https://img.youtube.com/vi/8pxS-MwHh9w/maxresdefault.jpg)](https://youtu.be/8pxS-MwHh9w)
+[![Watch the example](https://img.youtube.com/vi/8pxS-MwHh9w/sddefault.jpg)](https://youtu.be/8pxS-MwHh9w)
 
 
 ## Usage
