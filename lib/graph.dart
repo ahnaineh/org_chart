@@ -121,7 +121,7 @@ class Graph<E> {
   /// returns relative offset of the node
   double _calculateNP(Node<E> node, {Offset offset = const Offset(0, 0)}) {
     List<Node<E>> subNodes = getSubNodes(node);
-    
+
     /// if all the sub nodes are leaves, then draw subnodes vertically in stacks of 2 downwards
     if (allLeaf(subNodes)) {
       for (var i = 0; i < subNodes.length; i++) {
@@ -170,6 +170,7 @@ class Graph<E> {
       _calculateNP(node);
     }
   }
+
   /// returns the total size of the graph
   Offset getSize({Offset offset = const Offset(0, 0)}) {
     for (Node node in _nodes) {
@@ -200,12 +201,11 @@ class Graph<E> {
       }
     }
     overlapping.sort((a, b) =>
-    // TODO: use the distance function defined on the node class instead
-    // a.distance(node).compareTo(b.distance(node))
-    
-    _distance(a.position, node.position)
-        .compareTo(_distance(b.position, node.position))
-    );
+        // TODO: use the distance function defined on the node class instead
+        // a.distance(node).compareTo(b.distance(node))
+
+        _distance(a.position, node.position)
+            .compareTo(_distance(b.position, node.position)));
     return overlapping;
   }
 }

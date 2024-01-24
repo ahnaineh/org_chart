@@ -95,7 +95,7 @@ class _MainAppState extends State<MainApp> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
-            child: Text('Reset Position'),
+            child: const Text('Reset Position'),
             onPressed: () {
               graph.calculatePosition();
               setState(() {});

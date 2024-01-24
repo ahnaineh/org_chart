@@ -23,3 +23,9 @@ And the utility functions now return the data instead of the node
 3) Allowed customizing the curve and duration of the animation of resetting the tree postions (look the example)
 
 4) Added docstrings / internal code tweaking
+
+
+
+## 2.0.1
+
+1) Clean up
