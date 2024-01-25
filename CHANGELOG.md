@@ -29,3 +29,12 @@ And the utility functions now return the data instead of the node
 ## 2.0.1
 
 1) Clean up
+
+
+## 2.1.0
+
+1) added 2 new parameters to the orgchart widget: 'onTap' & 'onDoubleTap'
+2) added a new function: 'addItem' to the graph class to make it easier to add an item to the list, instead of the the old way dart`graph.items = graph.items + [newItem]`
+3) added a new example to show the new features
+4) minor arrow drawing change
+5) added a graph method 'uniqueNodeId' auto returns a unique id for a node

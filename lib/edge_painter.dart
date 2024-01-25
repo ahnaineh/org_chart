@@ -50,7 +50,7 @@ class EdgePainter<E> extends CustomPainter {
               node.position.dy + graph.boxSize.height / 2);
 
           linePath.lineTo(
-              node.position.dx + graph.boxSize.width / 2, miny + dy);
+              node.position.dx + graph.boxSize.width / 2, miny + dy - 10);
 
           if (maxx - minx > 15) {
             // linePath.arcToPoint(
@@ -59,7 +59,8 @@ class EdgePainter<E> extends CustomPainter {
             //     radius: const Radius.circular(10),
             //     clockwise: b);
 
-            linePath.lineTo(n.position.dx + graph.boxSize.width / 2, miny + dy);
+            linePath.lineTo(
+                n.position.dx + graph.boxSize.width / 2, miny + dy - 10);
             // + (!b ? -10 : 10)
 
             // linePath.arcToPoint(

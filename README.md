@@ -13,6 +13,12 @@ Built entirely in flutter, so it works on all platforms supported by it!
 <!-- <video controls src="example.mp4" title="Title"></video> -->
 
 
+# Caution
+- in this version if more than one node returns null from the toProvider, the 2nd node and its tree will be stacked above the first tree...
+- Also after any usage of a graph method that changes the graph structure, you need to run setState() to redraw the graph
+- You are required to check that there are no loops in the graph, otherwise the app will crash
+
+
 ## Usage
 To use this package add `org_chart` as a [dependency in your pubspec.yaml file](https://flutter.dev/docs/development/packages-and-plugins/using-packages).
 
@@ -51,10 +57,6 @@ import 'package:org_chart/org_chart.dart';
 idProvider is a function to return the unique id of the node
 
 toProvider is a function to return the id of the parent node if any, 
-
-# Caution
-- (in this version if more than one node returns null from the toProvider, the 2nd node and its tree will be stacked above the first tree...)
-- Also after any usage of a graph method that changes the graph structure, you need to run setState() to redraw the graph
 
 ## Widget implementation
 ```dart

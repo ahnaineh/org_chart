@@ -14,11 +14,13 @@ class Graph<E> {
   /// The spacing between each node box. Needed here for the same reason i need boxSize here.
   Size spacing;
 
-  /// The following 2 functions are included to ease the use of custom data types
+  /// The following function is included to ease the use of custom data types
   /// whether it be a map with key 'id' or 'pk' or a custom class, just use this function to provide the ids
   /// The function that returns the id of the node.
   String? Function(E data) idProvider;
 
+  /// The following function is included to ease the use of custom data types
+  /// whether it be a map with key 'id' or 'pk' or a custom class, just use this function to provide the ids
   /// The function that returns the id of the node that the current node is pointing to.
   String? Function(E data) toProvider;
 
@@ -45,6 +47,25 @@ class Graph<E> {
   /// to remove an item from the list
   void removeItem(id) {
     _nodes.removeWhere((element) => idProvider(element.data) == id);
+    calculatePosition();
+  }
+
+  /// to generate a unique id for an item
+  /// this is used when you want to add an item to the list
+  /// and you don't want to provide an id for it
+  /// you might want to get an id from the server, but in case of a local list you can use this function
+  String get uniqueNodeId {
+    int id = 0;
+    while (_nodes.any((element) => idProvider(element.data) == id.toString())) {
+      id++;
+    }
+    return id.toString();
+  }
+
+  /// to add an item to the list
+  /// position will be calculated afterwards
+  void addItem(E item) {
+    _nodes.add(Node(data: item));
     calculatePosition();
   }
 

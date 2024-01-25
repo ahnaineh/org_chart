@@ -42,6 +42,12 @@ class OrgChart<E> extends StatefulWidget {
   /// The function that is called when you drop a node on another node
   final void Function(E dragged, E target)? onDrop;
 
+  /// The function that is called when you tap on a node
+  final void Function(E item)? onTap;
+
+  /// The function that is called when you double tap on a node
+  final void Function(E item)? onDoubleTap;
+
   /// Whether to allow dragging nodes or not
   final bool isDraggable;
 
@@ -61,6 +67,8 @@ class OrgChart<E> extends StatefulWidget {
     this.onOptionSelect,
     this.onDrop,
     this.isDraggable = true,
+    this.onTap,
+    this.onDoubleTap,
     this.curve = Curves.elasticOut,
     this.duration = 700,
   });
@@ -120,6 +128,8 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                   duration: const Duration(milliseconds: 250),
                   opacity: hidden ? 0 : 1,
                   child: GestureDetector(
+                    onTap: () => widget.onTap?.call(node.data),
+                    onDoubleTap: () => widget.onDoubleTap?.call(node.data),
                     onTapDown: (TapDownDetails details) {
                       final RenderBox referenceBox =
                           context.findRenderObject() as RenderBox;
