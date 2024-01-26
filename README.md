@@ -3,6 +3,16 @@ This is my first package
 If you have any ideas regarding this please dont hesitate to contact me.
 Openning an issue or a pull request is highly appreciated.
 
+# TODO
+- [x] Achieve a relatively stable, easily customizable API
+- [ ] Add orientation support
+- [ ] Add more arrow styles
+- [ ] Add arrow animations
+- [ ] Write a detailed documentation
+- [ ] Write tests
+
+Do you want to to the list? Open an issue or a pull request!
+
 
 # Org Chart
 A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse/expand, and exteremly easy to customize the node shape!
