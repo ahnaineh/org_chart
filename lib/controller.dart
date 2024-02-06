@@ -4,9 +4,7 @@ import 'dart:math' as math;
 
 enum OrgChartOrientation { topToBottom, leftToRight }
 
-/// Please use [OrgChartController] instead of this class, as i want to rename this class in a future
-@deprecated
-class Graph<E> {
+class OrgChartController<E> {
   /// The list of nodes that we want to draw. this is generated from the items list.
   late List<Node<E>> _nodes;
 
@@ -29,7 +27,7 @@ class Graph<E> {
 
   OrgChartOrientation orientation;
 
-  Graph({
+  OrgChartController({
     required List<E> items,
     this.boxSize = const Size(200, 100),
     this.spacing = const Offset(20, 50),
@@ -353,9 +351,11 @@ class Graph<E> {
 }
 
 /// The main class the capsulates all the data and all the functions needed to calculate node positions
-/// please use this class instead of [Graph], as i want to rename that class in a future version
-class OrgChartController<E> extends Graph<E> {
-  OrgChartController({
+/// please use this [OrgChartController] class instead of [Graph], as i want to rename that class in a future version
+@Deprecated(
+    "Please use [OrgChartController] instead of this class, as i want to rename this class in a future")
+class Graph<E> extends OrgChartController<E> {
+  Graph({
     required super.items,
     required super.idProvider,
     required super.toProvider,

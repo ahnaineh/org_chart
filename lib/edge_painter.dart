@@ -141,8 +141,8 @@ class EdgePainter<E> extends CustomPainter {
 
           final dx = (maxx - minx) / 2 +
               85; // TODO: replace this hardcoded 85 value to a variable
-          final dy = (maxy - miny) / 2 +
-              85; // TODO: replace this hardcoded 85 value to a variable
+          // final dy = (maxy - miny) / 2 +
+          //     85; // TODO: replace this hardcoded 85 value to a variable
 
           // bool b = maxx == node.position.dx;
 //////////////////////////////////////

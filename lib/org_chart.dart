@@ -64,11 +64,7 @@ class OrgChart<E> extends StatefulWidget {
 
   OrgChart({
     super.key,
-    @deprecated
-    OrgChartController<E>?
-
-        /// user controller instead of graph
-        graph,
+    @Deprecated("Use controller instead of graph") OrgChartController<E>? graph,
     OrgChartController<E>? controller,
     required this.builder,
     this.optionsBuilder,
