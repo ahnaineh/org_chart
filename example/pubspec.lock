@@ -102,10 +102,10 @@ packages:
   org_chart:
     dependency: "direct main"
     description:
-      path: "C://Users/Ali Hnaineh/MyProjects/org_chart"
-      relative: false
+      path: ".."
+      relative: true
     source: path
-    version: "1.0.1"
+    version: "2.1.0"
   path:
     dependency: transitive
     description:

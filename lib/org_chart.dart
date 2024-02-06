@@ -3,10 +3,10 @@ library org_chart;
 import 'package:flutter/material.dart';
 import 'package:org_chart/edge_painter.dart';
 import 'package:org_chart/custom_animated_positioned.dart';
-import 'package:org_chart/graph.dart';
+import 'package:org_chart/controller.dart';
 import 'package:org_chart/node.dart';
 
-export 'graph.dart';
+export 'controller.dart';
 
 /// The details that are passed to the builder function
 /// contains supported properties that can be used to build the node
@@ -29,7 +29,7 @@ class NodeBuilderDetails<T> {
 /// This is the widget that the user adds to their build method
 class OrgChart<E> extends StatefulWidget {
   /// The graph that contains all the data and utility functions that the user can run
-  final Graph<E> graph;
+  late final OrgChartController<E> controller;
 
   /// optionsbuilder to build the menu that appears when you long press or right click on a node
   /// can be customized per item
@@ -57,11 +57,19 @@ class OrgChart<E> extends StatefulWidget {
   /// The duration, in milliseconds, of the animation when animating the nodes back to their position
   final int duration;
 
+  /// The paint to draw the arrows with
+  late final Paint linePaint;
+
   final Widget Function(NodeBuilderDetails<E> details) builder;
 
-  const OrgChart({
+  OrgChart({
     super.key,
-    required this.graph,
+    @deprecated
+    OrgChartController<E>?
+
+        /// user controller instead of graph
+        graph,
+    OrgChartController<E>? controller,
     required this.builder,
     this.optionsBuilder,
     this.onOptionSelect,
@@ -71,7 +79,22 @@ class OrgChart<E> extends StatefulWidget {
     this.onDoubleTap,
     this.curve = Curves.elasticOut,
     this.duration = 700,
-  });
+    Paint? linePaint,
+  }) {
+    assert(graph != null || controller != null, "Provide a controller");
+
+    this.controller = controller ?? graph!;
+
+    if (linePaint != null) {
+      this.linePaint = linePaint;
+    } else {
+      this.linePaint = Paint()
+        ..color = Colors.black
+        ..strokeWidth = 0.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+    }
+  }
 
   @override
   State<OrgChart<E>> createState() => _OrgChartState();
@@ -84,7 +107,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
 
   @override
   Widget build(BuildContext context) {
-    Offset size = widget.graph.getSize();
+    Offset size = widget.controller.getSize();
     return InteractiveViewer(
       constrained: false,
       boundaryMargin: const EdgeInsets.all(1000),
@@ -98,7 +121,10 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
           children: [
             CustomPaint(
               size: MediaQuery.of(context).size,
-              painter: EdgePainter<E>(graph: widget.graph),
+              painter: EdgePainter<E>(
+                controller: widget.controller,
+                linePaint: widget.linePaint,
+              ),
             ),
             ...draw(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
           ],
@@ -109,14 +135,14 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
 
   List<CustomAnimatedPositioned> draw(context,
       {List<Node<E>>? nodesToDraw, bool hidden = false}) {
-    nodesToDraw ??= widget.graph.roots;
+    nodesToDraw ??= widget.controller.roots;
     List<CustomAnimatedPositioned> widgets = [];
 
     for (int i = 0; i < nodesToDraw.length; i++) {
       Node<E> node = nodesToDraw[i];
       widgets.add(CustomAnimatedPositioned(
-          key: Key("ID: ${widget.graph.idProvider(node.data)}"),
-          isBeingDragged: draggedID == widget.graph.idProvider(node.data),
+          key: Key("ID: ${widget.controller.idProvider(node.data)}"),
+          isBeingDragged: draggedID == widget.controller.idProvider(node.data),
           curve: widget.curve,
           duration:
               Duration(milliseconds: draggedID != null ? 0 : widget.duration),
@@ -146,9 +172,9 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     onSecondaryTap: () async => await _showMenu(context, node),
                     onPanStart: widget.isDraggable
                         ? (details) {
-                            widget.graph.changeNodeIndex(node, -1);
+                            widget.controller.changeNodeIndex(node, -1);
 
-                            draggedID = widget.graph.idProvider(node.data);
+                            draggedID = widget.controller.idProvider(node.data);
                           }
                         : null,
                     onPanEnd: widget.isDraggable
@@ -164,26 +190,27 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                         : null,
                     onPanUpdate: widget.isDraggable
                         ? (details) {
-                            overlapping = widget.graph.getOverlapping(node);
+                            overlapping =
+                                widget.controller.getOverlapping(node);
 
                             setState(() => node.position += details.delta);
                           }
                         : null,
                     child: SizedBox(
-                      height: widget.graph.boxSize.height,
-                      width: widget.graph.boxSize.width,
+                      height: widget.controller.boxSize.height,
+                      width: widget.controller.boxSize.width,
                       child: widget.builder(
                         NodeBuilderDetails<E>(
                           item: node.data,
                           hideNodes: (hide) {
                             setState(() {
                               node.hideNodes = hide ?? !node.hideNodes;
-                              widget.graph.calculatePosition();
+                              widget.controller.calculatePosition();
                             });
                           },
                           nodesHidden: node.hideNodes,
-                          beingDragged:
-                              draggedID == widget.graph.idProvider(node.data),
+                          beingDragged: draggedID ==
+                              widget.controller.idProvider(node.data),
                           isOverlapped: overlapping.isNotEmpty &&
                               overlapping.first == node,
                         ),
@@ -192,7 +219,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                   ),
                 )));
       widgets.addAll(draw(context,
-          nodesToDraw: widget.graph.getSubNodes(node).toList(),
+          nodesToDraw: widget.controller.getSubNodes(node).toList(),
           hidden: node.hideNodes || hidden));
     }
     return widgets;

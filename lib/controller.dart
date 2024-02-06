@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/node.dart';
 import 'dart:math' as math;
 
-/// The main class the capsulates all the data and all the functions needed to calculate node positions
+enum OrgChartOrientation { topToBottom, leftToRight }
+
+/// Please use [OrgChartController] instead of this class, as i want to rename this class in a future
+@deprecated
 class Graph<E> {
   /// The list of nodes that we want to draw. this is generated from the items list.
   late List<Node<E>> _nodes;
@@ -12,7 +15,7 @@ class Graph<E> {
   Size boxSize;
 
   /// The spacing between each node box. Needed here for the same reason i need boxSize here.
-  Size spacing;
+  Offset spacing;
 
   /// The following function is included to ease the use of custom data types
   /// whether it be a map with key 'id' or 'pk' or a custom class, just use this function to provide the ids
@@ -24,12 +27,15 @@ class Graph<E> {
   /// The function that returns the id of the node that the current node is pointing to.
   String? Function(E data) toProvider;
 
+  OrgChartOrientation orientation;
+
   Graph({
     required List<E> items,
     this.boxSize = const Size(200, 100),
-    this.spacing = const Size(20, 50),
+    this.spacing = const Offset(20, 50),
     required this.idProvider,
     required this.toProvider,
+    this.orientation = OrgChartOrientation.leftToRight,
   }) : super() {
     this.items = items;
   }
@@ -37,6 +43,112 @@ class Graph<E> {
   /// returns the list of items showed in the graph
   /// use the remove item if you want to remove an item from the list
   List<E> get items => _nodes.map((e) => e.data).toList();
+
+  double _calculateNPTopToBottom(
+    Node<E> node, {
+    Offset offset = const Offset(0, 0),
+  }) {
+    List<Node<E>> subNodes = getSubNodes(node);
+
+    if (allLeaf(subNodes)) {
+      for (var i = 0; i < subNodes.length; i++) {
+        subNodes[i].position = offset +
+            Offset(
+              i % 2 == 0
+                  ? subNodes.length > i + 1 || subNodes.length == 1
+                      ? 0
+                      : boxSize.width / 2 + spacing.dx / 2
+                  : spacing.dx + boxSize.width,
+              (_getLevel(subNodes[i]) + i ~/ 2) * (boxSize.height + spacing.dy),
+            );
+      }
+      node.position = offset +
+          Offset(
+            (subNodes.length > 1 ? boxSize.width / 2 + spacing.dx / 2 : 0),
+            _getLevel(node) * (boxSize.height + spacing.dy),
+          );
+      return (subNodes.length > 1
+          ? boxSize.width * 2 + spacing.dx * 3
+          : boxSize.width + spacing.dx * 2);
+    } else {
+      double dxOff = 0;
+      for (var i = 0; i < subNodes.length; i++) {
+        dxOff += _calculateNPTopToBottom(
+          subNodes[i],
+          offset: offset + Offset(dxOff, 0),
+        );
+      }
+      double relOff = _getRelOffset(node);
+      dxOff = 0;
+
+      node.position = subNodes.length == 1
+          ? Offset(
+              subNodes.first.position.dx,
+              _getLevel(node) * (boxSize.height + spacing.dy),
+            )
+          : offset +
+              Offset(
+                relOff / 2 - boxSize.width / 2 - spacing.dx,
+                _getLevel(node) * (boxSize.height + spacing.dy),
+              );
+      return relOff;
+    }
+  }
+
+  double _calculateNPLeftToRight(Node<E> node,
+      {Offset offset = const Offset(0, 0)}) {
+    double returnValue = 0;
+    List<Node<E>> subNodes = getSubNodes(node);
+
+    /// if all the sub nodes are leaves, then draw subnodes vertically in stacks of 2 downwards
+    if (allLeaf(subNodes)) {
+      for (var i = 0; i < subNodes.length; i++) {
+        subNodes[i].position = offset +
+            Offset(
+              (_getLevel(subNodes[i]) + i ~/ 2) * (boxSize.width + spacing.dx),
+              i % 2 == 0
+                  ? subNodes.length > i + 1 || subNodes.length == 1
+                      ? 0
+                      : boxSize.height / 2 + spacing.dy / 2
+                  : spacing.dy + boxSize.height,
+            );
+      }
+      node.position = offset +
+          Offset(
+            _getLevel(node) * (boxSize.width + spacing.dx),
+            (subNodes.length > 1 ? boxSize.height / 2 + spacing.dy / 2 : 0),
+          );
+      // return 0;
+      returnValue = (subNodes.length > 1
+          ? boxSize.height * 2 +
+              spacing.dy *
+                  3 // multiplier used to change the distance between the group of nodes
+          : boxSize.height + spacing.dy * 2);
+    } else {
+      /// if not all are leaves then draw subnodes horizontally
+      double dyOff = 0;
+      for (var i = 0; i < subNodes.length; i++) {
+        dyOff += _calculateNPLeftToRight(
+          subNodes[i],
+          offset: offset + Offset(0, dyOff),
+        );
+      }
+      double relOff = _getRelOffset(node);
+
+      node.position = subNodes.length == 1
+          ? Offset(
+              _getLevel(node) * (boxSize.width + spacing.dx),
+              subNodes.first.position.dy,
+            )
+          : offset +
+              Offset(
+                _getLevel(node) * (boxSize.width + spacing.dx),
+                relOff / 2 - boxSize.height / 2 - spacing.dy,
+              );
+      returnValue = relOff;
+    }
+    return returnValue;
+  }
 
   /// to add an item
   set items(List<E> items) {
@@ -105,21 +217,61 @@ class Graph<E> {
 
   // reutns the relative X offset of the node
   double _getRelOffset(Node<E> node) {
+    switch (orientation) {
+      case OrgChartOrientation.topToBottom:
+        return _getRelOffsetTopToBottom(node);
+      case OrgChartOrientation.leftToRight:
+        return _getRelOffsetLeftToRight(node);
+      default:
+        return 0;
+    }
+  }
+
+  double _getRelOffsetTopToBottom(Node<E> node) {
     List<Node<E>> subNodes = getSubNodes(node);
+    // bool streak = _oneChildStreak(node);
 
     if (node.hideNodes || subNodes.isEmpty) {
-      return boxSize.width + spacing.width * 2;
+      return boxSize.width + spacing.dx * 2;
     }
 
     double relativeOffset = 0.0;
 
     if (allLeaf(subNodes)) {
       return (subNodes.length > 1
-          ? boxSize.width * 2 + spacing.width * 3
-          : boxSize.width + spacing.width * 2);
+          ? boxSize.width * 2 + spacing.dx * 3
+          : boxSize.width + spacing.dx * 2);
     } else {
+      // if (streak) {
+      //   return boxSize.width + spacing.dx;
+      // }
+      // else {
+      // if (_allOnes(node)) return 0;
       for (var i = 0; i < subNodes.length; i++) {
-        relativeOffset += _getRelOffset(subNodes[i]);
+        relativeOffset += _getRelOffsetTopToBottom(subNodes[i]);
+        // }
+      }
+    }
+    return relativeOffset;
+  }
+
+  double _getRelOffsetLeftToRight(Node<E> node) {
+    List<Node<E>> subNodes = getSubNodes(node);
+
+    if (node.hideNodes || subNodes.isEmpty) {
+      return boxSize.height + spacing.dy * 2;
+    }
+
+    double relativeOffset = 0.0;
+    if (allLeaf(subNodes)) {
+      return (subNodes.length > 1
+          ? boxSize.height * 2 + spacing.dy * 3
+          : boxSize.height + spacing.dy * 2);
+    } else {
+      // if (_allOnes(node)) return 0;
+
+      for (var i = 0; i < subNodes.length; i++) {
+        relativeOffset += _getRelOffsetLeftToRight(subNodes[i]);
       }
     }
     return relativeOffset;
@@ -141,44 +293,13 @@ class Graph<E> {
   /// function recursively calculates the position of the node and its subnodes
   /// returns relative offset of the node
   double _calculateNP(Node<E> node, {Offset offset = const Offset(0, 0)}) {
-    List<Node<E>> subNodes = getSubNodes(node);
-
-    /// if all the sub nodes are leaves, then draw subnodes vertically in stacks of 2 downwards
-    if (allLeaf(subNodes)) {
-      for (var i = 0; i < subNodes.length; i++) {
-        subNodes[i].position = offset +
-            Offset(
-                i % 2 == 0
-                    ? subNodes.length > i + 1 || subNodes.length == 1
-                        ? 0
-                        : boxSize.width / 2 + spacing.width / 2
-                    : spacing.width + boxSize.width,
-                (_getLevel(subNodes[i]) + i ~/ 2) *
-                    (boxSize.height + spacing.height));
-      }
-      node.position = offset +
-          Offset(
-              (subNodes.length > 1 ? boxSize.width / 2 + spacing.width / 2 : 0),
-              _getLevel(node) * (boxSize.height + spacing.height));
-      return (subNodes.length > 1
-          ? boxSize.width * 2 + spacing.width * 3
-          : boxSize.width + spacing.width * 2);
-    } else {
-      /// if not all are leaves then draw subnodes horizontally
-      double dxOff = 0;
-      for (var i = 0; i < subNodes.length; i++) {
-        dxOff += _calculateNP(subNodes[i],
-            offset: offset + Offset(dxOff + spacing.width, 0));
-      }
-      double relOff = _getRelOffset(node);
-      dxOff = 0;
-      node.position = subNodes.length == 1
-          ? Offset(subNodes.first.position.dx,
-              _getLevel(node) * (boxSize.height + spacing.height))
-          : offset +
-              Offset(relOff / 2 - boxSize.width / 2,
-                  _getLevel(node) * (boxSize.height + spacing.height));
-      return relOff;
+    switch (orientation) {
+      case OrgChartOrientation.topToBottom:
+        return _calculateNPTopToBottom(node, offset: offset);
+      case OrgChartOrientation.leftToRight:
+        return _calculateNPLeftToRight(node, offset: offset);
+      default:
+        return 0;
     }
   }
 
@@ -229,4 +350,17 @@ class Graph<E> {
             .compareTo(_distance(b.position, node.position)));
     return overlapping;
   }
+}
+
+/// The main class the capsulates all the data and all the functions needed to calculate node positions
+/// please use this class instead of [Graph], as i want to rename that class in a future version
+class OrgChartController<E> extends Graph<E> {
+  OrgChartController({
+    required super.items,
+    required super.idProvider,
+    required super.toProvider,
+    super.boxSize,
+    super.spacing,
+    super.orientation,
+  });
 }
