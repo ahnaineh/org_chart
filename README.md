@@ -20,7 +20,7 @@ A flutter orgranizational chart with drag and drop, zoom and pan, search, collap
 Built entirely in flutter, so it works on all platforms supported by it!
 
 <!-- [![Watch the example](https://img.youtube.com/vi/8pxS-MwHh9w/sddefault.jpg)](https://youtu.be/8pxS-MwHh9w) -->
-![Try it out](https://ahnaineh.github.io/)
+[Try it out](https://ahnaineh.github.io/)!
 ![The example app](https://github.com/ahnaineh/org_chart/blob/c9d1ed3f80b6a8ceb13f12e3255d3511ec68d865/Sequence%2001_5.gif?raw=True)
 <!-- <video controls src="example.mp4" title="Title"></video> -->
 
