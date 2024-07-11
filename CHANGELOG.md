@@ -43,7 +43,7 @@ And the utility functions now return the data instead of the node
 3) adding ability to customize the arrow paint
 4) resetting the positions in the example now also changes the orientation from top-to-bottom to left-to-right and vice versa
 
-## 2.3.0
+## 3.0.0
 1) Under the hood code cleanup.
 2) Fixed arrow-spacing relation bug.
 3) Added new parameter 'cornerRadius' to the orgchart widget to customize the corner radius of the arrows.
