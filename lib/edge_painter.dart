@@ -107,7 +107,7 @@ class EdgePainter<E> extends CustomPainter {
             linePath.arcToPoint(
               Offset(
                 n.position.dx + controller.boxSize.width / 2,
-                miny + dy +  (!vertical ? 1 : -1) * cornerRadius,
+                miny + dy + (!vertical ? 1 : -1) * cornerRadius,
               ),
               radius: Radius.circular(cornerRadius),
               clockwise: !clockwise,
@@ -163,7 +163,7 @@ class EdgePainter<E> extends CustomPainter {
           );
 
           linePath.lineTo(
-            minx + dx + (horizontal ? 1 : -1) *  cornerRadius, //
+            minx + dx + (horizontal ? 1 : -1) * cornerRadius, //
             node.position.dy + controller.boxSize.height / 2,
           );
 
