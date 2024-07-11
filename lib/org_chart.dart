@@ -12,15 +12,17 @@ export 'controller.dart';
 /// contains supported properties that can be used to build the node
 class NodeBuilderDetails<T> {
   final T item;
+  final int level;
   final void Function(bool? hide) hideNodes;
   final bool nodesHidden;
-  final bool beingDragged;
+  final bool isBeingDragged;
   final bool isOverlapped;
 
   const NodeBuilderDetails({
     required this.item,
+    required this.level,
     required this.hideNodes,
-    required this.beingDragged,
+    required this.isBeingDragged,
     required this.isOverlapped,
     required this.nodesHidden,
   });
@@ -40,7 +42,7 @@ class OrgChart<E> extends StatefulWidget {
   final void Function(E item, dynamic value)? onOptionSelect;
 
   /// The function that is called when you drop a node on another node
-  final void Function(E dragged, E target)? onDrop;
+  final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
 
   /// The function that is called when you tap on a node
   final void Function(E item)? onTap;
@@ -60,12 +62,15 @@ class OrgChart<E> extends StatefulWidget {
   /// The paint to draw the arrows with
   late final Paint linePaint;
 
+  /// The radius of the corner in the arrows
+  final double cornerRadius;
+
+  /// The builder function used to build the nodes
   final Widget Function(NodeBuilderDetails<E> details) builder;
 
   OrgChart({
     super.key,
-    @Deprecated("Use controller instead of graph") OrgChartController<E>? graph,
-    OrgChartController<E>? controller,
+    required this.controller,
     required this.builder,
     this.optionsBuilder,
     this.onOptionSelect,
@@ -76,11 +81,8 @@ class OrgChart<E> extends StatefulWidget {
     this.curve = Curves.elasticOut,
     this.duration = 700,
     Paint? linePaint,
+    this.cornerRadius = 10.0,
   }) {
-    assert(graph != null || controller != null, "Provide a controller");
-
-    this.controller = controller ?? graph!;
-
     if (linePaint != null) {
       this.linePaint = linePaint;
     } else {
@@ -102,6 +104,13 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   Offset? panDownPosition;
 
   @override
+  void initState() {
+    widget.controller.setState = setState;
+
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     Offset size = widget.controller.getSize();
     return InteractiveViewer(
@@ -120,6 +129,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
               painter: EdgePainter<E>(
                 controller: widget.controller,
                 linePaint: widget.linePaint,
+                cornerRadius: widget.cornerRadius,
               ),
             ),
             ...draw(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
@@ -130,7 +140,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   }
 
   List<CustomAnimatedPositioned> draw(context,
-      {List<Node<E>>? nodesToDraw, bool hidden = false}) {
+      {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     nodesToDraw ??= widget.controller.roots;
     List<CustomAnimatedPositioned> widgets = [];
 
@@ -176,8 +186,10 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     onPanEnd: widget.isDraggable
                         ? (details) {
                             if (overlapping.isNotEmpty) {
-                              widget.onDrop
-                                  ?.call(node.data, overlapping.first.data);
+                              widget.onDrop?.call(
+                                  node.data,
+                                  overlapping.first.data,
+                                  isSubNode(node, overlapping.first));
                             }
                             draggedID = null;
                             overlapping = [];
@@ -198,6 +210,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                       child: widget.builder(
                         NodeBuilderDetails<E>(
                           item: node.data,
+                          level: level,
                           hideNodes: (hide) {
                             setState(() {
                               node.hideNodes = hide ?? !node.hideNodes;
@@ -205,7 +218,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                             });
                           },
                           nodesHidden: node.hideNodes,
-                          beingDragged: draggedID ==
+                          isBeingDragged: draggedID ==
                               widget.controller.idProvider(node.data),
                           isOverlapped: overlapping.isNotEmpty &&
                               overlapping.first == node,
@@ -214,9 +227,14 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
                     ),
                   ),
                 )));
-      widgets.addAll(draw(context,
+      widgets.addAll(
+        draw(
+          context,
           nodesToDraw: widget.controller.getSubNodes(node).toList(),
-          hidden: node.hideNodes || hidden));
+          hidden: node.hideNodes || hidden,
+          level: level + 1,
+        ),
+      );
     }
     return widgets;
   }
@@ -238,5 +256,20 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
     );
 
     widget.onOptionSelect?.call(node.data, result);
+  }
+
+  bool isSubNode(Node<E> dragged, Node<E> target) {
+    E? to = target.data;
+    dynamic draggedId = widget.controller.idProvider(dragged.data);
+    while (to != null) {
+      dynamic toId = widget.controller.toProvider(to);
+      if (toId == draggedId) {
+        return true;
+      }
+      to = widget.controller.items
+          .where((element) => widget.controller.idProvider(element) == toId)
+          .firstOrNull;
+    }
+    return false;
   }
 }

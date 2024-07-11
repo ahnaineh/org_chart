@@ -28,11 +28,26 @@ class Example2 extends StatefulWidget {
 
 class _Example2State extends State<Example2> {
   final OrgChartController<Map> orgChartController = OrgChartController<Map>(
-    boxSize: const Size(150, 50),
+    boxSize: const Size(150, 80),
     items: [
       {
-        "id": '1',
+        "id": '0',
         "text": 'Main Block',
+      },
+      {
+        "id": '1',
+        "text": 'Block 2',
+        "to": '0',
+      },
+      {
+        "id": '2',
+        "text": 'Block 3',
+        "to": '0',
+      },
+      {
+        "id": '3',
+        "text": 'Block 4',
+        "to": '1',
       },
     ],
     idProvider: (data) => data["id"],
@@ -47,8 +62,8 @@ class _Example2State extends State<Example2> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.purple.shade600,
-                Colors.red.shade300,
+                Colors.blue.shade100,
+                Colors.blue.shade200,
               ],
               begin: Alignment.bottomLeft,
               end: Alignment.topRight,
@@ -61,6 +76,7 @@ class _Example2State extends State<Example2> {
                 Center(
                   child: OrgChart<Map>(
                     // graph: orgChartController,
+                    cornerRadius: 10,
                     controller: orgChartController,
                     isDraggable: true,
                     linePaint: Paint()
@@ -70,7 +86,7 @@ class _Example2State extends State<Example2> {
                     onTap: (item) {
                       orgChartController.addItem({
                         "id": orgChartController.uniqueNodeId,
-                        "text": '',
+                        "text": 'New Block',
                         "to": item["id"],
                       });
                       setState(() {});
@@ -81,18 +97,19 @@ class _Example2State extends State<Example2> {
                     },
                     builder: (details) {
                       return GestureDetector(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            color: details.isOverlapped
-                                ? Colors.grey.shade600
-                                : Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Center(child: Text(details.item["text"])),
+                        child: Card(
+                          elevation: 5,
+                          color: details.isBeingDragged
+                              ? Colors.green.shade100
+                              : details.isOverlapped
+                                  ? Colors.red.shade200
+                                  : Colors.teal.shade50,
+                          child: Center(
+                              child: Text(
+                            details.item["text"],
+                            style: TextStyle(
+                                color: Colors.purple.shade900, fontSize: 20),
+                          )),
                         ),
                       );
                     },
@@ -112,14 +129,34 @@ class _Example2State extends State<Example2> {
                         setState(() {});
                       }
                     },
-                    onDrop: (dragged, target) {
+                    onDrop: (dragged, target, isTargetSubnode) {
+                      if (isTargetSubnode) {
+                        showDialog(
+                            context: context,
+                            builder: (_) {
+                              return AlertDialog(
+                                  title: const Text('Error'),
+                                  content: const Text(
+                                      'You cannot drop a node on a subnode'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ]);
+                            });
+                        orgChartController.calculatePosition();
+
+                        return;
+                      }
                       dragged["to"] = target["id"];
                       orgChartController.calculatePosition();
-                      setState(() {});
                     },
                   ),
                 ),
-                Positioned(
+                const Positioned(
                   bottom: 20,
                   left: 20,
                   child: Text(
@@ -136,7 +173,7 @@ class _Example2State extends State<Example2> {
                           ? OrgChartOrientation.topToBottom
                           : OrgChartOrientation.leftToRight;
                   orgChartController.calculatePosition();
-                  setState(() {});
+                  // setState(() {});
                 }),
           ),
         ),

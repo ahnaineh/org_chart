@@ -14,16 +14,15 @@ class EdgePainter<E> extends CustomPainter {
   /// the path of the arrows
   Path linePath = Path();
 
-  EdgePainter({required this.controller, required this.linePaint}) {
-    // print(linePaint);
-    // // print(this.linePaint);
-    // this.linePaint = linePaint
-    // print(linePaint);
-    // print(this.linePaint);
-  }
+  double cornerRadius;
+
+  EdgePainter(
+      {required this.controller,
+      required this.linePaint,
+      this.cornerRadius = 10});
 
   /// The paint to draw the arrows with
-  late Paint linePaint;
+  Paint linePaint;
 
   /// returns True if no nodes
   bool allLeaf(List<Node<E>> nodes) {
@@ -51,8 +50,10 @@ class EdgePainter<E> extends CustomPainter {
     if (node.hideNodes == false) {
       if (allLeaf(subNodes)) {
         for (var n in subNodes) {
-          linePath.moveTo(node.position.dx + controller.boxSize.width / 2,
-              node.position.dy + controller.boxSize.height / 2);
+          linePath.moveTo(
+            node.position.dx + controller.boxSize.width / 2,
+            node.position.dy + controller.boxSize.height / 2,
+          );
           linePath.lineTo(
             node.position.dx + controller.boxSize.width / 2,
             n.position.dy + controller.boxSize.height / 2,
@@ -69,10 +70,12 @@ class EdgePainter<E> extends CustomPainter {
           final miny = math.min(node.position.dy, n.position.dy);
           final maxy = math.max(node.position.dy, n.position.dy);
 
-          // final dx = (maxx - minx) / 2 + 50;
-          final dy = (maxy - miny) / 2 + 50;
+          final dy = (maxy - miny) / 2 + controller.boxSize.height / 2;
 
-          // bool b = maxx == node.position.dx;
+          bool horizontal = maxx == node.position.dx;
+          bool vertical = maxy == node.position.dy;
+
+          bool clockwise = vertical ? !horizontal : horizontal;
 
           linePath.moveTo(
             node.position.dx + controller.boxSize.width / 2,
@@ -81,26 +84,34 @@ class EdgePainter<E> extends CustomPainter {
 
           linePath.lineTo(
             node.position.dx + controller.boxSize.width / 2,
-            miny + dy - 10,
+            miny + dy + (vertical ? 1 : -1) * cornerRadius,
           );
 
-          if (maxx - minx > 15) {
-            // linePath.arcToPoint(
-            //     Offset(node.position.dx + graph.boxSize.width / 2 + (b ? -10 : 10),
-            //         miny + dy),
-            //     radius: const Radius.circular(10),
-            //     clockwise: b);
+          if (maxx - minx > cornerRadius * 2) {
+            linePath.arcToPoint(
+                Offset(
+                  node.position.dx +
+                      controller.boxSize.width / 2 +
+                      (!(horizontal) ? 1 : -1) * cornerRadius,
+                  miny + dy,
+                ),
+                radius: Radius.circular(cornerRadius),
+                clockwise: clockwise);
 
             linePath.lineTo(
-              n.position.dx + controller.boxSize.width / 2,
-              miny + dy - 10,
+              n.position.dx +
+                  controller.boxSize.width / 2 +
+                  (horizontal ? 1 : -1) * cornerRadius,
+              miny + dy,
             );
-            // + (!b ? -10 : 10)
-
-            // linePath.arcToPoint(
-            //     Offset(n.position.dx + graph.boxSize.width / 2, miny + dy + 10),
-            //     radius: const Radius.circular(10),
-            //     clockwise: !b);
+            linePath.arcToPoint(
+              Offset(
+                n.position.dx + controller.boxSize.width / 2,
+                miny + dy +  (!vertical ? 1 : -1) * cornerRadius,
+              ),
+              radius: Radius.circular(cornerRadius),
+              clockwise: !clockwise,
+            );
           }
 
           linePath.lineTo(
@@ -139,44 +150,52 @@ class EdgePainter<E> extends CustomPainter {
           final miny = math.min(node.position.dy, n.position.dy);
           final maxy = math.max(node.position.dy, n.position.dy);
 
-          final dx = (maxx - minx) / 2 +
-              85; // TODO: replace this hardcoded 85 value to a variable
-          // final dy = (maxy - miny) / 2 +
-          //     85; // TODO: replace this hardcoded 85 value to a variable
+          final dx = (maxx - minx) / 2 + controller.boxSize.width / 2;
 
-          // bool b = maxx == node.position.dx;
-//////////////////////////////////////
+          bool horizontal = maxx == node.position.dx;
+          bool vertical = maxy == node.position.dy;
+
+          bool clockwise = horizontal ? !vertical : vertical;
+
           linePath.moveTo(
             node.position.dx + controller.boxSize.width / 2,
             node.position.dy + controller.boxSize.height / 2,
           );
 
           linePath.lineTo(
-            minx + dx - 10,
+            minx + dx + (horizontal ? 1 : -1) *  cornerRadius, //
             node.position.dy + controller.boxSize.height / 2,
           );
 
-          if (maxy - miny > 15) {
-            // linePath.arcToPoint(
-            //     Offset(node.position.dx + graph.boxSize.width / 2 + (b ? -10 : 10),
-            //         miny + dy),
-            //     radius: const Radius.circular(10),
-            //     clockwise: b);
+          if (maxy - miny > cornerRadius * 2) {
+            linePath.arcToPoint(
+                Offset(
+                  minx + dx,
+                  node.position.dy +
+                      controller.boxSize.height / 2 +
+                      (vertical ? -1 : 1) * cornerRadius,
+                ),
+                radius: Radius.circular(cornerRadius),
+                clockwise: !clockwise);
 
             linePath.lineTo(
-              minx + dx - 10,
-              n.position.dy + controller.boxSize.height / 2,
+              minx + dx,
+              n.position.dy +
+                  controller.boxSize.height / 2 +
+                  (vertical ? 1 : -1) * cornerRadius,
             );
-            // + (!b ? -10 : 10)
 
-            // linePath.arcToPoint(
-            //     Offset(n.position.dx + graph.boxSize.width / 2, miny + dy + 10),
-            //     radius: const Radius.circular(10),
-            //     clockwise: !b);
+            linePath.arcToPoint(
+                Offset(
+                  minx + dx + (!horizontal ? 1 : -1) * cornerRadius,
+                  n.position.dy + controller.boxSize.height / 2,
+                ),
+                radius: Radius.circular(cornerRadius),
+                clockwise: clockwise);
           }
 
           linePath.lineTo(
-            n.position.dx + controller.boxSize.width,
+            n.position.dx + controller.boxSize.width / 2,
             n.position.dy + controller.boxSize.height / 2,
           );
 

@@ -4,9 +4,9 @@ If you have any ideas regarding this please dont hesitate to contact me.
 Openning an issue or a pull request is highly appreciated.
 
 # TODO
-- [x] Achieve a relatively stable, easily customizable API
-- [x] Add orientation support
-- [x] Add arrow paint customization
+- [✅] Achieve a relatively stable, easily customizable API
+- [✅] Add orientation support
+- [✅] Add arrow paint customization
 - [ ] Add arrow styles
 - [ ] Add arrow animations
 - [ ] Write a detailed documentation
@@ -26,9 +26,8 @@ Built entirely in flutter, so it works on all platforms supported by it!
 
 
 # Caution
-- in this version if more than one node returns null from the toProvider, the 2nd node and its tree will be stacked above the first tree...
-- Also after any usage of a orgChartController method that changes the orgChartController structure, you need to run setState() to redraw the orgChartController
-- You are required to check that there are no loops in the orgChartController, otherwise the app will crash
+
+- If 'isTargetSubnode' in the onDrop function is true, then setting the target a parent to the dragged node will result in crashing the app! The checking is now done automatically for you behind the scenes.
 
 
 ## Usage
@@ -118,10 +117,28 @@ OrgChart(
                 setState(() {});
               }
             },
-            onDrop: (dragged, target) {
+            onDrop: (dragged, target, isTargetSubnode) {
+              if (isTargetSubnode) {
+                showDialog(
+                    context: context,
+                    builder: (_) {
+                      return AlertDialog(
+                          title: const Text('Error'),
+                          content: const Text('You cannot drop a node on a subnode'),
+                          actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('OK'),
+                              ),
+                          ]);
+                });
+                orgChartController.calculatePosition();
+                return;
+              }
               dragged["to"] = target["id"];
               orgChartController.calculatePosition();
-              setState(() {});
             },
   ),
 ```
@@ -130,7 +147,6 @@ If you want to redraw the nodes in the original positions
 Use
 ```dart
 orgChartController.calculatePosition();
-setState(() {});
 ```
 
 
@@ -139,7 +155,6 @@ Use
 ```dart
 orgChartController.orientation = OrgChartOrientation.leftToRight; // or OrgChartOrientation.topToBottom
 orgChartController.calculatePosition();
-setState(() {});
 ```
 
 

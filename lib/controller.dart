@@ -25,6 +25,9 @@ class OrgChartController<E> {
   /// The function that returns the id of the node that the current node is pointing to.
   String? Function(E data) toProvider;
 
+  // setState Function
+  void Function(void Function() function)? setState;
+
   OrgChartOrientation orientation;
 
   OrgChartController({
@@ -162,7 +165,7 @@ class OrgChartController<E> {
 
   /// to generate a unique id for an item
   /// this is used when you want to add an item to the list
-  /// and you don't want to provide an id for it
+  /// and you don't want to set an id
   /// you might want to get an id from the server, but in case of a local list you can use this function
   String get uniqueNodeId {
     int id = 0;
@@ -306,8 +309,10 @@ class OrgChartController<E> {
   /// but don't forget to setState after calcutions
   /// this function is called automatically when you change the items list
   void calculatePosition() {
-    for (Node<E> node in _nodes.where((element) => _getLevel(element) == 1)) {
-      _calculateNP(node);
+    Node<E>? n = _nodes.where((element) => _getLevel(element) == 1).firstOrNull;
+    if (n != null) {
+      _calculateNP(n);
+      setState?.call(() {});
     }
   }
 
@@ -320,11 +325,6 @@ class OrgChartController<E> {
       );
     }
     return offset;
-  }
-
-  /// returns the distance between 2 points
-  double _distance(Offset a, Offset b) {
-    return math.sqrt(math.pow(a.dx - b.dx, 2) + math.pow(a.dy - b.dy, 2));
   }
 
   /// input: the node that we want to get the overlapping nodes with
@@ -340,27 +340,11 @@ class OrgChartController<E> {
         overlapping.add(n);
       }
     }
-    overlapping.sort((a, b) =>
-        // TODO: use the distance function defined on the node class instead
-        // a.distance(node).compareTo(b.distance(node))
+    overlapping.sort((a, b) => a
+        .distance(node)
+        .distanceSquared
+        .compareTo(b.distance(node).distanceSquared));
 
-        _distance(a.position, node.position)
-            .compareTo(_distance(b.position, node.position)));
     return overlapping;
   }
-}
-
-/// The main class the capsulates all the data and all the functions needed to calculate node positions
-/// please use this [OrgChartController] class instead of [Graph], as i want to rename that class in a future version
-@Deprecated(
-    "Please use [OrgChartController] instead of this class, as i want to rename this class in a future")
-class Graph<E> extends OrgChartController<E> {
-  Graph({
-    required super.items,
-    required super.idProvider,
-    required super.toProvider,
-    super.boxSize,
-    super.spacing,
-    super.orientation,
-  });
 }

@@ -42,3 +42,14 @@ And the utility functions now return the data instead of the node
 2) Add orientation (2 supported orientations top to bottom and left to right)
 3) adding ability to customize the arrow paint
 4) resetting the positions in the example now also changes the orientation from top-to-bottom to left-to-right and vice versa
+
+## 2.3.0
+1) Under the hood code cleanup.
+2) Fixed arrow-spacing relation bug.
+3) Added new parameter 'cornerRadius' to the orgchart widget to customize the corner radius of the arrows.
+4) Added new parameter 'level' to 'NodeBuilderDetails' that is passed to the builder method to indicate the depth of the node in the tree.
+5) Added new parameter 'isTargetSubnode' to 'onDrop' function to indicate if the node is being dropped on a subnode. The checking is now done automatically behind the scenes. If true, do not add the node to the subnodes of the target node, as this will result in crashing the app. You might instead show an alert or ignore this action.
+6) Updated the example to reflect this change. And tweaked the style a bit.
+7) Dropped 'Graph' class & 'graph' parameter on 'OrgChart' class which were previously deprecated.
+8) No more need to call setState after calculatePosition to update the ui, it happens automatically now!
+9) Only the first tree will be displayed rather than stacking trees in case of multiple roots in the provided list.
