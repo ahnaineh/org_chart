@@ -54,6 +54,9 @@ And the utility functions now return the data instead of the node
 8) No more need to call setState after calculatePosition to update the ui, it happens automatically now!
 9) Only the first tree will be displayed rather than stacking trees in case of multiple roots in the provided list.
 
+## 3.0.0+1
+1) Update Readme
+
 ## 3.1.0
 1) Added 'switchOrientation' to controller; automatically switches the set orientation.
 2) When using dart```controller.orientation = x``` 'calculatePostion' will be run automatically, updating the chart. You don't need to run calculatePosition for this.
