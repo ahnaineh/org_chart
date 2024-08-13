@@ -52,6 +52,7 @@ class _Example2State extends State<Example2> {
     ],
     idProvider: (data) => data["id"],
     toProvider: (data) => data["to"],
+    toSetter: (data, newID) => data["to"] = newID,
   );
 
   @override
@@ -116,17 +117,13 @@ class _Example2State extends State<Example2> {
                     optionsBuilder: (item) {
                       return [
                         const PopupMenuItem(
-                            value: 'promote', child: Text('Promote')),
-                        const PopupMenuItem(
-                            value: 'vacate', child: Text('Vacate Position')),
-                        const PopupMenuItem(
                             value: 'Remove', child: Text('Remove')),
                       ];
                     },
                     onOptionSelect: (item, value) {
                       if (value == 'Remove') {
-                        orgChartController.removeItem(item["id"]);
-                        setState(() {});
+                        orgChartController.removeItem(
+                            item["id"], ActionOnNodeRemoval.unlink);
                       }
                     },
                     onDrop: (dragged, target, isTargetSubnode) {
@@ -166,14 +163,8 @@ class _Example2State extends State<Example2> {
             ),
             floatingActionButton: FloatingActionButton.extended(
                 label: const Text('Reset & Change Orientation'),
-                onPressed: () async {
-                  orgChartController.orientation =
-                      orgChartController.orientation ==
-                              OrgChartOrientation.leftToRight
-                          ? OrgChartOrientation.topToBottom
-                          : OrgChartOrientation.leftToRight;
-                  orgChartController.calculatePosition();
-                  // setState(() {});
+                onPressed: () {
+                  orgChartController.switchOrientation();
                 }),
           ),
         ),

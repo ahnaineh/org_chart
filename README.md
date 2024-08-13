@@ -62,6 +62,7 @@ import 'package:org_chart/org_chart.dart';
     ],
     idProvider: (data) => data["id"],
     toProvider: (data) => data["to"],
+    toSetter: (data, newID) => data["to"] = newID,
   );
 
 ```
@@ -105,16 +106,12 @@ OrgChart(
 
            optionsBuilder: (item) {
               return [
-                const PopupMenuItem(value: 'promote', child: Text('Promote')),
-                const PopupMenuItem(
-                    value: 'vacate', child: Text('Vacate Position')),
                 const PopupMenuItem(value: 'Remove', child: Text('Remove')),
               ];
             },
             onOptionSelect: (item, value) {
               if (value == 'Remove') {
-                orgChartController.removeItem(item["id"]);
-                setState(() {});
+                orgChartController.removeItem(item["id"], ActionOnNodeRemoval.unlink);
               }
             },
             onDrop: (dragged, target, isTargetSubnode) {
@@ -154,7 +151,6 @@ If you want to change the orientation of the org chart
 Use
 ```dart
 orgChartController.orientation = OrgChartOrientation.leftToRight; // or OrgChartOrientation.topToBottom
-orgChartController.calculatePosition();
 ```
 
 

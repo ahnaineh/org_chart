@@ -141,11 +141,12 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
 
   List<CustomAnimatedPositioned> draw(context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
-    nodesToDraw ??= widget.controller.roots;
     List<CustomAnimatedPositioned> widgets = [];
+    nodesToDraw ??= widget.controller.roots;
 
     for (int i = 0; i < nodesToDraw.length; i++) {
       Node<E> node = nodesToDraw[i];
+
       widgets.add(CustomAnimatedPositioned(
           key: Key("ID: ${widget.controller.idProvider(node.data)}"),
           isBeingDragged: draggedID == widget.controller.idProvider(node.data),

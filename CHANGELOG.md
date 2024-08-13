@@ -14,7 +14,7 @@ No api change
 And the utility functions now return the data instead of the node
 2) The builder method now inputs only a one parameter 'details' instance of new class 'NodeBuilderDetails' which contains the following:
     - data: the data of the node
-    - hideNodes: a function to hide the children of the node
+    - hideNodes: a function to hide the subnodes
     - nodesHidden: a boolean to indicate if the subnodes of the node are hidden
     - beingDragged: a boolean to indicate if the node is being dragged
     - isOverlapped: a boolean to indicate if the node is overlapped by another node
@@ -53,3 +53,13 @@ And the utility functions now return the data instead of the node
 7) Dropped 'Graph' class & 'graph' parameter on 'OrgChart' class which were previously deprecated.
 8) No more need to call setState after calculatePosition to update the ui, it happens automatically now!
 9) Only the first tree will be displayed rather than stacking trees in case of multiple roots in the provided list.
+
+## 3.1.0
+1) Added 'switchOrientation' to controller; automatically switches the set orientation.
+2) When using dart```controller.orientation = x``` 'calculatePostion' will be run automatically, updating the chart. You don't need to run calculatePosition for this.
+3) Replaced 'offset' with 'spacing' and 'runSpacing' as the 'spacing' is according to the orientation and not fixed to x & y. Now it's working as expected.
+4) Extra trees/roots now show aside/below each other rather than showing one only(according to oreintation).
+5) Added line radius to leaf nodes. Missed it in the previous version.
+5) Added a method 'idSetter' to the controller it's required only if you want to use the function 'removeItem', that's to change the to-id of the subnodes. Either unlinking from the tree, or linking to parent node.
+6) Added 'action' attribute to 'removeItem' function to specify the action to be taken on the subnodes of the removed node.
+Currently these 2 options: 'ActionOnNodeRemoval.unlink' or 'ActionOnNodeRemoval.linkToParent'.
