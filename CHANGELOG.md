@@ -12,6 +12,7 @@
 6) New method on the controller 'centerChart' to center the chart when wanted.
 7) bug fix: unnecessary node index changing when starting to drag a node. It was causing reordering nodes on the same level in a weird/unexpected/unwanted way.
 8) Updated example a bit.
+9) Removed `ontTap` and `onDoubleTap` from the `OrgChart` widget. Because of these, when a button on the node is pressed, running the callback is delayed, so to remove this delay both of these were removed. You can still add a `GestureDetector` in the builder method to achieve the same functionality.
 
 
 ## 3.1.0
