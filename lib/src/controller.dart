@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/node.dart';
+import 'package:org_chart/src/node.dart';
 import 'dart:math' as math;
 
 enum OrgChartOrientation { topToBottom, leftToRight }
@@ -32,27 +32,41 @@ class OrgChartController<E> {
   /// if not provided, using removeItem will not be allowed!
   void Function(E data, String? newID)? toSetter;
 
-  /// setState Function
+  /// setState Function, hooked automatically to redraw the node positions are recalculated.
   void Function(void Function() function)? setState;
+
+  void Function()? centerChart;
 
   OrgChartOrientation _orientation;
   OrgChartOrientation get orientation => _orientation;
+
+  @Deprecated(
+      "Use [`switchOrientation`] instead, can't implement optional centering here.")
   set orientation(OrgChartOrientation orientation) {
     _orientation = orientation;
     calculatePosition();
   }
 
-  switchOrientation() {
-    _orientation = _orientation == OrgChartOrientation.topToBottom
-        ? OrgChartOrientation.leftToRight
-        : OrgChartOrientation.topToBottom;
+  /// Switches the orientation of the chart,
+  /// if orientaiton is not provided, the other orientation will be used
+  /// if the current orientation is topToBottom, the new orientation will be leftToRight
+  /// if the current orientation is leftToRight, the new orientation will be topToBottom
+  /// if center is true, the chart will be centered after the switch
+  void switchOrientation(
+      {OrgChartOrientation? orientation, bool center = true}) {
+    _orientation = orientation ??
+        (_orientation == OrgChartOrientation.topToBottom
+            ? OrgChartOrientation.leftToRight
+            : OrgChartOrientation.topToBottom);
     calculatePosition();
+    if (center) {
+      centerChart?.call();
+    }
   }
 
   OrgChartController({
     required List<E> items,
     this.boxSize = const Size(200, 100),
-    // this.spacing = const Offset(20, 50),
     this.spacing = 20,
     this.runSpacing = 50,
     required this.idProvider,
@@ -83,13 +97,14 @@ class OrgChartController<E> {
                       ? 0
                       : boxSize.width / 2 + spacing / 2
                   : spacing + boxSize.width,
-              (_getLevel(subNodes[i]) + i ~/ 2) * (boxSize.height + runSpacing),
+              ((_getLevel(subNodes[i]) - 1) + i ~/ 2) *
+                  (boxSize.height + runSpacing),
             );
       }
       node.position = offset +
           Offset(
             (subNodes.length > 1 ? boxSize.width / 2 + spacing / 2 : 0),
-            _getLevel(node) * (boxSize.height + runSpacing),
+            (_getLevel(node) - 1) * (boxSize.height + runSpacing),
           );
       return (subNodes.length > 1
           ? boxSize.width * 2 + spacing * 3
@@ -108,12 +123,12 @@ class OrgChartController<E> {
       node.position = subNodes.length == 1
           ? Offset(
               subNodes.first.position.dx,
-              _getLevel(node) * (boxSize.height + runSpacing),
+              (_getLevel(node) - 1) * (boxSize.height + runSpacing),
             )
           : offset +
               Offset(
                 relOff / 2 - boxSize.width / 2 - spacing,
-                _getLevel(node) * (boxSize.height + runSpacing),
+                (_getLevel(node) - 1) * (boxSize.height + runSpacing),
               );
       return relOff;
     }
@@ -129,7 +144,8 @@ class OrgChartController<E> {
       for (var i = 0; i < subNodes.length; i++) {
         subNodes[i].position = offset +
             Offset(
-              (_getLevel(subNodes[i]) + i ~/ 2) * (boxSize.width + runSpacing),
+              ((_getLevel(subNodes[i]) - 1) + i ~/ 2) *
+                  (boxSize.width + runSpacing),
               i % 2 == 0
                   ? subNodes.length > i + 1 || subNodes.length == 1
                       ? 0
@@ -139,14 +155,13 @@ class OrgChartController<E> {
       }
       node.position = offset +
           Offset(
-            _getLevel(node) * (boxSize.width + runSpacing),
+            (_getLevel(node) - 1) * (boxSize.width + runSpacing),
             (subNodes.length > 1 ? boxSize.height / 2 + spacing / 2 : 0),
           );
-      // return 0;
       returnValue = (subNodes.length > 1
-          ? boxSize.height * 2 +
-              spacing *
-                  3 // multiplier used to change the distance between the group of nodes
+          ? boxSize.height * 2 + spacing * 3
+
+          /// multiplier used to change the distance between the group of nodes
           : boxSize.height + spacing * 2);
     } else {
       /// if not all are leaves then draw subnodes horizontally
@@ -161,12 +176,12 @@ class OrgChartController<E> {
 
       node.position = subNodes.length == 1
           ? Offset(
-              _getLevel(node) * (boxSize.width + runSpacing),
+              (_getLevel(node) - 1) * (boxSize.width + runSpacing),
               subNodes.first.position.dy,
             )
           : offset +
               Offset(
-                _getLevel(node) * (boxSize.width + runSpacing),
+                (_getLevel(node) - 1) * (boxSize.width + runSpacing),
                 relOff / 2 - boxSize.height / 2 - spacing,
               );
       returnValue = relOff;
@@ -239,16 +254,8 @@ class OrgChartController<E> {
   }
 
   /// returns the list of root nodes
-  List<Node<E>> get roots {
-    return _nodes
-        .where((node) => _getLevel(node) == 1
-            //  _nodes
-            //     .where(
-            //         (element) => idProvider(element.data) == toProvider(node.data))
-            //     .isEmpty
-            )
-        .toList();
-  }
+  List<Node<E>> get roots =>
+      _nodes.where((node) => _getLevel(node) == 1).toList();
 
   /// changes the index of the node in the list, if index is -1 then it will be moved to the end of the list
   /// this is used on drag start to move the dragged node to the end of the list so that it will be drawn on top
@@ -257,15 +264,13 @@ class OrgChartController<E> {
     _nodes.insert(index == -1 ? math.max(_nodes.length - 1, 0) : index, node);
   }
 
-  // returns the relative X offset of the node
+  /// return the relative X offset of the node
   double _getRelOffset(Node<E> node) {
     switch (_orientation) {
       case OrgChartOrientation.topToBottom:
         return _getRelOffsetTopToBottom(node);
       case OrgChartOrientation.leftToRight:
         return _getRelOffsetLeftToRight(node);
-      default:
-        return 0;
     }
   }
 
@@ -330,8 +335,6 @@ class OrgChartController<E> {
         return _calculateNPTopToBottom(node, offset: offset);
       case OrgChartOrientation.leftToRight:
         return _calculateNPLeftToRight(node, offset: offset);
-      default:
-        return 0;
     }
   }
 
@@ -339,7 +342,7 @@ class OrgChartController<E> {
   /// for example if you want to restore the postion after dragging the items around
   /// but don't forget to setState after calcutions
   /// this function is called automatically when you change the items list
-  void calculatePosition() {
+  void calculatePosition({bool center = true}) {
     double offset = 0;
     for (Node<E> node in roots) {
       offset += _calculateNP(
@@ -349,6 +352,9 @@ class OrgChartController<E> {
             : Offset(0, offset),
       );
       setState?.call(() {});
+      if (center) {
+        centerChart?.call();
+      }
     }
   }
 
@@ -360,7 +366,7 @@ class OrgChartController<E> {
         math.max(offset.dy, node.position.dy),
       );
     }
-    return offset;
+    return offset + Offset(boxSize.width, boxSize.height);
   }
 
   /// input: the node that we want to get the overlapping nodes with
@@ -368,7 +374,7 @@ class OrgChartController<E> {
   /// sorted by closest to farthest from the input node
   List<Node<E>> getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
-    for (Node<E> n in _nodes.cast<Node<E>>()) {
+    for (Node<E> n in _nodes) {
       Offset offset = node.position - n.position;
       if (offset.dx.abs() < boxSize.width &&
           offset.dy.abs() < boxSize.height &&

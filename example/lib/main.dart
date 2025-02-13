@@ -76,48 +76,72 @@ class _Example2State extends State<Example2> {
               children: [
                 Center(
                   child: OrgChart<Map>(
-                    // graph: orgChartController,
+                    arrowStyle:
+                        const DashedGraphArrow(pattern: [20, 10, 5, 10]),
                     cornerRadius: 10,
                     controller: orgChartController,
                     isDraggable: true,
                     linePaint: Paint()
                       ..color = Colors.black
                       ..strokeWidth = 5
-                      ..style = PaintingStyle.stroke,
-                    onTap: (item) {
-                      orgChartController.addItem({
-                        "id": orgChartController.uniqueNodeId,
-                        "text": 'New Block',
-                        "to": item["id"],
-                      });
-                      setState(() {});
-                    },
-                    onDoubleTap: (item) async {
-                      String? text = await getBlockText(context, item);
-                      if (text != null) setState(() => item["text"] = text);
-                    },
+                      ..style = PaintingStyle.stroke
+                      ..strokeCap = StrokeCap.round
+                      ..color = Colors.grey,
                     builder: (details) {
-                      return GestureDetector(
-                        child: Card(
-                          elevation: 5,
-                          color: details.isBeingDragged
-                              ? Colors.green.shade100
-                              : details.isOverlapped
-                                  ? Colors.red.shade200
-                                  : Colors.teal.shade50,
-                          child: Center(
-                              child: Text(
-                            details.item["text"],
-                            style: TextStyle(
-                                color: Colors.purple.shade900, fontSize: 20),
-                          )),
-                        ),
+                      return Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              orgChartController.addItem({
+                                "id": orgChartController.uniqueNodeId,
+                                "text": 'New Block',
+                                "to": details.item["id"],
+                              });
+                            },
+                            onDoubleTap: () async {
+                              String? text =
+                                  await getBlockText(context, details.item);
+                              if (text != null) {
+                                setState(() => details.item["text"] = text);
+                              }
+                            },
+                            child: Card(
+                              elevation: 5,
+                              color: details.isBeingDragged
+                                  ? Colors.green.shade100
+                                  : details.isOverlapped
+                                      ? Colors.red.shade200
+                                      : Colors.teal.shade50,
+                              child: Center(
+                                child: Text(
+                                  details.item["text"],
+                                  style: TextStyle(
+                                    color: Colors.purple.shade900,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              details.hideNodes(!details.nodesHidden);
+                            },
+                            child: Text(
+                              details.nodesHidden
+                                  ? 'Press to Unhide'
+                                  : 'Press to Hide',
+                            ),
+                          ),
+                        ],
                       );
                     },
                     optionsBuilder: (item) {
                       return [
                         const PopupMenuItem(
-                            value: 'Remove', child: Text('Remove')),
+                          value: 'Remove',
+                          child: Text('Remove'),
+                        ),
                       ];
                     },
                     onOptionSelect: (item, value) {
@@ -127,6 +151,10 @@ class _Example2State extends State<Example2> {
                       }
                     },
                     onDrop: (dragged, target, isTargetSubnode) {
+                      if (dragged["to"] == target["id"]) {
+                        orgChartController.calculatePosition();
+                        return;
+                      }
                       if (isTargetSubnode) {
                         showDialog(
                             context: context,
@@ -157,7 +185,7 @@ class _Example2State extends State<Example2> {
                   bottom: 20,
                   left: 20,
                   child: Text(
-                      'Tap to add a node, double tap to change text\ndrag and drop to change hierarchy\nright click / tap and hold to remove \n Drag in the empty space to pan the chart, zoom in and out.\n'),
+                      'Tap to add a node, double tap to change text\ndrag and drop to change hierarchy\nright click / tap and hold to remove \nDrag in the empty space to pan the chart\n& pinch to zoom in and out.'),
                 )
               ],
             ),
