@@ -1,4 +1,10 @@
+## 4.0.1
+
+1) fix bug when centering the graph and some nodes are hidden.
+
+
 ## 4.0.0+1
+
 1) Edit Readme & Changelog
 
 
