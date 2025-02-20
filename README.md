@@ -29,7 +29,7 @@ import 'package:org_chart/org_chart.dart';
 ```
 
 # Implementation
-[Check the example](https://flutter.dev/docs/development/packages-and-plugins/using-packages)
+[Check the example](https://pub.dev/packages/org_chart/example)
 
 
 If you want to redraw the nodes in the original positions

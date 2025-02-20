@@ -360,14 +360,11 @@ class OrgChartController<E> {
 
   /// returns the total size of the graph
   Offset getSize({Offset offset = const Offset(0, 0)}) {
-    for (Node node in roots) {
+    for (Node<E> node in _nodes) {
       offset = Offset(
         math.max(offset.dx, node.position.dx),
         math.max(offset.dy, node.position.dy),
       );
-      if(!node.hideNodes) {
-        offset = getSize(offset: offset);
-      }
     }
     return offset + Offset(boxSize.width, boxSize.height);
   }

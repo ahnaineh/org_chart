@@ -1,3 +1,6 @@
+## 4.0.2
+1) Graph not drawn, (recursion issue)
+
 ## 4.0.1
 
 1) fix bug when centering the graph and some nodes are hidden.
