@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 
-/// The main class that contains the data, position, and wether to show subnodes or not.
+/// Represents a node in the organizational chart
 class Node<E> {
   /// The position of the node in the graph
   Offset position;
 
-  /// The data that the node containsm such as the id, to, title, etc.
-  /// This is the data that you provide in the items list and you can use to build the node
-  E data;
+  /// The data that the node contains (custom data type)
+  final E data;
 
-  /// Whether to show the subnodes or not
+  /// Whether to hide/collapse subnodes
   bool hideNodes;
 
+  /// Creates a new node with the given data
   Node({
     required this.data,
     this.position = Offset.zero,
     this.hideNodes = false,
   });
 
-  /// The distance between this node and an input node
-  Offset distance(Node node) => node.position - position;
+  /// Calculates the offset distance between this node and another node
+  Offset distance(Node other) => other.position - position;
+  
+  /// The squared distance between nodes (faster calculation than actual distance)
+  double get distanceSquared => position.dx * position.dx + position.dy * position.dy;
+  
+  @override
+  String toString() => 'Node(position: $position, hideNodes: $hideNodes)';
 }

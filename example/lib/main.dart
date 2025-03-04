@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
+import 'widgets/org_chart_node.dart';
+import 'models/node_data.dart';
 
 void main() {
   runApp(const MainApp());
 }
 
-class MainApp extends StatefulWidget {
+class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: Example2());
+    return MaterialApp(
+      title: 'Organization Chart Example',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.blue,
+      ),
+      home: const Example2(),
+    );
   }
 }
 
@@ -27,210 +31,292 @@ class Example2 extends StatefulWidget {
 }
 
 class _Example2State extends State<Example2> {
-  final OrgChartController<Map> orgChartController = OrgChartController<Map>(
-    boxSize: const Size(150, 80),
-    items: [
-      {
-        "id": '0',
-        "text": 'Main Block',
-      },
-      {
-        "id": '1',
-        "text": 'Block 2',
-        "to": '0',
-      },
-      {
-        "id": '2',
-        "text": 'Block 3',
-        "to": '0',
-      },
-      {
-        "id": '3',
-        "text": 'Block 4',
-        "to": '1',
-      },
-    ],
-    idProvider: (data) => data["id"],
-    toProvider: (data) => data["to"],
-    toSetter: (data, newID) => data["to"] = newID,
-  );
+  late final OrgChartController<NodeData> orgChartController;
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.blue.shade100,
-                Colors.blue.shade200,
-              ],
-              begin: Alignment.bottomLeft,
-              end: Alignment.topRight,
-            ),
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Stack(
-              children: [
-                Center(
-                  child: OrgChart<Map>(
-                    arrowStyle:
-                        const DashedGraphArrow(pattern: [20, 10, 5, 10]),
-                    cornerRadius: 10,
-                    controller: orgChartController,
-                    isDraggable: true,
-                    linePaint: Paint()
-                      ..color = Colors.black
-                      ..strokeWidth = 5
-                      ..style = PaintingStyle.stroke
-                      ..strokeCap = StrokeCap.round
-                      ..color = Colors.grey,
-                    builder: (details) {
-                      return Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              orgChartController.addItem({
-                                "id": orgChartController.uniqueNodeId,
-                                "text": 'New Block',
-                                "to": details.item["id"],
-                              });
-                            },
-                            onDoubleTap: () async {
-                              String? text =
-                                  await getBlockText(context, details.item);
-                              if (text != null) {
-                                setState(() => details.item["text"] = text);
-                              }
-                            },
-                            child: Card(
-                              elevation: 5,
-                              color: details.isBeingDragged
-                                  ? Colors.green.shade100
-                                  : details.isOverlapped
-                                      ? Colors.red.shade200
-                                      : Colors.teal.shade50,
-                              child: Center(
-                                child: Text(
-                                  details.item["text"],
-                                  style: TextStyle(
-                                    color: Colors.purple.shade900,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              details.hideNodes(!details.nodesHidden);
-                            },
-                            child: Text(
-                              details.nodesHidden
-                                  ? 'Press to Unhide'
-                                  : 'Press to Hide',
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                    optionsBuilder: (item) {
-                      return [
-                        const PopupMenuItem(
-                          value: 'Remove',
-                          child: Text('Remove'),
-                        ),
-                      ];
-                    },
-                    onOptionSelect: (item, value) {
-                      if (value == 'Remove') {
-                        orgChartController.removeItem(
-                            item["id"], ActionOnNodeRemoval.unlink);
-                      }
-                    },
-                    onDrop: (dragged, target, isTargetSubnode) {
-                      if (dragged["to"] == target["id"]) {
-                        orgChartController.calculatePosition();
-                        return;
-                      }
-                      if (isTargetSubnode) {
-                        showDialog(
-                            context: context,
-                            builder: (_) {
-                              return AlertDialog(
-                                  title: const Text('Error'),
-                                  content: const Text(
-                                      'You cannot drop a node on a subnode'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ]);
-                            });
-                        orgChartController.calculatePosition();
-
-                        return;
-                      }
-                      dragged["to"] = target["id"];
-                      orgChartController.calculatePosition();
-                    },
-                  ),
-                ),
-                const Positioned(
-                  bottom: 20,
-                  left: 20,
-                  child: Text(
-                      'Tap to add a node, double tap to change text\ndrag and drop to change hierarchy\nright click / tap and hold to remove \nDrag in the empty space to pan the chart\n& pinch to zoom in and out.'),
-                )
-              ],
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-                label: const Text('Reset & Change Orientation'),
-                onPressed: () {
-                  orgChartController.switchOrientation();
-                }),
-          ),
-        ),
-      ],
+  void initState() {
+    super.initState();
+    orgChartController = OrgChartController<NodeData>(
+      boxSize: const Size(150, 100),
+      items: _initialNodes,
+      idProvider: (data) => data.id,
+      toProvider: (data) => data.parentId,
+      toSetter: _updateNodeParent,
     );
   }
 
-  Future<String?> getBlockText(
-      BuildContext context, Map<dynamic, dynamic> item) async {
-    final String? text = await showDialog(
-      context: context,
-      builder: (context) {
-        String text = item["text"];
-        return AlertDialog(
-          title: const Text('Enter Text'),
-          content: TextFormField(
-            initialValue: item["text"],
-            onChanged: (value) {
-              text = value;
-            },
+  List<NodeData> get _initialNodes => [
+        NodeData(id: '0', text: 'Main Block'),
+        NodeData(id: '1', text: 'Block 2', parentId: '0'),
+        NodeData(id: '2', text: 'Block 3', parentId: '0'),
+        NodeData(id: '3', text: 'Block 4', parentId: '1'),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          DecoratedBox(
+            decoration: _buildBackgroundGradient(),
+            child: Stack(
+              children: [
+                Center(child: _buildOrgChart()),
+                const _InfoOverlay(),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(text);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
+      floatingActionButton: _buildOrientationButton(),
     );
-    return text;
+  }
+
+  Widget _buildOrgChart() {
+    return OrgChart<NodeData>(
+      controller: orgChartController,
+      arrowStyle: DashedGraphArrow(pattern: [20, 10, 5, 10]),
+      cornerRadius: 10,
+      isDraggable: true,
+      linePaint: _buildArrowPaint(),
+      builder: (details) => OrgChartNode(
+        details: details,
+        onAddNode: () => _handleAddNode(details.item.id),
+        onEditText: () => _handleEditText(details.item),
+        onToggleNodes: details.hideNodes,
+      ),
+      optionsBuilder: _buildOptionsMenu,
+      onOptionSelect: _handleOptionSelect,
+      onDrop: _handleNodeDrop,
+    );
+  }
+
+  Widget _buildOrientationButton() {
+    return FloatingActionButton.extended(
+      label: const Text('Change Orientation'),
+      icon: const Icon(Icons.rotate_90_degrees_ccw),
+      onPressed: () => orgChartController.switchOrientation(),
+    );
+  }
+
+  BoxDecoration _buildBackgroundGradient() {
+    return const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+        begin: Alignment.bottomLeft,
+        end: Alignment.topRight,
+      ),
+    );
+  }
+
+  Paint _buildArrowPaint() {
+    return Paint()
+      ..color = Colors.grey.shade600
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+  }
+
+  List<PopupMenuEntry<String>> _buildOptionsMenu(NodeData item) {
+    // Don't allow removing the root node
+    if (item.parentId == null) return const [];
+
+    return [
+      const PopupMenuItem(
+        value: 'remove',
+        child: ListTile(
+          leading: Icon(Icons.remove_circle_outline),
+          title: Text('Remove Node'),
+        ),
+      ),
+      const PopupMenuItem(
+        value: 'edit',
+        child: ListTile(
+          leading: Icon(Icons.edit),
+          title: Text('Edit Node'),
+        ),
+      )
+    ];
+  }
+
+  void _handleOptionSelect(NodeData item, dynamic value) {
+    if (value == 'remove') {
+      _removeNode(item);
+    } else if (value == 'edit') {
+      _handleEditText(item);
+    }
+  }
+
+  void _removeNode(NodeData item) {
+    try {
+      orgChartController.removeItem(item.id, ActionOnNodeRemoval.unlink);
+    } catch (e) {
+      _showError('Failed to remove node: ${e.toString()}');
+    }
+  }
+
+  void _updateNodeParent(NodeData data, String? newParentId) {
+    data.parentId = newParentId;
+  }
+
+  void _handleAddNode(String parentId) {
+    print("test");
+    try {
+      final newNode = NodeData(
+        id: orgChartController.uniqueNodeId,
+        text: 'New Block',
+        parentId: parentId,
+      );
+      orgChartController.addItem(newNode);
+    } catch (e) {
+      _showError('Failed to add node: ${e.toString()}');
+    }
+  }
+
+  Future<void> _handleEditText(NodeData item) async {
+    try {
+      final newText = await _showTextEditDialog(item);
+      if (newText == null) return;
+
+      final index = orgChartController.items.indexOf(item);
+      if (index == -1) return;
+      setState(() {
+        item.text = newText;
+      });
+    } catch (e) {
+      _showError('Failed to edit node text: ${e.toString()}');
+    }
+  }
+
+  void _handleNodeDrop(
+      NodeData dragged, NodeData target, bool isTargetSubnode) {
+    try {
+      if (isTargetSubnode) {
+        _showError('Cannot drop a node onto its own child');
+        orgChartController.calculatePosition();
+        return;
+      }
+
+      if (dragged.parentId == target.id) {
+        orgChartController.calculatePosition();
+        return;
+      }
+      dragged.parentId = target.id;
+      orgChartController.calculatePosition();
+    } catch (e) {
+      _showError('Failed to move node: ${e.toString()}');
+      orgChartController.calculatePosition();
+    }
+  }
+
+  Future<String?> _showTextEditDialog(NodeData item) {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => _EditNodeDialog(initialText: item.text),
+    );
+  }
+
+  void _showError(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoOverlay extends StatelessWidget {
+  const _InfoOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Positioned(
+      bottom: 20,
+      left: 20,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Instructions:', style: textTheme.titleSmall),
+              const SizedBox(height: 8),
+              ...[
+                'Tap to add a child node',
+                'Double tap to edit text',
+                'Drag to rearrange nodes',
+                'Right click/long press to remove',
+                'Drag in empty space to pan',
+                'Pinch to zoom'
+              ].map(
+                (text) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('• $text', style: textTheme.bodySmall),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditNodeDialog extends StatefulWidget {
+  final String initialText;
+
+  const _EditNodeDialog({required this.initialText});
+
+  @override
+  State<_EditNodeDialog> createState() => _EditNodeDialogState();
+}
+
+class _EditNodeDialogState extends State<_EditNodeDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Node Text'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Node Text',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
