@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/node_builder_details.dart';
+import 'package:org_chart/org_chart.dart';
 import '../models/node_data.dart';
 
 class OrgChartNode extends StatelessWidget {
-  static const double _nodePadding = 8.0;
-  static const double _defaultFontSize = 16.0;
-  static const double _spacing = 4.0;
-
   final NodeBuilderDetails<NodeData> details;
   final VoidCallback onAddNode;
   final VoidCallback onEditText;
-  final void Function(bool?) onToggleNodes;
+  final void Function(bool? hide) onToggleNodes;
 
   const OrgChartNode({
     super.key,
@@ -22,87 +18,65 @@ class OrgChartNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildNodeCard(context),
-        const SizedBox(height: _spacing),
-        if (_hasChildren) _buildToggleButton(context),
-      ],
-    );
-  }
+    final theme = Theme.of(context);
+    final isRoot = details.item.parentId == null;
 
-  Widget _buildNodeCard(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Semantics(
-      button: true,
-      label: 'Node: ${details.item.text}',
-      hint: details.isBeingDragged
-          ? 'Being dragged'
-          : details.isOverlapped
-              ? 'Target for drop'
-              : 'Long press to edit, single tap to add child',
-      child: Card(
-        elevation: details.isBeingDragged ? 8 : 4,
-        color: _getNodeColor(colorScheme),
-        child: InkWell(
-          onTap: onAddNode,
-          // onDoubleTap: onEditText,
-          child: Padding(
-            padding: const EdgeInsets.all(_nodePadding),
-            child: Center(
-              child: Text(
+    return Card(
+      elevation: details.isBeingDragged ? 8 : 2,
+      color: _getCardColor(theme, isRoot),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: details.isOverlapped
+            ? BorderSide(color: theme.colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      child: InkWell(
+        onTap: onAddNode,
+        onDoubleTap: onEditText,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
                 details.item.text,
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: _defaultFontSize,
-                  fontWeight: FontWeight.w500,
-                ),
                 textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: isRoot ? Colors.white : null,
+                ),
               ),
-            ),
+              if (!isRoot) ...[
+                const SizedBox(height: 4),
+                _buildCollapseButton(),
+              ],
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildToggleButton(BuildContext context) {
-    final theme = Theme.of(context);
-    return FilledButton.tonal(
-      onPressed: () => onToggleNodes(!details.nodesHidden),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            details.nodesHidden
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined,
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            details.nodesHidden ? 'Show Children' : 'Hide Children',
-            style: theme.textTheme.labelSmall,
-          ),
-        ],
+  Widget _buildCollapseButton() {
+    return IconButton(
+      iconSize: 20,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      icon: Icon(
+        details.nodesHidden
+            ? Icons.add_circle_outline
+            : Icons.remove_circle_outline,
       ),
+      onPressed: () => onToggleNodes(null),
     );
   }
 
-  Color _getNodeColor(ColorScheme colorScheme) {
+  Color _getCardColor(ThemeData theme, bool isRoot) {
     if (details.isBeingDragged) {
-      return colorScheme.primaryContainer;
+      return theme.colorScheme.primaryContainer;
     }
-    if (details.isOverlapped) {
-      return colorScheme.errorContainer;
+    if (isRoot) {
+      return theme.colorScheme.primary;
     }
-    return colorScheme.surface;
+    return theme.cardColor;
   }
-
-  bool get _hasChildren => !_isRoot && details.level > 1;
-  bool get _isRoot => details.level == 1;
 }

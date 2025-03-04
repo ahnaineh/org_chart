@@ -18,19 +18,19 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
       ),
-      home: const Example2(),
+      home: const Example(),
     );
   }
 }
 
-class Example2 extends StatefulWidget {
-  const Example2({super.key});
+class Example extends StatefulWidget {
+  const Example({super.key});
 
   @override
-  State<Example2> createState() => _Example2State();
+  State<Example> createState() => _ExampleState();
 }
 
-class _Example2State extends State<Example2> {
+class _ExampleState extends State<Example> {
   late final OrgChartController<NodeData> orgChartController;
 
   @override
@@ -160,7 +160,6 @@ class _Example2State extends State<Example2> {
   }
 
   void _handleAddNode(String parentId) {
-    print("test");
     try {
       final newNode = NodeData(
         id: orgChartController.uniqueNodeId,

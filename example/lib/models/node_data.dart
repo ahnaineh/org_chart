@@ -20,8 +20,6 @@ class NodeData {
     return NodeData._(id: id, text: text, parentId: parentId);
   }
 
-  // String? get parentId => _parentId;
-
   NodeData copyWith({
     String? id,
     String? text,
@@ -40,27 +38,25 @@ class NodeData {
   }
 
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'text': text,
-    'to': parentId,
-  };
+        'id': id,
+        'text': text,
+        'to': parentId,
+      };
 
   factory NodeData.fromMap(Map<String, dynamic> map) => NodeData(
-    id: map['id'] as String,
-    text: map['text'] as String,
-    parentId: map['to'] as String?,
-  );
+        id: map['id'] as String,
+        text: map['text'] as String,
+        parentId: map['to'] as String?,
+      );
 
   @override
   bool operator ==(Object other) =>
-    identical(this, other) ||
-    other is NodeData &&
-    runtimeType == other.runtimeType &&
-    id == other.id;
+      identical(this, other) ||
+      other is NodeData && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
-  
+
   @override
   String toString() => 'NodeData(id: $id, text: $text, parentId: $parentId)';
 }
