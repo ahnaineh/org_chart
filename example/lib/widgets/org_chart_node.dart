@@ -5,14 +5,12 @@ import '../models/node_data.dart';
 class OrgChartNode extends StatelessWidget {
   final NodeBuilderDetails<NodeData> details;
   final VoidCallback onAddNode;
-  final VoidCallback onEditText;
   final void Function(bool? hide) onToggleNodes;
 
   const OrgChartNode({
     super.key,
     required this.details,
     required this.onAddNode,
-    required this.onEditText,
     required this.onToggleNodes,
   });
 
@@ -32,7 +30,6 @@ class OrgChartNode extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onAddNode,
-        onDoubleTap: onEditText,
         child: Container(
           padding: const EdgeInsets.all(8),
           child: Column(

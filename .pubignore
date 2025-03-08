@@ -1,2 +1,6 @@
 old/
 .vscode/
+
+.venv/
+test.py
+env/

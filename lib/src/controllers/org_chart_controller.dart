@@ -17,14 +17,17 @@ class OrgChartController<E> extends BaseGraphController<E> {
   /// Get the current orientation of the chart
   OrgChartOrientation get orientation => _orientation;
 
+  String? Function(E data) toProvider;
+  void Function(E data, String? newID)? toSetter;
+
   OrgChartController({
     required List<E> items,
     Size boxSize = const Size(200, 100),
     double spacing = 20,
     double runSpacing = 50,
-    required String? Function(E data) idProvider,
-    required String? Function(E data) toProvider,
-    void Function(E data, String? newID)? toSetter,
+    required String Function(E data) idProvider,
+    required this.toProvider,
+    this.toSetter,
     OrgChartOrientation orientation = OrgChartOrientation.leftToRight,
   })  : _orientation = orientation,
         super(
@@ -33,9 +36,67 @@ class OrgChartController<E> extends BaseGraphController<E> {
           spacing: spacing,
           runSpacing: runSpacing,
           idProvider: idProvider,
-          toProvider: toProvider,
-          toSetter: toSetter,
         );
+
+  // Node-related methods
+  List<Node<E>> get roots =>
+      nodes.where((node) => getLevel(node) == 1).toList();
+
+  List<Node<E>> getSubNodes(Node<E> node) {
+    final nodeId = idProvider(node.data);
+    return nodes
+        .where((element) => toProvider(element.data) == nodeId)
+        .toList();
+  }
+
+  bool allLeaf(List<Node<E>> nodes) {
+    return nodes
+        .every((element) => getSubNodes(element).isEmpty || element.hideNodes);
+  }
+
+  // Helper method for determining node level
+  @protected
+  int getLevel(Node<E> node) {
+    int level = 1;
+    Node<E>? current = node;
+    String? currentToId;
+
+    while (current != null) {
+      currentToId = toProvider(current.data);
+      if (currentToId == null) break;
+
+      try {
+        current = nodes.firstWhere((n) => idProvider(n.data) == currentToId);
+        level++;
+      } catch (_) {
+        break;
+      }
+    }
+    return level;
+  }
+
+  bool isSubNode(Node<E> dragged, Node<E> target) {
+    E? current = target.data;
+    final draggedId = idProvider(dragged.data);
+
+    while (current != null) {
+      final currentToId = toProvider(current);
+
+      if (currentToId == draggedId) {
+        return true;
+      }
+
+      try {
+        final matchingParents =
+            items.where((element) => idProvider(element) == currentToId);
+        current = matchingParents.isNotEmpty ? matchingParents.first : null;
+      } catch (_) {
+        break;
+      }
+    }
+
+    return false;
+  }
 
   /// Switch the orientation of the chart
   void switchOrientation(
@@ -53,7 +114,7 @@ class OrgChartController<E> extends BaseGraphController<E> {
         "toSetter is not provided, you can't use this function without providing a toSetter");
 
     final subnodes =
-        super.roots.where((element) => toProvider(element.data) == id).toList();
+        roots.where((element) => toProvider(element.data) == id).toList();
 
     for (Node<E> node in subnodes) {
       switch (action) {

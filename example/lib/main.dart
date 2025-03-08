@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
+import 'package:org_chart_example/models/family_member.dart';
+import 'package:org_chart_example/widgets/genogram_node.dart';
 import 'widgets/org_chart_node.dart';
 import 'models/node_data.dart';
 
@@ -13,10 +15,10 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Organization Chart Example',
+      title: 'Family Genogram Example',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
+        colorSchemeSeed: Colors.indigo,
       ),
       home: const Example(),
     );
@@ -32,6 +34,8 @@ class Example extends StatefulWidget {
 
 class _ExampleState extends State<Example> {
   late final OrgChartController<NodeData> orgChartController;
+  late final GenogramController<FamilyMember> genogramController;
+  bool showOrgChart = false;
 
   @override
   void initState() {
@@ -43,6 +47,23 @@ class _ExampleState extends State<Example> {
       toProvider: (data) => data.parentId,
       toSetter: _updateNodeParent,
     );
+
+    genogramController = GenogramController<FamilyMember>(
+      boxSize: const Size(150, 150),
+      spacing: 30, // Reduced from 100 to bring siblings closer together
+      runSpacing: 60, // Reduced from 150 to bring children closer to parents
+      items: _sampleFamilyMembers,
+      idProvider: (data) => data.id,
+      fatherProvider: (data) => data.fatherId,
+      motherProvider: (data) => data.motherId,
+      spousesProvider: (data) => data.spouses,
+      // Add the new genogram-specific providers - fixing nullable return types
+      genderProvider: (data) => data.gender as Gender?,
+      // isDeceasedProvider: (data) => data.isDeceased,
+      // relationshipTypesProvider: (data) =>
+      //     data.relationshipTypes as Map<String, RelationshipType>?,
+      // nameProvider: (data) => data.name, // Add name provider
+    );
   }
 
   List<NodeData> get _initialNodes => [
@@ -52,51 +73,315 @@ class _ExampleState extends State<Example> {
         NodeData(id: '3', text: 'Block 4', parentId: '1'),
       ];
 
+  List<FamilyMember> get _sampleFamilyMembers => [
+        // First generation - Grandparents
+        FamilyMember(
+          id: 'gf1',
+          name: 'Robert Smith',
+          gender: Gender.male,
+          spouses: ['gm1'],
+          // relationshipTypes: {'gm1': RelationshipType.married},
+          isDeceased: true,
+          birthDate: DateTime(1920),
+          deathDate: DateTime(1990),
+        ),
+        FamilyMember(
+          id: 'gm1',
+          name: 'Mary Smith',
+          gender: Gender.female,
+          spouses: ['gf1'],
+          // relationshipTypes: {'gf1': RelationshipType.married},
+          isDeceased: true,
+          birthDate: DateTime(1925),
+          deathDate: DateTime(1995),
+        ),
+
+        // First generation - Other side
+        FamilyMember(
+          id: 'gf2',
+          name: 'James Johnson',
+          gender: Gender.male,
+          spouses: ['gm2', 'gm2b'],
+          // relationshipTypes: {
+          //   'gm2': RelationshipType.divorced,
+          //   'gm2b': RelationshipType.married,
+          // },
+          isDeceased: true,
+          birthDate: DateTime(1918),
+          deathDate: DateTime(1985),
+        ),
+        FamilyMember(
+          id: 'gm2',
+          name: 'Emma Johnson',
+          gender: Gender.female,
+          spouses: ['gf2'],
+          // relationshipTypes: {'gf2': RelationshipType.divorced},
+          birthDate: DateTime(1922),
+          deathDate: DateTime(2000),
+          isDeceased: true,
+        ),
+        FamilyMember(
+          id: 'gm2b',
+          name: 'Helen Johnson',
+          gender: Gender.female,
+          spouses: ['gf2'],
+          // relationshipTypes: {'gf2': RelationshipType.married},
+          birthDate: DateTime(1930),
+          isDeceased: false,
+        ),
+
+        // Second generation - Parents
+        FamilyMember(
+          id: 'f1',
+          name: 'John Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          spouses: ['m1'],
+          // relationshipTypes: {'m1': RelationshipType.married},
+          birthDate: DateTime(1950),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'm1',
+          name: 'Sarah Smith',
+          gender: Gender.female,
+          fatherId: 'gf2',
+          motherId: 'gm2',
+          spouses: ['f1'],
+          // relationshipTypes: {'f1': RelationshipType.married},
+          birthDate: DateTime(1952),
+          isDeceased: false,
+        ),
+
+        // Uncle with multiple marriages
+        FamilyMember(
+          id: 'u1',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'a1',
+          name: 'Patricia',
+          gender: Gender.female,
+          spouses: ['u1'],
+          // relationshipTypes: {'u1': RelationshipType.divorced},
+          birthDate: DateTime(1958),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'a2',
+          name: 'Jennifer',
+          gender: Gender.female,
+          spouses: ['u1'],
+          // relationshipTypes: {'u1': RelationshipType.married},
+          birthDate: DateTime(1960),
+          isDeceased: false,
+        ),
+
+        // Aunt from second marriage
+        FamilyMember(
+          id: 'a3',
+          name: 'Barbara Johnson',
+          gender: Gender.female,
+          fatherId: 'gf2',
+          motherId: 'gm2b',
+          birthDate: DateTime(1962),
+          isDeceased: false,
+        ),
+
+        // Third generation - Siblings including twins
+        FamilyMember(
+          id: 'c1',
+          name: 'Michael Smith',
+          gender: Gender.male,
+          fatherId: 'f1',
+          motherId: 'm1',
+          birthDate: DateTime(1975),
+          isDeceased: false,
+          spouses: ['p1'],
+          // relationshipTypes: {'p1': RelationshipType.married},
+        ),
+        FamilyMember(
+          id: 'c2',
+          name: 'David Smith',
+          gender: Gender.male,
+          fatherId: 'f1',
+          motherId: 'm1',
+          birthDate: DateTime(1980),
+          isDeceased: false,
+          // birthType: BirthType.identical,
+          // ,
+        ),
+        FamilyMember(
+          id: 'c3',
+          name: 'Daniel Smith',
+          gender: Gender.male,
+          fatherId: 'f1',
+          motherId: 'm1',
+          birthDate: DateTime(1980),
+          isDeceased: false,
+          // birthType: BirthType.identical,
+        
+        ),
+        FamilyMember(
+          id: 'c4',
+          name: 'Emily Smith',
+          gender: Gender.female,
+          fatherId: 'f1',
+          motherId: 'm1',
+          birthDate: DateTime(1985),
+          isDeceased: false,
+        ),
+
+        // Cousins from uncle's first marriage
+        FamilyMember(
+          id: 'c5',
+          name: 'Jessica',
+          gender: Gender.female,
+          fatherId: 'u1',
+          motherId: 'a1',
+          birthDate: DateTime(1978),
+          isDeceased: false,
+        ),
+
+        // Cousins from uncle's second marriage - Fraternal twins
+        FamilyMember(
+          id: 'c6',
+          name: 'Matthew',
+          gender: Gender.male,
+          fatherId: 'u1',
+          motherId: 'a2',
+          birthDate: DateTime(1988),
+          isDeceased: false,
+          // birthType: BirthType.fraternal,
+          // ,
+        ),
+        FamilyMember(
+          id: 'c7',
+          name: 'Olivia',
+          gender: Gender.female,
+          fatherId: 'u1',
+          motherId: 'a2',
+          birthDate: DateTime(1988),
+          isDeceased: false,
+          // birthType: BirthType.fraternal,
+          // ,
+        ),
+
+        // Fourth generation
+        FamilyMember(
+          id: 'p1',
+          name: 'Amanda Smith',
+          gender: Gender.female,
+          spouses: ['c1'],
+          // relationshipTypes: {'c1': RelationshipType.married},
+          birthDate: DateTime(1978),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'gc1',
+          name: 'Sophia Smith',
+          gender: Gender.female,
+          fatherId: 'c1',
+          motherId: 'p1',
+          birthDate: DateTime(2005),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'gc2',
+          name: 'William Smith',
+          gender: Gender.male,
+          fatherId: 'c1',
+          motherId: 'p1',
+          birthDate: DateTime(2008),
+          isDeceased: false,
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(showOrgChart ? 'Organization Chart' : 'Family Genogram'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showInfo(context),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           DecoratedBox(
             decoration: _buildBackgroundGradient(),
-            child: Stack(
-              children: [
-                Center(child: _buildOrgChart()),
-                const _InfoOverlay(),
-              ],
+            child: Center(
+              child: _buildChart(),
             ),
           ),
         ],
       ),
-      floatingActionButton: _buildOrientationButton(),
-    );
-  }
-
-  Widget _buildOrgChart() {
-    return OrgChart<NodeData>(
-      controller: orgChartController,
-      arrowStyle: DashedGraphArrow(pattern: [20, 10, 5, 10]),
-      cornerRadius: 10,
-      isDraggable: true,
-      linePaint: _buildArrowPaint(),
-      builder: (details) => OrgChartNode(
-        details: details,
-        onAddNode: () => _handleAddNode(details.item.id),
-        onEditText: () => _handleEditText(details.item),
-        onToggleNodes: details.hideNodes,
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            label: Text(showOrgChart ? 'Show Genogram' : 'Show Org Chart'),
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () => setState(() => showOrgChart = !showOrgChart),
+          ),
+          const SizedBox(width: 8),
+          FloatingActionButton.extended(
+            label: const Text('Change Orientation'),
+            icon: const Icon(Icons.rotate_90_degrees_ccw),
+            onPressed: () => 
+            showOrgChart
+                ? 
+                orgChartController.switchOrientation()
+                : genogramController.switchOrientation(),
+          ),
+        ],
       ),
-      optionsBuilder: _buildOptionsMenu,
-      onOptionSelect: _handleOptionSelect,
-      onDrop: _handleNodeDrop,
     );
   }
 
-  Widget _buildOrientationButton() {
-    return FloatingActionButton.extended(
-      label: const Text('Change Orientation'),
-      icon: const Icon(Icons.rotate_90_degrees_ccw),
-      onPressed: () => orgChartController.switchOrientation(),
-    );
+  Widget _buildChart() {
+    if (showOrgChart) {
+      return OrgChart<NodeData>(
+        controller: orgChartController,
+        arrowStyle: DashedGraphArrow(pattern: [20, 10, 5, 10]),
+        cornerRadius: 10,
+        isDraggable: true,
+        linePaint: _buildArrowPaint(),
+        builder: (details) => OrgChartNode(
+          details: details,
+          onAddNode: () => _handleAddNode(details.item.id),
+          onToggleNodes: details.hideNodes,
+        ),
+        optionsBuilder: _buildOptionsMenu,
+        onOptionSelect: _handleOptionSelect,
+        onDrop: _handleNodeDrop,
+      );
+    } else {
+      return Genogram<FamilyMember>(
+        controller: genogramController,
+        cornerRadius: 15,
+        isDraggable: true,
+        linePaint: _buildGenogramLinePaint(),
+        builder: (details) => GenogramNode(
+          details: details,
+          onToggleNodes: details.hideNodes,
+        ),
+      );
+    }
   }
 
   BoxDecoration _buildBackgroundGradient() {
@@ -112,13 +397,24 @@ class _ExampleState extends State<Example> {
   Paint _buildArrowPaint() {
     return Paint()
       ..color = Colors.grey.shade600
-      ..strokeWidth = 5
+      ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
   }
 
+  Paint _buildGenogramLinePaint() {
+    return Paint()
+      ..color = Colors.grey.shade800
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+  }
+
+  void _updateNodeParent(NodeData data, String? newParentId) {
+    data.parentId = newParentId;
+  }
+
   List<PopupMenuEntry<String>> _buildOptionsMenu(NodeData item) {
-    // Don't allow removing the root node
     if (item.parentId == null) return const [];
 
     return [
@@ -155,10 +451,6 @@ class _ExampleState extends State<Example> {
     }
   }
 
-  void _updateNodeParent(NodeData data, String? newParentId) {
-    data.parentId = newParentId;
-  }
-
   void _handleAddNode(String parentId) {
     try {
       final newNode = NodeData(
@@ -169,6 +461,27 @@ class _ExampleState extends State<Example> {
       orgChartController.addItem(newNode);
     } catch (e) {
       _showError('Failed to add node: ${e.toString()}');
+    }
+  }
+
+  void _handleNodeDrop(
+      NodeData dragged, NodeData target, bool isTargetSubnode) {
+    try {
+      if (isTargetSubnode) {
+        _showError('Cannot drop a node onto its own child');
+        orgChartController.calculatePosition(center: false);
+        return;
+      }
+
+      if (dragged.parentId == target.id) {
+        orgChartController.calculatePosition(center: false);
+        return;
+      }
+      dragged.parentId = target.id;
+      orgChartController.calculatePosition(center: false);
+    } catch (e) {
+      _showError('Failed to move node: ${e.toString()}');
+      orgChartController.calculatePosition(center: false);
     }
   }
 
@@ -184,27 +497,6 @@ class _ExampleState extends State<Example> {
       });
     } catch (e) {
       _showError('Failed to edit node text: ${e.toString()}');
-    }
-  }
-
-  void _handleNodeDrop(
-      NodeData dragged, NodeData target, bool isTargetSubnode) {
-    try {
-      if (isTargetSubnode) {
-        _showError('Cannot drop a node onto its own child');
-        orgChartController.calculatePosition();
-        return;
-      }
-
-      if (dragged.parentId == target.id) {
-        orgChartController.calculatePosition();
-        return;
-      }
-      dragged.parentId = target.id;
-      orgChartController.calculatePosition();
-    } catch (e) {
-      _showError('Failed to move node: ${e.toString()}');
-      orgChartController.calculatePosition();
     }
   }
 
@@ -230,41 +522,74 @@ class _ExampleState extends State<Example> {
       ),
     );
   }
-}
 
-class _InfoOverlay extends StatelessWidget {
-  const _InfoOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Positioned(
-      bottom: 20,
-      left: 20,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Instructions:', style: textTheme.titleSmall),
-              const SizedBox(height: 8),
+  void _showInfo(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(showOrgChart ? 'Organization Chart' : 'Family Genogram'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              showOrgChart
+                  ? 'This demonstrates a basic organizational chart.'
+                  : 'This genogram demonstrates:',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            if (!showOrgChart) ...[
+              const SizedBox(height: 12),
               ...[
-                'Tap to add a child node',
-                'Double tap to edit text',
-                'Drag to rearrange nodes',
-                'Right click/long press to remove',
-                'Drag in empty space to pan',
-                'Pinch to zoom'
-              ].map(
-                (text) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('• $text', style: textTheme.bodySmall),
-                ),
+                'Multiple generations',
+                'Gender-specific shapes (square/circle)',
+                'Deceased indicators (diagonal line)',
+                'Marriage and divorce relationships',
+                'Identical and fraternal twins',
+                'Multiple marriages',
+                'Proper parent-child connections'
+              ].map((text) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(child: Text(text)),
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 12),
+              Text(
+                'Interactions:',
+                style: Theme.of(context).textTheme.titleSmall,
               ),
+              const SizedBox(height: 4),
+              ...[
+                'Drag to pan the view',
+                'Pinch to zoom',
+                'Tap +/- to collapse branches',
+                'Switch orientation with the button'
+              ].map((text) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(child: Text(text)),
+                      ],
+                    ),
+                  )),
             ],
-          ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

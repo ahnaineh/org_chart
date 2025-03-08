@@ -63,23 +63,32 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   List<Widget> buildGraphElements(BuildContext context) {
     return [
       buildEdges(),
-      ...buildNodes(context),
+      ...buildNodes(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
     ];
+  }
+
+  void finishDragging(Node<E> node) {
+    if (overlapping.isNotEmpty) {
+      widget.onDrop?.call(node.data, overlapping.first.data,
+          controller.isSubNode(node, overlapping.first));
+    }
+    draggedID = null;
+    overlapping = [];
+    setState(() {});
   }
 
   @override
   Widget buildEdges() {
     return CustomPaint(
-      size: Size.infinite,
       painter: _edgePainter,
     );
   }
 
   @override
-  List<Widget> buildNodes(BuildContext context,
+  List<CustomAnimatedPositioned> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     final nodes = nodesToDraw ?? controller.roots;
-    final List<Widget> nodeWidgets = [];
+    final List<CustomAnimatedPositioned> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String? nodeId = controller.idProvider(node.data);

@@ -1,143 +1,189 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
+import 'package:org_chart/src/common/genogram_enums.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
-/// Enum defining relationship types in a genogram
-enum GenogramRelationType {
-  marriage,
-  divorce,
-  separation,
-  engagement,
-  cohabitation,
-  children,
-}
+/// The orientation of the genogram chart
+enum GenogramOrientation { topToBottom, leftToRight }
 
-/// Controller for genogram charts
+/// Controller specifically for genogram charts
 class GenogramController<E> extends BaseGraphController<E> {
-  /// Determines if couples should be placed side by side
-  bool placeCouplesSideBySide;
+  GenogramOrientation _orientation;
 
-  /// Spacing between partners in a relationship
-  double partnerSpacing;
+  /// Get the current orientation of the chart
+  GenogramOrientation get orientation => _orientation;
 
-  /// Function that returns relationship information between nodes
-  final GenogramRelationType? Function(E data1, E data2)? relationProvider;
-
-  /// Function that returns gender information for nodes
-  final String? Function(E data)? genderProvider;
+  String? Function(E data) fatherProvider;
+  String? Function(E data) motherProvider;
+  List<String>? Function(E data) spousesProvider;
+  Gender? Function(E data) genderProvider;
 
   GenogramController({
     required List<E> items,
-    Size boxSize = const Size(100, 100),
+    Size boxSize = const Size(150, 150),
     double spacing = 30,
     double runSpacing = 60,
-    required String? Function(E data) idProvider,
-    required String? Function(E data) toProvider,
-    void Function(E data, String? newID)? toSetter,
-    this.placeCouplesSideBySide = true,
-    this.partnerSpacing = 40,
-    this.relationProvider,
-    this.genderProvider,
-  }) : super(
+    required String Function(E data) idProvider,
+    required this.fatherProvider,
+    required this.motherProvider,
+    required this.spousesProvider,
+    required this.genderProvider,
+    GenogramOrientation orientation = GenogramOrientation.topToBottom,
+  })  : _orientation = orientation,
+        super(
           items: items,
           boxSize: boxSize,
           spacing: spacing,
           runSpacing: runSpacing,
           idProvider: idProvider,
-          toProvider: toProvider,
-          toSetter: toSetter,
         );
 
-  /// Get all relationships in the genogram
-  List<GenogramRelation<E>> getRelations() {
-    if (relationProvider == null) return [];
+  @override
+  List<Node<E>> get roots => nodes
+      .where((node) =>
+          fatherProvider(node.data) == null &&
+          motherProvider(node.data) == null)
+      .toList();
 
-    final List<GenogramRelation<E>> relations = [];
-    final List<Node<E>> processedNodes = [];
+  List<Node<E>> getChildren(List<Node<E>> nodes) {
+    final nodeIds = nodes.map((e) => idProvider(e.data));
+    return nodes
+        .where((element) =>
+            nodeIds.contains(fatherProvider(element.data)) ||
+            nodeIds.contains(motherProvider(element.data)))
+        .toList();
+  }
 
-    for (var node1 in super.items.map((e) => Node(data: e))) {
-      processedNodes.add(node1);
+  List<Node<E>> getParents(Node<E> node) {
+    final fatherId = fatherProvider(node.data);
+    final motherId = motherProvider(node.data);
+    return nodes
+        .where((element) =>
+            idProvider(element.data) == fatherId ||
+            idProvider(element.data) == motherId)
+        .toList();
+  }
 
-      for (var node2 in super.items.map((e) => Node(data: e))) {
-        if (processedNodes.contains(node2)) continue;
+  List<Node<E>> getSpouses(Node<E> node) {
+    final spouseIds = spousesProvider(node.data) ?? [];
+    return nodes
+        .where((element) => spouseIds.contains(idProvider(element.data)))
+        .toList();
+  }
 
-        final relationType = relationProvider!(node1.data, node2.data);
-        if (relationType != null) {
-          relations.add(GenogramRelation(
-            person1: node1,
-            person2: node2,
-            type: relationType,
-          ));
+  void switchOrientation(
+      {GenogramOrientation? orientation, bool center = true}) {
+    _orientation = orientation ??
+        (_orientation == GenogramOrientation.topToBottom
+            ? GenogramOrientation.leftToRight
+            : GenogramOrientation.topToBottom);
+    calculatePosition(center: center);
+  }
+
+
+
+@override
+void calculatePosition({bool center = true}) {
+  // Keep track of nodes that have already been laid out
+  final Set<Node<E>> laidOut = <Node<E>>{};
+
+  // Helper: Get all children of a given couple group from the full nodes list.
+  List<Node<E>> getChildrenForGroup(List<Node<E>> parents) {
+    final parentIds = parents.map((p) => idProvider(p.data)).toSet();
+    return nodes.where((child) =>
+        parentIds.contains(fatherProvider(child.data)) ||
+        parentIds.contains(motherProvider(child.data))
+    ).toList();
+  }
+
+  // Recursive function: Layout a family subtree starting from a given node at (x, y)
+  // Returns the total width of the laid out subtree.
+  double layoutFamily(Node<E> node, double x, double y) {
+    if (laidOut.contains(node)) {
+      return 0;
+    }
+
+    // Build the couple group.
+    // If the node is male, add his spouses as part of the same group.
+    final List<Node<E>> coupleGroup = <Node<E>>[];
+    if (genderProvider(node.data) == Gender.male) {
+      coupleGroup.add(node);
+      laidOut.add(node);
+      // Only add spouses (females) if they haven't been laid out already.
+      final List<Node<E>> spouses = getSpouses(node);
+      for (final spouse in spouses) {
+        if (!laidOut.contains(spouse)) {
+          coupleGroup.add(spouse);
+          laidOut.add(spouse);
         }
       }
+    } else {
+      coupleGroup.add(node);
+      laidOut.add(node);
     }
 
-    return relations;
-  }
+    // Calculate the width of the couple group.
+    final int groupCount = coupleGroup.length;
+    final double groupWidth = groupCount * boxSize.width + (groupCount - 1) * spacing;
 
-  /// Get marriage/partner relations in the genogram
-  List<GenogramRelation<E>> getPartnerRelations() {
-    return getRelations()
-        .where((relation) =>
-            relation.type == GenogramRelationType.marriage ||
-            relation.type == GenogramRelationType.divorce ||
-            relation.type == GenogramRelationType.separation ||
-            relation.type == GenogramRelationType.engagement ||
-            relation.type == GenogramRelationType.cohabitation)
+    // Position each member of the couple group horizontally.
+    for (int i = 0; i < groupCount; i++) {
+      final double nodeX = x + i * (boxSize.width + spacing);
+      coupleGroup[i].position = Offset(nodeX, y);
+    }
+
+    // Retrieve children for this couple group from the complete list.
+    List<Node<E>> children = getChildrenForGroup(coupleGroup)
+        .where((child) => !laidOut.contains(child))
         .toList();
-  }
 
-  /// Get children relations in the genogram
-  List<GenogramRelation<E>> getChildrenRelations() {
-    return getRelations()
-        .where((relation) => relation.type == GenogramRelationType.children)
-        .toList();
-  }
-
-  @override
-  void calculatePosition({bool center = true}) {
-    // Basic implementation - will be enhanced for proper genogram layout
-    // in a real implementation with sophisticated family tree positioning algorithm
-
-    // Position nodes - start with a simple grid layout
-    int row = 0;
-    int col = 0;
-    int maxColsPerRow = 4;
-
-    for (Node<E> node in super.roots) {
-      node.position = Offset(
-          col * (boxSize.width + spacing), row * (boxSize.height + runSpacing));
-
-      col++;
-      if (col >= maxColsPerRow) {
-        col = 0;
-        row++;
-      }
+    // If no children, this subtree is just the couple group.
+    if (children.isEmpty) {
+      return groupWidth;
     }
 
-    // In a real implementation, we'd handle:
-    // - Proper family tree layout with parents above children
-    // - Marriage/partnership lines connecting spouses
-    // - Blood relation lines
-    // - Multiple generations
-    // - Handling divorces, remarriages, etc.
-
-    setState?.call(() {});
-    if (center) {
-      centerGraph?.call();
+    // Layout children: Position them in the next level (vertically below current group).
+    final double childrenY = y + boxSize.height + runSpacing;
+    double childrenTotalWidth = 0;
+    double childX = x;
+    for (final child in children) {
+      // Recursively layout each child's subtree.
+      final double subtreeWidth = layoutFamily(child, childX, childrenY);
+      childrenTotalWidth += subtreeWidth;
+      childX += subtreeWidth + spacing;
     }
+    // Remove the extra spacing after the last child.
+    if (children.isNotEmpty) {
+      childrenTotalWidth -= spacing;
+    }
+
+    // Center the parent couple group above their children.
+    final double parentCenter = x + groupWidth / 2;
+    final double childrenCenter = x + childrenTotalWidth / 2;
+    final double shift = childrenCenter - parentCenter;
+    for (final parent in coupleGroup) {
+      parent.position = Offset(parent.position.dx + shift, parent.position.dy);
+    }
+
+    // The total width of this subtree is the maximum of the couple group width and children layout width.
+    return max(groupWidth, childrenTotalWidth);
+  }
+
+  // Layout each family tree (starting with each root) horizontally.
+  double currentX = 0;
+  for (final root in roots) {
+    if (laidOut.contains(root)) continue;
+    final double subtreeWidth = layoutFamily(root, currentX, 0);
+    currentX += subtreeWidth + spacing;
+  }
+
+  // Update the state and center the graph if needed.
+  setState?.call(() {});
+  if (center) {
+    centerGraph?.call();
   }
 }
 
-/// Represents a genogram relationship between two nodes
-class GenogramRelation<E> {
-  final Node<E> person1;
-  final Node<E> person2;
-  final GenogramRelationType type;
-
-  GenogramRelation({
-    required this.person1,
-    required this.person2,
-    required this.type,
-  });
 }

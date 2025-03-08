@@ -4,188 +4,303 @@ import 'dart:math' as math;
 import 'package:org_chart/src/common/edge_painter.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/genogram_controller.dart';
+import 'package:org_chart/src/controllers/org_chart_controller.dart';
 
-/// Edge painter for genogram charts that shows family relationships
+/// Edge painter specific to organizational charts
 class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
-  /// The genogram controller
-  final GenogramController<E> genogramController;
-
-  /// Paint for marriage/partnership relationships
-  final Paint partnershipPaint;
-
-  /// Paint for children connections
-  final Paint childrenPaint;
+  /// The org chart controller
+  final GenogramController<E> controller;
 
   GenogramEdgePainter({
-    required this.genogramController,
+    required this.controller,
     required Paint linePaint,
     double cornerRadius = 10,
     required GraphArrowStyle arrowStyle,
-    Paint? partnershipPaint,
-    Paint? childrenPaint,
-  })  : partnershipPaint = partnershipPaint ?? Paint()
-          ..color = Colors.red
-          ..strokeWidth = 2
-          ..style = PaintingStyle.stroke,
-        childrenPaint = childrenPaint ?? Paint()
-          ..color = Colors.blue
-          ..strokeWidth = 2
-          ..style = PaintingStyle.stroke,
-        super(
-          controller: genogramController,
+  }) : super(
+          controller: controller,
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
         );
-
-  @override
-  void drawNodeConnections(Node<E> node, Canvas canvas) {
-    // In a complete implementation, we would draw different types of
-    // relationship lines between nodes based on genogramController.getRelations()
-
-    // For now, we'll draw simple blood relation connections (parent-child)
-    final List<Node<E>> children = genogramController.getSubNodes(node);
-
-    if (!node.hideNodes && children.isNotEmpty) {
-      drawParentChildConnections(node, children, canvas);
-    }
-
-    // Draw partnership/marriage connections
-    drawPartnershipConnections(canvas);
-  }
-
-  /// Draw connections between parent and children
-  void drawParentChildConnections(
-      Node<E> parent, List<Node<E>> children, Canvas canvas) {
-    if (children.isEmpty) return;
-
-    final parentCenter = Offset(
-        parent.position.dx + genogramController.boxSize.width / 2,
-        parent.position.dy + genogramController.boxSize.height / 2);
-
-    // Draw vertical line down from parent
-    final verticalLineBottom = Offset(
-        parentCenter.dx, parentCenter.dy + genogramController.runSpacing / 2);
-
-    canvas.drawLine(parentCenter, verticalLineBottom, childrenPaint);
-
-    // If there are multiple children, draw horizontal line connecting them
-    if (children.length > 1) {
-      final leftmostChild =
-          children.reduce((a, b) => a.position.dx < b.position.dx ? a : b);
-      final rightmostChild =
-          children.reduce((a, b) => a.position.dx > b.position.dx ? a : b);
-
-      final horizontalLineStart = Offset(
-          leftmostChild.position.dx + genogramController.boxSize.width / 2,
-          verticalLineBottom.dy);
-
-      final horizontalLineEnd = Offset(
-          rightmostChild.position.dx + genogramController.boxSize.width / 2,
-          verticalLineBottom.dy);
-
-      canvas.drawLine(horizontalLineStart, horizontalLineEnd, childrenPaint);
-    }
-
-    // Draw vertical lines up to each child
-    for (final child in children) {
-      final childTopCenter = Offset(
-          child.position.dx + genogramController.boxSize.width / 2,
-          child.position.dy);
-
-      canvas.drawLine(Offset(childTopCenter.dx, verticalLineBottom.dy),
-          childTopCenter, childrenPaint);
-
-      // Recursively draw connections to grandchildren
-      final grandchildren = genogramController.getSubNodes(child);
-      if (!child.hideNodes && grandchildren.isNotEmpty) {
-        drawParentChildConnections(child, grandchildren, canvas);
-      }
-    }
-  }
-
-  /// Draw connections between partners (marriages, etc.)
-  void drawPartnershipConnections(Canvas canvas) {
-    final partnerRelations = genogramController.getPartnerRelations();
-
-    for (final relation in partnerRelations) {
-      final person1Center = Offset(
-          relation.person1.position.dx + genogramController.boxSize.width / 2,
-          relation.person1.position.dy + genogramController.boxSize.height / 2);
-
-      final person2Center = Offset(
-          relation.person2.position.dx + genogramController.boxSize.width / 2,
-          relation.person2.position.dy + genogramController.boxSize.height / 2);
-
-      // Different line styles for different relationship types
-      switch (relation.type) {
-        case GenogramRelationType.marriage:
-          // Solid line for marriage
-          canvas.drawLine(person1Center, person2Center, partnershipPaint);
-          break;
-
-        case GenogramRelationType.divorce:
-          // Double strikethrough line for divorce
-          canvas.drawLine(person1Center, person2Center, partnershipPaint);
-
-          // Calculate perpendicular short lines to indicate divorce
-          final dx = person2Center.dx - person1Center.dx;
-          final dy = person2Center.dy - person1Center.dy;
-          final length = math.sqrt(dx * dx + dy * dy);
-
-          if (length > 0) {
-            final unitPerpX = -dy / length * 10;
-            final unitPerpY = dx / length * 10;
-
-            final midPoint = Offset((person1Center.dx + person2Center.dx) / 2,
-                (person1Center.dy + person2Center.dy) / 2);
-
-            // Draw two diagonal lines through the partnership line
-            canvas.drawLine(
-                Offset(midPoint.dx - unitPerpX, midPoint.dy - unitPerpY),
-                Offset(midPoint.dx + unitPerpX, midPoint.dy + unitPerpY),
-                partnershipPaint);
-
-            canvas.drawLine(
-                Offset(midPoint.dx - unitPerpX - 10, midPoint.dy - unitPerpY),
-                Offset(midPoint.dx + unitPerpX - 10, midPoint.dy + unitPerpY),
-                partnershipPaint);
+        
+          @override
+          void drawNodeConnections(Node<E> node, Canvas canvas) {
+            // TODO: implement drawNodeConnections
           }
-          break;
 
-        case GenogramRelationType.separation:
-          // Dashed line for separation
-          drawDashedLine(
-              p1: person1Center,
-              p2: person2Center,
-              pattern: [5, 5],
-              paint: partnershipPaint,
-              canvas: canvas);
-          break;
+//   @override
+//   void drawNodeConnections(Node<E> node, Canvas canvas) {
+//     switch (controller.orientation) {
+//       case OrgChartOrientation.topToBottom:
+//         drawArrowsTopToBottom(node, canvas);
+//         break;
+//       case OrgChartOrientation.leftToRight:
+//         drawArrowsLeftToRight(node, canvas);
+//         break;
+//     }
+//   }
 
-        case GenogramRelationType.engagement:
-          // Dotted line for engagement
-          drawDashedLine(
-              p1: person1Center,
-              p2: person2Center,
-              pattern: [2, 3],
-              paint: partnershipPaint,
-              canvas: canvas);
-          break;
+//   /// Checks if all nodes are leaf nodes (no children or hidden children)
+//   bool allLeaf(List<Node<E>> nodes) {
+//     return nodes.every((element) =>
+//         controller.getSubNodes(element).isEmpty || element.hideNodes);
+//   }
 
-        case GenogramRelationType.cohabitation:
-          // Dash-dot line for cohabitation
-          drawDashedLine(
-              p1: person1Center,
-              p2: person2Center,
-              pattern: [10, 5, 2, 5],
-              paint: partnershipPaint,
-              canvas: canvas);
-          break;
+//   /// Draw arrows for top-to-bottom oriented org chart
+//   void drawArrowsTopToBottom(Node<E> node, Canvas canvas) {
+//     List<Node<E>> subNodes = controller.getSubNodes(node);
+//     if (node.hideNodes == false) {
+//       if (allLeaf(subNodes)) {
+//         for (int i = 0; i < subNodes.length; i++) {
+//           Node<E> n = subNodes[i];
+//           final bool horizontal = n.position.dx > node.position.dx;
+//           final bool vertical = n.position.dy > node.position.dy;
+//           final bool c = vertical ? horizontal : !horizontal;
 
-        default:
-          break;
-      }
-    }
-  }
+//           drawArrow(
+//               p1: Offset(
+//                 node.position.dx + controller.boxSize.width / 2,
+//                 node.position.dy + controller.boxSize.height / 2,
+//               ),
+//               p2: Offset(
+//                 node.position.dx + controller.boxSize.width / 2,
+//                 n.position.dy +
+//                     controller.boxSize.height / 2 +
+//                     (vertical ? -1 : 1) * cornerRadius,
+//               ),
+//               canvas: canvas);
+
+//           if ((n.position.dx - node.position.dx).abs() > cornerRadius) {
+//             linePath.arcToPoint(
+//               Offset(
+//                 node.position.dx +
+//                     controller.boxSize.width / 2 +
+//                     (horizontal ? 1 : -1) * cornerRadius,
+//                 n.position.dy + controller.boxSize.height / 2,
+//               ),
+//               radius: Radius.circular(cornerRadius),
+//               clockwise: !c,
+//             );
+//             drawArrow(
+//                 p1: Offset(
+//                   node.position.dx +
+//                       controller.boxSize.width / 2 +
+//                       (horizontal ? 1 : -1) * cornerRadius,
+//                   n.position.dy + controller.boxSize.height / 2,
+//                 ),
+//                 p2: Offset(
+//                   n.position.dx + controller.boxSize.width / 2,
+//                   n.position.dy + controller.boxSize.height / 2,
+//                 ),
+//                 canvas: canvas);
+//           }
+//         }
+//       } else {
+//         for (var n in subNodes) {
+//           final minx = math.min(node.position.dx, n.position.dx);
+//           final maxx = math.max(node.position.dx, n.position.dx);
+//           final miny = math.min(node.position.dy, n.position.dy);
+//           final maxy = math.max(node.position.dy, n.position.dy);
+
+//           final dy = (maxy - miny) / 2 + controller.boxSize.height / 2;
+
+//           bool horizontal = maxx == node.position.dx;
+//           bool vertical = maxy == node.position.dy;
+//           bool clockwise = vertical ? !horizontal : horizontal;
+
+//           drawArrow(
+//             p1: Offset(
+//               node.position.dx + controller.boxSize.width / 2,
+//               node.position.dy + controller.boxSize.height / 2,
+//             ),
+//             p2: Offset(
+//               node.position.dx + controller.boxSize.width / 2,
+//               miny + dy + (vertical ? 1 : -1) * cornerRadius,
+//             ),
+//             canvas: canvas,
+//           );
+
+//           if (maxx - minx > cornerRadius * 2) {
+//             linePath.arcToPoint(
+//                 Offset(
+//                   node.position.dx +
+//                       controller.boxSize.width / 2 +
+//                       (!(horizontal) ? 1 : -1) * cornerRadius,
+//                   miny + dy,
+//                 ),
+//                 radius: Radius.circular(cornerRadius),
+//                 clockwise: clockwise);
+
+//             drawArrow(
+//               p1: Offset(
+//                 node.position.dx +
+//                     controller.boxSize.width / 2 +
+//                     (!(horizontal) ? 1 : -1) * cornerRadius,
+//                 miny + dy,
+//               ),
+//               p2: Offset(
+//                 n.position.dx +
+//                     controller.boxSize.width / 2 +
+//                     (horizontal ? 1 : -1) * cornerRadius,
+//                 miny + dy,
+//               ),
+//               canvas: canvas,
+//             );
+//             linePath.arcToPoint(
+//               Offset(
+//                 n.position.dx + controller.boxSize.width / 2,
+//                 miny + dy + (!vertical ? 1 : -1) * cornerRadius,
+//               ),
+//               radius: Radius.circular(cornerRadius),
+//               clockwise: !clockwise,
+//             );
+//           }
+//           drawArrow(
+//             p1: maxx - minx <= cornerRadius * 2
+//                 ? Offset(
+//                     node.position.dx + controller.boxSize.width / 2,
+//                     miny + dy + (vertical ? 1 : -1) * cornerRadius,
+//                   )
+//                 : Offset(
+//                     n.position.dx + controller.boxSize.width / 2,
+//                     miny + dy + (!vertical ? 1 : -1) * cornerRadius,
+//                   ),
+//             p2: Offset(
+//               n.position.dx + controller.boxSize.width / 2,
+//               n.position.dy + controller.boxSize.height / 2,
+//             ),
+//             canvas: canvas,
+//           );
+
+//           drawArrowsTopToBottom(n, canvas);
+//         }
+//       }
+//     }
+//   }
+
+//   /// Draw arrows for left-to-right oriented org chart
+//   void drawArrowsLeftToRight(Node<E> node, Canvas canvas) {
+//     List<Node<E>> subNodes = controller.getSubNodes(node);
+//     if (node.hideNodes == false) {
+//       if (allLeaf(subNodes)) {
+//         for (int i = 0; i < subNodes.length; i++) {
+//           Node<E> n = subNodes[i];
+//           final bool horizontal = n.position.dx > node.position.dx;
+//           final bool vertical = n.position.dy > node.position.dy;
+//           final bool c = vertical ? horizontal : !horizontal;
+
+//           drawArrow(
+//               p1: Offset(
+//                 node.position.dx + controller.boxSize.width / 2,
+//                 node.position.dy + controller.boxSize.height / 2,
+//               ),
+//               p2: Offset(
+//                 n.position.dx +
+//                     controller.boxSize.width / 2 +
+//                     (horizontal ? -1 : 1) * cornerRadius,
+//                 node.position.dy + controller.boxSize.height / 2,
+//               ),
+//               canvas: canvas);
+
+//           if ((n.position.dy - node.position.dy).abs() > cornerRadius) {
+//             linePath.arcToPoint(
+//               Offset(
+//                 n.position.dx + controller.boxSize.width / 2,
+//                 node.position.dy +
+//                     controller.boxSize.height / 2 +
+//                     (vertical ? 1 : -1) * cornerRadius,
+//               ),
+//               radius: Radius.circular(cornerRadius),
+//               clockwise: c,
+//             );
+//             drawArrow(
+//                 p1: Offset(
+//                   n.position.dx + controller.boxSize.width / 2,
+//                   node.position.dy +
+//                       controller.boxSize.height / 2 +
+//                       (vertical ? 1 : -1) * cornerRadius,
+//                 ),
+//                 p2: Offset(
+//                   n.position.dx + controller.boxSize.width / 2,
+//                   n.position.dy + controller.boxSize.height / 2,
+//                 ),
+//                 canvas: canvas);
+//           }
+//         }
+//       } else {
+//         for (var n in subNodes) {
+//           final minx = math.min(node.position.dx, n.position.dx);
+//           final maxx = math.max(node.position.dx, n.position.dx);
+//           final miny = math.min(node.position.dy, n.position.dy);
+//           final maxy = math.max(node.position.dy, n.position.dy);
+
+//           final dx = (maxx - minx) / 2 + controller.boxSize.width / 2;
+
+//           bool horizontal = maxx == node.position.dx;
+//           bool vertical = maxy == node.position.dy;
+//           bool clockwise = horizontal ? !vertical : vertical;
+
+//           drawArrow(
+//             canvas: canvas,
+//             p1: Offset(
+//               node.position.dx + controller.boxSize.width / 2,
+//               node.position.dy + controller.boxSize.height / 2,
+//             ),
+//             p2: Offset(minx + dx + (horizontal ? 1 : -1) * cornerRadius,
+//                 node.position.dy + controller.boxSize.height / 2),
+//           );
+
+//           if (maxy - miny > cornerRadius * 2) {
+//             linePath.arcToPoint(
+//                 Offset(
+//                   minx + dx,
+//                   node.position.dy +
+//                       controller.boxSize.height / 2 +
+//                       (vertical ? -1 : 1) * cornerRadius,
+//                 ),
+//                 radius: Radius.circular(cornerRadius),
+//                 clockwise: !clockwise);
+
+//             drawArrow(
+//               canvas: canvas,
+//               p1: Offset(
+//                 minx + dx,
+//                 node.position.dy +
+//                     controller.boxSize.height / 2 +
+//                     (vertical ? -1 : 1) * cornerRadius,
+//               ),
+//               p2: Offset(
+//                 minx + dx,
+//                 n.position.dy +
+//                     controller.boxSize.height / 2 +
+//                     (vertical ? 1 : -1) * cornerRadius,
+//               ),
+//             );
+
+//             linePath.arcToPoint(
+//                 Offset(
+//                   minx + dx + (!horizontal ? 1 : -1) * cornerRadius,
+//                   n.position.dy + controller.boxSize.height / 2,
+//                 ),
+//                 radius: Radius.circular(cornerRadius),
+//                 clockwise: clockwise);
+//           }
+//           drawArrow(
+//             canvas: canvas,
+//             p1: maxy - miny <= cornerRadius * 2
+//                 ? Offset(minx + dx + (horizontal ? 1 : -1) * cornerRadius,
+//                     node.position.dy + controller.boxSize.height / 2)
+//                 : Offset(
+//                     minx + dx + (!horizontal ? 1 : -1) * cornerRadius,
+//                     n.position.dy + controller.boxSize.height / 2,
+//                   ),
+//             p2: Offset(n.position.dx + controller.boxSize.width / 2,
+//                 n.position.dy + controller.boxSize.height / 2),
+//           );
+
+//           drawArrowsLeftToRight(n, canvas);
+//         }
+//       }
+//     }
+//   }
 }

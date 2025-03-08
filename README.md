@@ -5,6 +5,7 @@
 - ✅ Add arrow styles
 - 🚧 Add arrow animations
 - 🚧 Write a detailed documentation
+- 🚧 update toSetter. Allow using consts. 
 
 
 Do you want to add to this list? Open an issue or a pull request!

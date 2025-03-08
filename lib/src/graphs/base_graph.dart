@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/edge_painter.dart';
 import 'package:org_chart/src/common/node.dart';
@@ -21,7 +23,6 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final Paint linePaint;
   final double cornerRadius;
   final GraphArrowStyle arrowStyle;
-
 
   // Callback functions
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
@@ -54,17 +55,21 @@ abstract class BaseGraph<E> extends StatefulWidget {
 
 /// Base state class for graph widgets
 abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
-  List<Node<E>> _overlapping = [];
-  String? _draggedID;
-  Offset? _panDownPosition;
-  final _transformController = TransformationController();
+  @protected
+  List<Node<E>> overlapping = [];
+  @protected
+  String? draggedID;
+  @protected
+  Offset? panDownPosition;
+  @protected
+  final transformController = TransformationController();
 
   // Protected getters for subclasses
   @protected
-  List<Node<E>> get overlappingNodes => _overlapping;
+  List<Node<E>> get overlappingNodes => overlapping;
 
-  @protected
-  String? get draggedID => _draggedID;
+  // @protected
+  // String? get draggedID => _draggedID;
 
   @override
   void initState() {
@@ -90,13 +95,14 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
       final double x = (size.width - contentSize.dx) / 2;
       final double y = (size.height - contentSize.dy) / 2;
 
-      _transformController.value = Matrix4.identity()..translate(x, y);
+      transformController.value = Matrix4.identity()..translate(x, y);
+
     }
   }
 
   @override
   void dispose() {
-    _transformController.dispose();
+    transformController.dispose();
     super.dispose();
   }
 
@@ -105,7 +111,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     final size = widget.controller.getSize();
     return InteractiveViewer(
       constrained: false,
-      transformationController: _transformController,
+      transformationController: transformController,
       boundaryMargin: const EdgeInsets.all(500),
       minScale: widget.minScale,
       maxScale: widget.maxScale,
@@ -133,7 +139,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   // Common node interaction methods
   void handleTapDown(TapDownDetails details) {
     final RenderBox referenceBox = context.findRenderObject() as RenderBox;
-    _panDownPosition = referenceBox.globalToLocal(details.globalPosition);
+    panDownPosition = referenceBox.globalToLocal(details.globalPosition);
   }
 
   void toggleHideNodes(Node<E> node, bool? hide) {
@@ -147,29 +153,19 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   }
 
   void startDragging(Node<E> node) {
-    _draggedID = widget.controller.idProvider(node.data);
+    draggedID = widget.controller.idProvider(node.data);
     setState(() {});
   }
 
   void updateDragging(Node<E> node, DragUpdateDetails details) {
     setState(() {
       node.position = Offset(
-        node.position.dx + details.delta.dx,
-        node.position.dy + details.delta.dy,
-      ).translate(0, 0); // Ensure positive coordinates
+        max(0, node.position.dx + details.delta.dx),
+        max(0, node.position.dy + details.delta.dy),
+      );
 
-      _overlapping = widget.controller.getOverlapping(node);
+      overlapping = widget.controller.getOverlapping(node);
     });
-  }
-
-  void finishDragging(Node<E> node) {
-    if (_overlapping.isNotEmpty) {
-      widget.onDrop?.call(node.data, _overlapping.first.data,
-          isSubNode(node, _overlapping.first));
-    }
-    _draggedID = null;
-    _overlapping = [];
-    setState(() {});
   }
 
   Future<void> showNodeMenu(BuildContext context, Node<E> node) async {
@@ -178,41 +174,18 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
     final RenderObject? overlay =
         Overlay.of(context).context.findRenderObject();
-    if (_panDownPosition == null || overlay == null) return;
+    if (panDownPosition == null || overlay == null) return;
 
     final result = await showMenu(
       context: context,
       position: RelativeRect.fromRect(
-          Rect.fromLTWH(_panDownPosition!.dx, _panDownPosition!.dy, 30, 30),
+          Rect.fromLTWH(panDownPosition!.dx, panDownPosition!.dy, 30, 30),
           Rect.fromLTWH(0, 0, overlay.paintBounds.size.width,
               overlay.paintBounds.size.height)),
       items: options,
     );
 
     widget.onOptionSelect?.call(node.data, result);
-  }
-
-  bool isSubNode(Node<E> dragged, Node<E> target) {
-    E? current = target.data;
-    final draggedId = widget.controller.idProvider(dragged.data);
-
-    while (current != null) {
-      final currentToId = widget.controller.toProvider(current);
-
-      if (currentToId == draggedId) {
-        return true;
-      }
-
-      try {
-        final matchingParents = widget.controller.items.where(
-            (element) => widget.controller.idProvider(element) == currentToId);
-        current = matchingParents.isNotEmpty ? matchingParents.first : null;
-      } catch (_) {
-        break;
-      }
-    }
-
-    return false;
   }
 
   // Getter for accessing the controller with the correct type

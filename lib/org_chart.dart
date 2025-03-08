@@ -8,5 +8,6 @@ export 'src/controllers/org_chart_controller.dart'
 export 'src/common/edge_painter.dart' show SolidGraphArrow, DashedGraphArrow;
 export 'src/common/node_builder_details.dart' show NodeBuilderDetails;
 
-// For those who want the complete set of graph types, use:
-// import 'package:org_chart/family_graphs.dart';
+export 'src/graphs/genogram/genogram.dart' show Genogram;
+export 'src/controllers/genogram_controller.dart' show GenogramController;
+export 'src/common/genogram_enums.dart';
