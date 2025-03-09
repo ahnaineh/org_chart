@@ -70,7 +70,9 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
   }
 
   /// Implement in subclass to draw connections for a specific node
-  void drawNodeConnections(Node<E> node, Canvas canvas);
+  void drawNodeConnections(Node<E> node, Canvas canvas) {
+    throw UnimplementedError();
+  }
 
   /// Draw a line between two points with the configured style
   void drawArrow({

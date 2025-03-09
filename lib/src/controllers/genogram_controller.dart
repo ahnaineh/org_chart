@@ -82,108 +82,132 @@ class GenogramController<E> extends BaseGraphController<E> {
     calculatePosition(center: center);
   }
 
+  @override
+  void calculatePosition({bool center = true}) {
+    // Keep track of nodes that have already been laid out
+    final Set<Node<E>> laidOut = <Node<E>>{};
 
+    // Map to store the rightmost edge of each family branch at each level
+    final Map<int, double> levelRightEdges = {};
 
-@override
-void calculatePosition({bool center = true}) {
-  // Keep track of nodes that have already been laid out
-  final Set<Node<E>> laidOut = <Node<E>>{};
-
-  // Helper: Get all children of a given couple group from the full nodes list.
-  List<Node<E>> getChildrenForGroup(List<Node<E>> parents) {
-    final parentIds = parents.map((p) => idProvider(p.data)).toSet();
-    return nodes.where((child) =>
-        parentIds.contains(fatherProvider(child.data)) ||
-        parentIds.contains(motherProvider(child.data))
-    ).toList();
-  }
-
-  // Recursive function: Layout a family subtree starting from a given node at (x, y)
-  // Returns the total width of the laid out subtree.
-  double layoutFamily(Node<E> node, double x, double y) {
-    if (laidOut.contains(node)) {
-      return 0;
+    // Helper: Get all children of a given couple group from the full nodes list.
+    List<Node<E>> getChildrenForGroup(List<Node<E>> parents) {
+      final parentIds = parents.map((p) => idProvider(p.data)).toSet();
+      return nodes
+          .where((child) =>
+              parentIds.contains(fatherProvider(child.data)) ||
+              parentIds.contains(motherProvider(child.data)))
+          .toList();
     }
 
-    // Build the couple group.
-    // If the node is male, add his spouses as part of the same group.
-    final List<Node<E>> coupleGroup = <Node<E>>[];
-    if (genderProvider(node.data) == Gender.male) {
-      coupleGroup.add(node);
-      laidOut.add(node);
-      // Only add spouses (females) if they haven't been laid out already.
-      final List<Node<E>> spouses = getSpouses(node);
-      for (final spouse in spouses) {
-        if (!laidOut.contains(spouse)) {
-          coupleGroup.add(spouse);
-          laidOut.add(spouse);
-        }
+    // Recursive function: Layout a family subtree starting from a given node at (x, y)
+    // Returns the total width of the laid out subtree.
+    double layoutFamily(Node<E> node, double x, double y, int level) {
+      if (laidOut.contains(node)) {
+        return 0;
       }
-    } else {
-      coupleGroup.add(node);
-      laidOut.add(node);
+
+      // Check if we need to adjust the starting x position based on previous layouts at this level
+      if (levelRightEdges.containsKey(level)) {
+        // Add extra spacing between family branches to prevent overlaps
+        x = max(x, levelRightEdges[level]! + spacing * 2);
+      }
+
+      // Build the couple group.
+      // If the node is male, add his spouses as part of the same group.
+      final List<Node<E>> coupleGroup = <Node<E>>[];
+      if (genderProvider(node.data) == Gender.male) {
+        coupleGroup.add(node);
+        laidOut.add(node);
+        // Only add spouses (females) if they haven't been laid out already.
+        final List<Node<E>> spouses = getSpouses(node);
+        for (final spouse in spouses) {
+          if (!laidOut.contains(spouse)) {
+            coupleGroup.add(spouse);
+            laidOut.add(spouse);
+          }
+        }
+      } else {
+        coupleGroup.add(node);
+        laidOut.add(node);
+      }
+
+      // Calculate the width of the couple group.
+      final int groupCount = coupleGroup.length;
+      final double groupWidth =
+          groupCount * boxSize.width + (groupCount - 1) * spacing;
+
+      // Position each member of the couple group horizontally.
+      for (int i = 0; i < groupCount; i++) {
+        final double nodeX = x + i * (boxSize.width + spacing);
+        coupleGroup[i].position = Offset(nodeX, y);
+      }
+
+      // Retrieve children for this couple group from the complete list.
+      List<Node<E>> children = getChildrenForGroup(coupleGroup)
+          .where((child) => !laidOut.contains(child))
+          .toList();
+
+      // If no children, this subtree is just the couple group.
+      if (children.isEmpty) {
+        // Update the rightmost edge for this level
+        levelRightEdges[level] = x + groupWidth;
+        return groupWidth;
+      }
+
+      // Layout children: Position them in the next level (vertically below current group).
+      final double childrenY = y + boxSize.height + runSpacing;
+      double childrenTotalWidth = 0;
+      double childX = x;
+
+      for (final child in children) {
+        // Recursively layout each child's subtree.
+        final double subtreeWidth =
+            layoutFamily(child, childX, childrenY, level + 1);
+        childrenTotalWidth += subtreeWidth;
+        // Add additional spacing between siblings to prevent cousin overlaps
+        childX += subtreeWidth + spacing * 1.5;
+      }
+
+      // Remove the extra spacing after the last child.
+      if (children.isNotEmpty) {
+        childrenTotalWidth -=
+            spacing * 0.5; // Adjust for the extra spacing we added
+      }
+
+      // Center the parent couple group above their children.
+      final double parentCenter = x + groupWidth / 2;
+      final double childrenCenter = x + childrenTotalWidth / 2;
+      final double shift = childrenCenter - parentCenter;
+      for (final parent in coupleGroup) {
+        parent.position =
+            Offset(parent.position.dx + shift, parent.position.dy);
+      }
+
+      // The total width of this subtree is the maximum of the couple group width and children layout width.
+      final totalWidth = max(groupWidth, childrenTotalWidth);
+
+      // Update the rightmost edge for this level
+      levelRightEdges[level] = x + totalWidth;
+
+      return totalWidth;
     }
 
-    // Calculate the width of the couple group.
-    final int groupCount = coupleGroup.length;
-    final double groupWidth = groupCount * boxSize.width + (groupCount - 1) * spacing;
-
-    // Position each member of the couple group horizontally.
-    for (int i = 0; i < groupCount; i++) {
-      final double nodeX = x + i * (boxSize.width + spacing);
-      coupleGroup[i].position = Offset(nodeX, y);
+    // Layout each family tree (starting with each root) horizontally.
+    double currentX = 0;
+    for (final root in roots) {
+      if (laidOut.contains(root)) continue;
+      final double subtreeWidth = layoutFamily(root, currentX, 0, 0);
+      currentX += subtreeWidth +
+          spacing * 3; // Add extra spacing between root family trees
     }
 
-    // Retrieve children for this couple group from the complete list.
-    List<Node<E>> children = getChildrenForGroup(coupleGroup)
-        .where((child) => !laidOut.contains(child))
-        .toList();
-
-    // If no children, this subtree is just the couple group.
-    if (children.isEmpty) {
-      return groupWidth;
+    // Update the state and center the graph if needed.
+    setState?.call(() {
+      nodes = nodes;
+    });
+    if (center) {
+      centerGraph?.call();
     }
-
-    // Layout children: Position them in the next level (vertically below current group).
-    final double childrenY = y + boxSize.height + runSpacing;
-    double childrenTotalWidth = 0;
-    double childX = x;
-    for (final child in children) {
-      // Recursively layout each child's subtree.
-      final double subtreeWidth = layoutFamily(child, childX, childrenY);
-      childrenTotalWidth += subtreeWidth;
-      childX += subtreeWidth + spacing;
-    }
-    // Remove the extra spacing after the last child.
-    if (children.isNotEmpty) {
-      childrenTotalWidth -= spacing;
-    }
-
-    // Center the parent couple group above their children.
-    final double parentCenter = x + groupWidth / 2;
-    final double childrenCenter = x + childrenTotalWidth / 2;
-    final double shift = childrenCenter - parentCenter;
-    for (final parent in coupleGroup) {
-      parent.position = Offset(parent.position.dx + shift, parent.position.dy);
-    }
-
-    // The total width of this subtree is the maximum of the couple group width and children layout width.
-    return max(groupWidth, childrenTotalWidth);
   }
-
-  // Layout each family tree (starting with each root) horizontally.
-  double currentX = 0;
-  for (final root in roots) {
-    if (laidOut.contains(root)) continue;
-    final double subtreeWidth = layoutFamily(root, currentX, 0);
-    currentX += subtreeWidth + spacing;
-  }
-
-  // Update the state and center the graph if needed.
-  setState?.call(() {});
-  if (center) {
-    centerGraph?.call();
-  }
-}
-
 }
