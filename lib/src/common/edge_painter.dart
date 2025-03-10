@@ -82,8 +82,9 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
   }) {
     switch (arrowStyle) {
       case SolidGraphArrow _:
-        linePath.moveTo(p1.dx, p1.dy);
-        linePath.lineTo(p2.dx, p2.dy);
+        linePath
+          ..moveTo(p1.dx, p1.dy)
+          ..lineTo(p2.dx, p2.dy);
         break;
       case DashedGraphArrow _:
         drawDashedLine(

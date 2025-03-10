@@ -40,7 +40,8 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
   @override
   void paint(Canvas canvas, Size size) {
     final Map<String, Color> marriageColors = {};
-    final Map<String, Offset> marriagePoints = {}; // Store middle points of marriages
+    final Map<String, Offset> marriagePoints =
+        {}; // Store middle points of marriages
 
     // Retrieve all nodes.
     final List<Node<E>> allNodes = controller.nodes;
@@ -54,15 +55,15 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       final String personId = controller.idProvider(person.data);
       final List<String>? spouses = controller.spousesProvider(person.data);
       if (spouses == null || spouses.isEmpty) continue;
-      
+
       // Only process if this person is male, to avoid double-counting marriages
       if (controller.genderProvider(person.data) != Gender.male) continue;
-      
+
       final Offset personCenter = getCenter(person);
-      
+
       for (int i = 0; i < spouses.length; i++) {
         final String spouseId = spouses[i];
-        
+
         // Find spouse node
         Node<E>? spouse;
         try {
@@ -73,11 +74,12 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
           // Spouse not found in the displayed nodes
           continue;
         }
-        
+
         final String marriageKey = '$personId|$spouseId';
-        final Color marriageColor = getMarriageColor(marriageKey, marriageColors, availableColors);
+        final Color marriageColor =
+            getMarriageColor(marriageKey, marriageColors, availableColors);
         final Offset spouseCenter = getCenter(spouse);
-        
+
         // Record the marriage
         marriageConnections.add({
           'husband': person,
@@ -91,11 +93,12 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
         });
       }
     }
-    
+
     // STEP 2: Draw all marriage lines and store their midpoints
     // Sort by spouseIndex so earlier marriages are drawn first
-    marriageConnections.sort((a, b) => a['spouseIndex'].compareTo(b['spouseIndex']));
-    
+    marriageConnections
+        .sort((a, b) => a['spouseIndex'].compareTo(b['spouseIndex']));
+
     for (final connection in marriageConnections) {
       final Paint marriagePaint = Paint()
         ..color = connection['marriageColor']
@@ -106,39 +109,59 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       final Offset husbandCenter = connection['husbandCenter'];
       final Offset wifeCenter = connection['wifeCenter'];
       final int spouseIndex = connection['spouseIndex'];
-      
+      final int totalSpouses = connection['totalSpouses'];
+
       // Add a small offset for multiple marriages to prevent overlap
       const double offsetY = 2.0;
-      final Offset adjustedHusbandCenter = husbandCenter + Offset(0, spouseIndex * offsetY);
-      final Offset adjustedWifeCenter = wifeCenter + Offset(0, spouseIndex * offsetY);
-      
+      final Offset adjustedHusbandCenter =
+          husbandCenter + Offset(0, spouseIndex * offsetY);
+      final Offset adjustedWifeCenter =
+          wifeCenter + Offset(0, spouseIndex * offsetY);
+
       // Draw the marriage line
       canvas.drawLine(adjustedHusbandCenter, adjustedWifeCenter, marriagePaint);
-      
-      // Store the midpoint of this marriage for child connections
+
+      // Store the connection point of this marriage for child connections
       final String marriageKey = connection['marriageKey'];
+
+      // Calculate connection point position based on spouse index
+      // First wife (index 0): use midpoint (ratio 0.5)
+      // Additional wives: move closer to wife position (ratio > 0.5)
+      double connectionRatio = 0.5;
+      if (spouseIndex > 0 && totalSpouses > 1) {
+        // For additional wives, move connection point closer to wife
+        // Use 0.65 for 2nd wife, 0.75 for 3rd wife, etc.
+        // connectionRatio = 0.5 + (0.15 * spouseIndex);
+        connectionRatio = 0.5 + 0.25;
+      }
+
       final Offset marriagePoint = Offset(
-        (adjustedHusbandCenter.dx + adjustedWifeCenter.dx) / 2,
-        (adjustedHusbandCenter.dy + adjustedWifeCenter.dy) / 2
-      );
+          adjustedHusbandCenter.dx +
+              (adjustedWifeCenter.dx - adjustedHusbandCenter.dx) *
+                  connectionRatio,
+          adjustedHusbandCenter.dy +
+              (adjustedWifeCenter.dy - adjustedHusbandCenter.dy) *
+                  connectionRatio);
       marriagePoints[marriageKey] = marriagePoint;
     }
-    
+
     // STEP 3: Process children and connect to appropriate parents or marriage points
     for (final Node<E> child in allNodes) {
       final String? fatherId = controller.fatherProvider(child.data);
       final String? motherId = controller.motherProvider(child.data);
       if (fatherId == null && motherId == null) continue;
-      
+
       final Offset childTop = getTopCenter(child);
-      final bool isFemale = controller.genderProvider(child.data) == Gender.female;
+      final bool isFemale =
+          controller.genderProvider(child.data) == Gender.female;
       final List<String>? childSpouses = controller.spousesProvider(child.data);
-      final bool isMarriedFemale = isFemale && childSpouses != null && childSpouses.isNotEmpty;
-      
+      final bool isMarriedFemale =
+          isFemale && childSpouses != null && childSpouses.isNotEmpty;
+
       // Try to find both parents
       Node<E>? father;
       Node<E>? mother;
-      
+
       if (fatherId != null) {
         try {
           father = allNodes.firstWhere(
@@ -148,7 +171,7 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
           // Father not found
         }
       }
-      
+
       if (motherId != null) {
         try {
           mother = allNodes.firstWhere(
@@ -158,11 +181,11 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
           // Mother not found
         }
       }
-      
+
       // If both parents exist and they are married
       if (father != null && mother != null) {
         final String marriageKey = '${fatherId}|${motherId}';
-        
+
         // If this marriage has a stored point (it was found in the first pass)
         if (marriagePoints.containsKey(marriageKey)) {
           // Use the marriage midpoint for the connection
@@ -172,11 +195,13 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
             ..strokeWidth = linePaint.strokeWidth
             ..style = linePaint.style
             ..strokeCap = linePaint.strokeCap;
-          
+
           if (isMarriedFemale) {
-            drawTwoSegmentArrow(canvas, connectionStart, childTop, connectionPaint);
+            drawTwoSegmentArrow(
+                canvas, connectionStart, childTop, connectionPaint);
           } else {
-            drawSegmentedArrow(canvas, connectionStart, childTop, connectionPaint);
+            drawSegmentedArrow(
+                canvas, connectionStart, childTop, connectionPaint);
           }
         } else {
           // This is a parent pair that didn't have a marriage in first pass
@@ -210,11 +235,11 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
         }
       }
     }
-    
+
     // Draw all single parent connections
     for (final connection in childConnections) {
       final bool isMarriedFemale = connection['isMarriedFemale'] ?? false;
-      
+
       if (isMarriedFemale) {
         drawTwoSegmentArrow(canvas, getCenter(connection['parent']),
             connection['childTop'], linePaint);
