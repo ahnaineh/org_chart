@@ -77,10 +77,10 @@ abstract class BaseGraphController<E> {
 
   List<Node<E>> getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
-    final String nodeId = idProvider(node.data) ?? '';
+    final String nodeId = idProvider(node.data);
 
     for (Node<E> n in nodes) {
-      final String nId = idProvider(n.data) ?? '';
+      final String nId = idProvider(n.data);
       if (nodeId != nId) {
         Offset offset = node.position - n.position;
         if (offset.dx.abs() < boxSize.width &&

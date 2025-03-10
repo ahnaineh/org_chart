@@ -41,27 +41,7 @@ class GenogramNode extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${member.name ?? 'Unknown'} (${member.id})',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: _getTextColor(member.gender),
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                ),
-                Text(
-                  '(${member.fatherId} - ${member.motherId})',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: _getTextColor(member.gender),
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                ),
-                Text(
-                  '(${member.spouses})',
+                  member.name ?? 'Unknown',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: _getTextColor(member.gender),

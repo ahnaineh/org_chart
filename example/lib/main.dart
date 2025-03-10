@@ -197,7 +197,7 @@ class _ExampleState extends State<Example> {
           gender: Gender.male,
           fatherId: 'gf1',
           motherId: 'gm1',
-          spouses: ['m1'],
+          spouses: ['m1', 'm2', 'm3', 'm4'],
           // relationshipTypes: {'m1': RelationshipType.married},
           birthDate: DateTime(1950),
           isDeceased: false,
@@ -213,7 +213,139 @@ class _ExampleState extends State<Example> {
           birthDate: DateTime(1952),
           isDeceased: false,
         ),
+        FamilyMember(
+          id: 'm2',
+          name: 'Sarah Smith',
+          gender: Gender.female,
+          // fatherId: 'gf2',
+          // motherId: 'gm2',
+          spouses: ['f1'],
+          // relationshipTypes: {'f1': RelationshipType.married},
+          birthDate: DateTime(1952),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'm3',
+          name: 'Sarah Smith',
+          gender: Gender.female,
+          // fatherId: 'gf2',
+          // motherId: 'gm2',
+          spouses: ['f1'],
+          // relationshipTypes: {'f1': RelationshipType.married},
+          birthDate: DateTime(1952),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'm4',
+          name: 'Sarah Smith',
+          gender: Gender.female,
+          // fatherId: 'gf2',
+          // motherId: 'gm2',
+          spouses: ['f1'],
+          // relationshipTypes: {'f1': RelationshipType.married},
+          birthDate: DateTime(1952),
+          isDeceased: false,
+        ),
 
+        // Uncle with multiple marriages
+        FamilyMember(
+          id: 'u2241',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u201',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u2901',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u-21',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u219=',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u21',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'u212',
+          name: 'Thomas Smith',
+          gender: Gender.male,
+          fatherId: 'gf1',
+          motherId: 'gm1',
+          // spouses: ['a1', 'a2'],
+          // relationshipTypes: {
+          //   'a1': RelationshipType.divorced,
+          //   'a2': RelationshipType.married
+          // },
+          birthDate: DateTime(1955),
+          isDeceased: false,
+        ),
         // Uncle with multiple marriages
         FamilyMember(
           id: 'u1',

@@ -4,7 +4,6 @@ import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 import 'package:org_chart/src/common/edge_painter.dart';
 import 'package:org_chart/src/controllers/genogram_controller.dart';
-import 'package:org_chart/src/controllers/org_chart_controller.dart';
 import 'package:org_chart/src/graphs/base_graph.dart';
 import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
 

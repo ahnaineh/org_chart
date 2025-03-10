@@ -26,6 +26,10 @@ class FamilyMember {
     this.birthDate,
     this.deathDate,
   });
+  @override
+  String toString() {
+    return 'FM(id: $id, name: $name, gender: $gender, fatherId: $fatherId, motherId: $motherId, spouses: $spouses)';
+  }
 }
 
 /// Gender enumeration for family members
