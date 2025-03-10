@@ -40,109 +40,62 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
   @override
   void paint(Canvas canvas, Size size) {
     final Map<String, Color> marriageColors = {};
+    final Map<String, Offset> marriagePoints = {}; // Store middle points of marriages
 
     // Retrieve all nodes.
     final List<Node<E>> allNodes = controller.nodes;
 
-    // Collect marriage connections to draw in a specific order
+    // STEP 1: Collect all marriages first
     final List<Map<String, dynamic>> marriageConnections = [];
-    final List<Map<String, dynamic>> singleParentConnections = [];
+    final List<Map<String, dynamic>> childConnections = [];
 
-    // Process each node that may be a child.
-    for (final Node<E> child in allNodes) {
-      final String? fatherId = controller.fatherProvider(child.data);
-      final String? motherId = controller.motherProvider(child.data);
-      if (fatherId == null && motherId == null) continue;
-
-      // Check if this child is a woman and is married
-      final bool isFemale = controller.genderProvider != null &&
-          controller.genderProvider!(child.data) == Gender.female;
-      final List<String>? spouses = controller.spousesProvider(child.data);
-      final bool isMarried = spouses != null && spouses.isNotEmpty;
-      final bool isMarriedFemale = isFemale && isMarried;
-
-      Node<E>? father;
-      Node<E>? mother;
-      if (fatherId != null) {
-        father = allNodes.firstWhere(
-          (node) => controller.idProvider(node.data) == fatherId,
-        );
-      }
-      if (motherId != null) {
-        mother = allNodes.firstWhere(
-          (node) => controller.idProvider(node.data) == motherId,
-        );
-      }
-      final Offset childTop = getTopCenter(child);
-
-      if (father != null && mother != null) {
-        final String fatherNodeId = controller.idProvider(father.data);
-        final String motherNodeId = controller.idProvider(mother.data);
-        final List<String>? fatherSpouses =
-            controller.spousesProvider(father.data);
-        final List<String>? motherSpouses =
-            controller.spousesProvider(mother.data);
-
-        bool areMarried = false;
-        if (fatherSpouses != null && fatherSpouses.contains(motherNodeId)) {
-          areMarried = true;
-        } else if (motherSpouses != null &&
-            motherSpouses.contains(fatherNodeId)) {
-          areMarried = true;
+    // First pass: collect all marriages
+    for (final Node<E> person in allNodes) {
+      final String personId = controller.idProvider(person.data);
+      final List<String>? spouses = controller.spousesProvider(person.data);
+      if (spouses == null || spouses.isEmpty) continue;
+      
+      // Only process if this person is male, to avoid double-counting marriages
+      if (controller.genderProvider(person.data) != Gender.male) continue;
+      
+      final Offset personCenter = getCenter(person);
+      
+      for (int i = 0; i < spouses.length; i++) {
+        final String spouseId = spouses[i];
+        
+        // Find spouse node
+        Node<E>? spouse;
+        try {
+          spouse = allNodes.firstWhere(
+            (node) => controller.idProvider(node.data) == spouseId,
+          );
+        } catch (_) {
+          // Spouse not found in the displayed nodes
+          continue;
         }
-
-        if (areMarried) {
-          final String marriageKey = '$fatherNodeId|$motherNodeId';
-          final Color marriageColor =
-              getMarriageColor(marriageKey, marriageColors, availableColors);
-
-          marriageConnections.add({
-            'father': father,
-            'mother': mother,
-            'child': child,
-            'fatherCenter': getCenter(father),
-            'motherCenter': getCenter(mother),
-            'childTop': childTop,
-            'marriageKey': marriageKey,
-            'marriageColor': marriageColor,
-            'spouseIndex':
-                fatherSpouses != null ? fatherSpouses.indexOf(motherNodeId) : 0,
-            'totalSpouses': fatherSpouses != null ? fatherSpouses.length : 1,
-            'isMarriedFemale': isMarriedFemale,
-          });
-        } else {
-          singleParentConnections.add({
-            'parent': father,
-            'childTop': childTop,
-            'isMarriedFemale': isMarriedFemale,
-          });
-          singleParentConnections.add({
-            'parent': mother,
-            'childTop': childTop,
-            'isMarriedFemale': isMarriedFemale,
-          });
-        }
-      } else {
-        if (father != null) {
-          singleParentConnections.add({
-            'parent': father,
-            'childTop': childTop,
-            'isMarriedFemale': isMarriedFemale,
-          });
-        }
-        if (mother != null) {
-          singleParentConnections.add({
-            'parent': mother,
-            'childTop': childTop,
-            'isMarriedFemale': isMarriedFemale,
-          });
-        }
+        
+        final String marriageKey = '$personId|$spouseId';
+        final Color marriageColor = getMarriageColor(marriageKey, marriageColors, availableColors);
+        final Offset spouseCenter = getCenter(spouse);
+        
+        // Record the marriage
+        marriageConnections.add({
+          'husband': person,
+          'wife': spouse,
+          'husbandCenter': personCenter,
+          'wifeCenter': spouseCenter,
+          'marriageKey': marriageKey,
+          'marriageColor': marriageColor,
+          'spouseIndex': i,
+          'totalSpouses': spouses.length,
+        });
       }
     }
-
-    marriageConnections
-        .sort((a, b) => b['spouseIndex'].compareTo(a['spouseIndex']));
-
+    
+    // STEP 2: Draw all marriage lines and store their midpoints
+    // Sort by spouseIndex so earlier marriages are drawn first
+    marriageConnections.sort((a, b) => a['spouseIndex'].compareTo(b['spouseIndex']));
+    
     for (final connection in marriageConnections) {
       final Paint marriagePaint = Paint()
         ..color = connection['marriageColor']
@@ -150,42 +103,118 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
         ..style = linePaint.style
         ..strokeCap = linePaint.strokeCap;
 
-      final Offset fatherCenter = connection['fatherCenter'];
-      final Offset motherCenter = connection['motherCenter'];
-      final Offset childTop = connection['childTop'];
-      final bool isMarriedFemale = connection['isMarriedFemale'] ?? false;
-
-      canvas.drawLine(fatherCenter, motherCenter, marriagePaint);
-
-      Offset arrowStart;
-      if (connection['totalSpouses'] > 1) {
-        final int index = connection['spouseIndex'];
-        final double distance = (fatherCenter - motherCenter).distance;
-        const double threshold = 100.0;
-        if (distance < threshold) {
-          const double offsetAmount = 5.0;
-          arrowStart = Offset.lerp(fatherCenter, motherCenter, 0.5)! +
-              Offset(0, index * offsetAmount);
+      final Offset husbandCenter = connection['husbandCenter'];
+      final Offset wifeCenter = connection['wifeCenter'];
+      final int spouseIndex = connection['spouseIndex'];
+      
+      // Add a small offset for multiple marriages to prevent overlap
+      const double offsetY = 2.0;
+      final Offset adjustedHusbandCenter = husbandCenter + Offset(0, spouseIndex * offsetY);
+      final Offset adjustedWifeCenter = wifeCenter + Offset(0, spouseIndex * offsetY);
+      
+      // Draw the marriage line
+      canvas.drawLine(adjustedHusbandCenter, adjustedWifeCenter, marriagePaint);
+      
+      // Store the midpoint of this marriage for child connections
+      final String marriageKey = connection['marriageKey'];
+      final Offset marriagePoint = Offset(
+        (adjustedHusbandCenter.dx + adjustedWifeCenter.dx) / 2,
+        (adjustedHusbandCenter.dy + adjustedWifeCenter.dy) / 2
+      );
+      marriagePoints[marriageKey] = marriagePoint;
+    }
+    
+    // STEP 3: Process children and connect to appropriate parents or marriage points
+    for (final Node<E> child in allNodes) {
+      final String? fatherId = controller.fatherProvider(child.data);
+      final String? motherId = controller.motherProvider(child.data);
+      if (fatherId == null && motherId == null) continue;
+      
+      final Offset childTop = getTopCenter(child);
+      final bool isFemale = controller.genderProvider(child.data) == Gender.female;
+      final List<String>? childSpouses = controller.spousesProvider(child.data);
+      final bool isMarriedFemale = isFemale && childSpouses != null && childSpouses.isNotEmpty;
+      
+      // Try to find both parents
+      Node<E>? father;
+      Node<E>? mother;
+      
+      if (fatherId != null) {
+        try {
+          father = allNodes.firstWhere(
+            (node) => controller.idProvider(node.data) == fatherId,
+          );
+        } catch (_) {
+          // Father not found
+        }
+      }
+      
+      if (motherId != null) {
+        try {
+          mother = allNodes.firstWhere(
+            (node) => controller.idProvider(node.data) == motherId,
+          );
+        } catch (_) {
+          // Mother not found
+        }
+      }
+      
+      // If both parents exist and they are married
+      if (father != null && mother != null) {
+        final String marriageKey = '${fatherId}|${motherId}';
+        
+        // If this marriage has a stored point (it was found in the first pass)
+        if (marriagePoints.containsKey(marriageKey)) {
+          // Use the marriage midpoint for the connection
+          final Offset connectionStart = marriagePoints[marriageKey]!;
+          final Paint connectionPaint = Paint()
+            ..color = marriageColors[marriageKey] ?? linePaint.color
+            ..strokeWidth = linePaint.strokeWidth
+            ..style = linePaint.style
+            ..strokeCap = linePaint.strokeCap;
+          
+          if (isMarriedFemale) {
+            drawTwoSegmentArrow(canvas, connectionStart, childTop, connectionPaint);
+          } else {
+            drawSegmentedArrow(canvas, connectionStart, childTop, connectionPaint);
+          }
         } else {
-          final double lerpFactor = (connection['totalSpouses'] > 1)
-              ? (index / (connection['totalSpouses'] - 1)) * 0.25 + 0.5
-              : 0.5;
-          arrowStart = Offset.lerp(fatherCenter, motherCenter, lerpFactor)!;
+          // This is a parent pair that didn't have a marriage in first pass
+          // Draw single parent connections instead
+          childConnections.add({
+            'parent': father,
+            'childTop': childTop,
+            'isMarriedFemale': isMarriedFemale,
+          });
+          childConnections.add({
+            'parent': mother,
+            'childTop': childTop,
+            'isMarriedFemale': isMarriedFemale,
+          });
         }
       } else {
-        arrowStart = Offset.lerp(fatherCenter, motherCenter, 0.5)!;
-      }
-
-      if (isMarriedFemale) {
-        drawTwoSegmentArrow(canvas, arrowStart, childTop, marriagePaint);
-      } else {
-        drawSegmentedArrow(canvas, arrowStart, childTop, marriagePaint);
+        // At least one parent is missing, draw single parent connections
+        if (father != null) {
+          childConnections.add({
+            'parent': father,
+            'childTop': childTop,
+            'isMarriedFemale': isMarriedFemale,
+          });
+        }
+        if (mother != null) {
+          childConnections.add({
+            'parent': mother,
+            'childTop': childTop,
+            'isMarriedFemale': isMarriedFemale,
+          });
+        }
       }
     }
-
-    for (final connection in singleParentConnections) {
+    
+    // Draw all single parent connections
+    for (final connection in childConnections) {
       final bool isMarriedFemale = connection['isMarriedFemale'] ?? false;
-
+      
       if (isMarriedFemale) {
         drawTwoSegmentArrow(canvas, getCenter(connection['parent']),
             connection['childTop'], linePaint);
