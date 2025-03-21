@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/edge_painter.dart';
 import 'package:org_chart/src/custom_animated_positioned.dart';
@@ -68,10 +69,12 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   String? _draggedID;
   Offset? _panDownPosition;
   final _transformController = TransformationController();
+  bool _trackpadScrollCausesScale = false;
 
   @override
   void initState() {
     super.initState();
+    ServicesBinding.instance.keyboard.addHandler(_handleKeyEvent);
     _initializeController();
   }
 
@@ -99,6 +102,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
 
   @override
   void dispose() {
+    ServicesBinding.instance.keyboard.removeHandler(_handleKeyEvent);
     _transformController.dispose();
     super.dispose();
   }
@@ -112,6 +116,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       boundaryMargin: const EdgeInsets.all(500),
       minScale: widget.minScale,
       maxScale: widget.maxScale,
+      trackpadScrollCausesScale: _trackpadScrollCausesScale,
       child: SizedBox(
         width: size.dx,
         height: size.dy,
@@ -291,6 +296,18 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
           .firstOrNull;
     }
 
+    return false;
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent &&
+        ServicesBinding.instance.keyboard.isControlPressed) {
+      setState(() => _trackpadScrollCausesScale = true);
+    } else if (_trackpadScrollCausesScale &&
+        event is KeyUpEvent &&
+        !ServicesBinding.instance.keyboard.isControlPressed) {
+      setState(() => _trackpadScrollCausesScale = false);
+    }
     return false;
   }
 }
