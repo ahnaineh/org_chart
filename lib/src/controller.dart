@@ -66,6 +66,8 @@ class OrgChartController<E> {
     assert(toSetter != null,
         "toSetter is not provided, you can't use this function without providing a toSetter");
 
+    final nodeToRemove =
+        _nodes.firstWhere((element) => idProvider(element.data) == id);
     final subnodes =
         _nodes.where((element) => toProvider(element.data) == id).toList();
 
@@ -75,12 +77,12 @@ class OrgChartController<E> {
           toSetter!(node.data, null);
           break;
         case ActionOnNodeRemoval.connectToParent:
-          toSetter!(node.data, toProvider(node.data));
+          toSetter!(node.data, toProvider(nodeToRemove.data));
           break;
       }
     }
 
-    _nodes.removeWhere((element) => idProvider(element.data) == id);
+    _nodes.remove(nodeToRemove);
     calculatePosition();
   }
 
