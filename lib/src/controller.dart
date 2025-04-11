@@ -4,7 +4,7 @@ import 'dart:math' as math;
 
 enum OrgChartOrientation { topToBottom, leftToRight }
 
-enum ActionOnNodeRemoval { unlink, connectToParent }
+enum ActionOnNodeRemoval { unlink, connectToParent, removeDescendants }
 
 class OrgChartController<E> {
   // Private fields
@@ -63,11 +63,15 @@ class OrgChartController<E> {
   }
 
   void removeItem(String? id, ActionOnNodeRemoval action) {
-    assert(toSetter != null,
-        "toSetter is not provided, you can't use this function without providing a toSetter");
+    if (action == ActionOnNodeRemoval.unlink ||
+        action == ActionOnNodeRemoval.connectToParent) {
+      assert(toSetter != null,
+          "toSetter is not provided, you can't use this function without providing a toSetter");
+    }
 
     final nodeToRemove =
         _nodes.firstWhere((element) => idProvider(element.data) == id);
+
     final subnodes =
         _nodes.where((element) => toProvider(element.data) == id).toList();
 
@@ -78,6 +82,9 @@ class OrgChartController<E> {
           break;
         case ActionOnNodeRemoval.connectToParent:
           toSetter!(node.data, toProvider(nodeToRemove.data));
+          break;
+        case ActionOnNodeRemoval.removeDescendants:
+          _removeNodeAndDescendants(_nodes, node);
           break;
       }
     }
@@ -367,5 +374,25 @@ class OrgChartController<E> {
       }
     }
     return level;
+  }
+
+  /// Removes a node and all its descendants from the list of nodes
+  void _removeNodeAndDescendants(List<Node<E>> nodes, Node<E> nodeToRemove) {
+    Set<Node<E>> nodesToRemove = {};
+
+    void collectDescendantNodes(Node<E> currentNode) {
+      nodesToRemove.add(currentNode);
+
+      final nodeId = idProvider(currentNode.data);
+      final subnodes =
+          _nodes.where((element) => toProvider(element.data) == nodeId);
+
+      for (final node in subnodes) {
+        collectDescendantNodes(node);
+      }
+    }
+
+    collectDescendantNodes(nodeToRemove);
+    nodes.removeWhere((node) => nodesToRemove.contains(node));
   }
 }
