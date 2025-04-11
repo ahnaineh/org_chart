@@ -1,103 +1,161 @@
-## 4.0.2
-1) Graph not drawn, (recursion issue)
+## [4.1.0] - 2025-04-11
 
-## 4.0.1
+### Added
+- Recursive node removal functionality.
+- Holding the Ctrl key changes trackpad scroll behavior to "scaling in".
 
-1) fix bug when centering the graph and some nodes are hidden.
+### Fixed
+- `removeItem` with `ActionOnNodeRemoval.connectToParent` now behaves correctly and no longer mimics `ActionOnNodeRemoval.unlink`.
 
+Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of these features and fixes!
 
-## 4.0.0+1
+---
 
-1) Edit Readme & Changelog
+## [4.0.2]
 
+### Fixed
+- Graph not being drawn due to a recursion issue.
 
-## 4.0.0
+---
 
-1) Added Dashed Arrow Styles
-   - Added 'arrowStyle' to the orgchart widget with 2 options: 'SolidGraphArrow' & 'DashedGraphArrow'
-2) Fixed boundries issues sometimes node is out of the boundaries causing unabilty to drag it back or click it
-3) Dragging node into a negative position is unallowed now
-4) Exposed 'minScale' & 'maxScale' in the orgchart widget to control the zooming scale
-5) Graph now will be centered on init and on orientation change.
-   (you can disable this on orientation change by setting the new paramater 'center' to false in the function 'switchOrientation')
-   using the 'orientation' setter in the controller is now deprecated
-   this parameter is also implemented in the 'calculatePosition' function and the default value is true.
-6) New method on the controller 'centerChart' to center the chart when wanted.
-7) bug fix: unnecessary node index changing when starting to drag a node. It was causing reordering nodes on the same level in a weird/unexpected/unwanted way.
-8) Updated example a bit.
-9) Removed `ontTap` and `onDoubleTap` from the `OrgChart` widget. Because of these, when a button on the node is pressed, running the callback is delayed, so to remove this delay both of these were removed. You can still add a `GestureDetector` in the builder method to achieve the same functionality.
+## [4.0.1]
 
+### Fixed
+- Bug when centering the graph with some hidden nodes.
 
-## 3.1.0
+---
 
-1) Added 'switchOrientation' to controller; automatically switches the set orientation.
-2) When using dart```controller.orientation = x``` 'calculatePostion' will be run automatically, updating the chart. You don't need to run calculatePosition for this.
-3) Replaced 'offset' with 'spacing' and 'runSpacing' as the 'spacing' is according to the orientation and not fixed to x & y. Now it's working as expected.
-4) Extra trees/roots now show aside/below each other rather than showing one only(according to oreintation).
-5) Added line radius to leaf nodes. Missed it in the previous version.
-5) Added a method 'idSetter' to the controller it's required only if you want to use the function 'removeItem', that's to change the to-id of the subnodes. Either unlinking from the tree, or linking to parent node.
-6) Added 'action' attribute to 'removeItem' function to specify the action to be taken on the subnodes of the removed node. Currently these 2 options: 'ActionOnNodeRemoval.unlink' or 'ActionOnNodeRemoval.linkToParent'.
+## [4.0.0]
 
+### Added
+1. Dashed arrow styles:  
+   - Introduced `arrowStyle` to the `OrgChart` widget with options `SolidGraphArrow` and `DashedGraphArrow`.
 
-## 3.0.0+1
+2. Graph centering:
+   - Graph now centers on initialization and orientation change.
+   - Can be disabled during orientation change using the new `center` parameter in `switchOrientation`.
+   - The `orientation` setter is now deprecated.
+   - `calculatePosition` also accepts the `center` parameter (defaults to `true`).
+   - New `centerChart()` method added to controller.
 
-1) Update Readme
+3. Zoom control:
+   - Exposed `minScale` and `maxScale` in the `OrgChart` widget.
 
+4. Drag behavior:
+   - Prevents dragging nodes into negative positions.
+   - Fixed node index changing unnecessarily when starting to drag a node.
 
-## 3.0.0
+### Fixed
+- Boundary issues where nodes could be placed out of view and become unclickable or undraggable.
 
-1) Under the hood code cleanup.
-2) Fixed arrow-spacing relation bug.
-3) Added new parameter 'cornerRadius' to the orgchart widget to customize the corner radius of the arrows.
-4) Added new parameter 'level' to 'NodeBuilderDetails' that is passed to the builder method to indicate the depth of the node in the tree.
-5) Added new parameter 'isTargetSubnode' to 'onDrop' function to indicate if the node is being dropped on a subnode. The checking is now done automatically behind the scenes. If true, do not add the node to the subnodes of the target node, as this will result in crashing the app. You might instead show an alert or ignore this action.
-6) Updated the example to reflect this change. And tweaked the style a bit.
-7) Dropped 'Graph' class & 'graph' parameter on 'OrgChart' class which were previously deprecated.
-8) No more need to call setState after calculatePosition to update the ui, it happens automatically now!
-9) Only the first tree will be displayed rather than stacking trees in case of multiple roots in the provided list.
+### Removed
+- Removed `onTap` and `onDoubleTap` from the `OrgChart` widget due to delayed callbacks. Use `GestureDetector` in the builder method instead.
 
+### Updated
+- Example project improvements.
 
-## 2.2.0
+---
 
-1) Bug fix (issue calculating the positions of a one subnode streak)
-2) Add orientation (2 supported orientations top to bottom and left to right)
-3) adding ability to customize the arrow paint
-4) resetting the positions in the example now also changes the orientation from top-to-bottom to left-to-right and vice versa
+## [3.1.0]
 
+### Added
+1. `switchOrientation` method on the controller to toggle orientation.
+2. Automatic position recalculation when setting `controller.orientation`.
 
-## 2.1.0
+3. Spacing improvements:
+   - Replaced `offset` with `spacing` and `runSpacing` based on current orientation.
 
-1) added 2 new parameters to the orgchart widget: 'onTap' & 'onDoubleTap'
-2) added a new function: 'addItem' to the graph class to make it easier to add an item to the list, instead of the the old way dart`graph.items = graph.items + [newItem]`
-3) added a new example to show the new features
-4) minor arrow drawing change
-5) added a graph method 'uniqueNodeId' auto returns a unique id for a node
+4. Tree rendering:
+   - Multiple roots now display side-by-side (or vertically) depending on orientation.
 
+5. Visual polish:
+   - Line radius added to leaf nodes.
 
-## 2.0.1
+6. Node removal improvements:
+   - Added `idSetter` to controller for subnode reattachment.
+   - New `action` parameter in `removeItem` with options:
+     - `ActionOnNodeRemoval.unlink`
+     - `ActionOnNodeRemoval.linkToParent`
 
-1) Clean up
+---
 
+## [3.0.0+1]
 
-## 2.0.0
+### Changed
+- Updated README.
 
-1) Removed the need to map custom data types to the node class, it's done internally now
-And the utility functions now return the data instead of the node
-2) The builder method now inputs only a one parameter 'details' instance of new class 'NodeBuilderDetails' which contains the following:
-    - data: the data of the node
-    - hideNodes: a function to hide the subnodes
-    - nodesHidden: a boolean to indicate if the subnodes of the node are hidden
-    - beingDragged: a boolean to indicate if the node is being dragged
-    - isOverlapped: a boolean to indicate if the node is overlapped by another node
-3) Allowed customizing the curve and duration of the animation of resetting the tree postions (look the example)
-4) Added docstrings / internal code tweaking
+---
 
+## [3.0.0]
 
-## 1.0.1
+### Changed
+1. Major internal cleanup.
+2. Fixed arrow-spacing calculation.
+3. Added `cornerRadius` to customize arrow curves.
+4. Added `level` to `NodeBuilderDetails` to indicate depth in tree.
+5. Added `isTargetSubnode` to `onDrop` to detect drops on subnodes.
+6. Updated and restyled example.
+7. Removed deprecated `Graph` class and `graph` parameter from `OrgChart`.
+8. Automatic UI updates after `calculatePosition` — no more need to call `setState`.
+9. Only the first tree is shown if multiple roots exist.
 
-No api change
+---
 
+## [2.2.0]
 
-## 1.0.0
+### Added
+1. Support for top-to-bottom and left-to-right orientations.
+2. Customizable arrow paint.
+3. Resetting positions in the example also toggles orientation.
 
-First Semi-stable implementation
+### Fixed
+- Positioning bug for nodes with a single subnode chain.
+
+---
+
+## [2.1.0]
+
+### Added
+1. `onTap` and `onDoubleTap` to `OrgChart` widget.
+2. `addItem` method in `Graph` for easier node addition.
+3. A new example showcasing recent features.
+4. `uniqueNodeId` method in `Graph` for auto-generating node IDs.
+
+### Changed
+- Minor arrow drawing tweaks.
+
+---
+
+## [2.0.1]
+
+### Changed
+- Code cleanup.
+
+---
+
+## [2.0.0]
+
+### Changed
+1. Removed the need to manually map data types to `Node` — done internally now.
+2. Builder method now receives a `NodeBuilderDetails` object containing:
+   - `data`
+   - `hideNodes`
+   - `nodesHidden`
+   - `beingDragged`
+   - `isOverlapped`
+3. Added customizable animation curve and duration when resetting positions.
+4. Added documentation and internal tweaks.
+
+---
+
+## [1.0.1]
+
+### Changed
+- No API changes.
+
+---
+
+## [1.0.0]
+
+### Added
+- First semi-stable implementation.
