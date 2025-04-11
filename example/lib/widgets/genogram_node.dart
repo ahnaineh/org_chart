@@ -104,12 +104,12 @@ class GenogramNode extends StatelessWidget {
 
   Color _getNodeColor(ThemeData theme, FamilyMember member) {
     switch (member.gender) {
-      case Gender.male:
+      case 0:
         return Colors.blue.shade50;
-      case Gender.female:
+      case 1:
         return Colors.pink.shade50;
-      case Gender.unknown:
-        return Colors.grey.shade50;
+      case _:
+        return Colors.black;
     }
   }
 
@@ -120,13 +120,13 @@ class GenogramNode extends StatelessWidget {
     return Colors.grey.shade500;
   }
 
-  Color _getTextColor(Gender gender) {
+  Color _getTextColor(int gender) {
     switch (gender) {
-      case Gender.male:
+      case 0:
         return Colors.blue.shade900;
-      case Gender.female:
+      case 1:
         return Colors.pink.shade900;
-      case Gender.unknown:
+      case _:
         return Colors.black87;
     }
   }
@@ -134,7 +134,7 @@ class GenogramNode extends StatelessWidget {
 
 /// Custom painter for genogram node shapes based on gender
 class GenogramShapePainter extends CustomPainter {
-  final Gender gender;
+  final int gender;
   final bool isDeceased;
   final bool isSelected;
   // final BirthType birthType;
@@ -165,7 +165,7 @@ class GenogramShapePainter extends CustomPainter {
 
     // Draw shape based on gender
     switch (gender) {
-      case Gender.male:
+      case 0:
         // Male: Square
         final square = Rect.fromCenter(
           center: center,
@@ -176,7 +176,7 @@ class GenogramShapePainter extends CustomPainter {
         canvas.drawRect(square, borderPaint);
         break;
 
-      case Gender.female:
+      case 1:
         // Female: Circle
         canvas.drawCircle(
           center,
@@ -190,7 +190,7 @@ class GenogramShapePainter extends CustomPainter {
         );
         break;
 
-      case Gender.unknown:
+      case _:
         // Unknown: Diamond
         final path = Path();
         path.moveTo(center.dx, center.dy - size.height * 0.4); // Top

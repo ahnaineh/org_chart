@@ -9,6 +9,9 @@ import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
 
 /// A widget that displays an organizational chart
 class Genogram<E> extends BaseGraph<E> {
+
+  final void Function(E dragged, E target)? onDrop;
+  
   Genogram({
     Key? key,
     required GenogramController<E> controller,
@@ -23,7 +26,7 @@ class Genogram<E> extends BaseGraph<E> {
     GraphArrowStyle arrowStyle = const SolidGraphArrow(),
     List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder,
     void Function(E item, dynamic value)? onOptionSelect,
-    void Function(E dragged, E target, bool isTargetSubnode)? onDrop,
+    this.onDrop,
   }) : super(
           key: key,
           controller: controller,
@@ -38,7 +41,6 @@ class Genogram<E> extends BaseGraph<E> {
           cornerRadius: cornerRadius,
           optionsBuilder: optionsBuilder,
           onOptionSelect: onOptionSelect,
-          onDrop: onDrop,
         );
 
   @override
@@ -69,8 +71,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
   void finishDragging(Node<E> node) {
     if (overlapping.isNotEmpty) {
-      // widget.onDrop?.call(node.data, overlapping.first.data,
-      //     controller.isSubNode(node, overlapping.first));
+        widget.onDrop?.call(node.data, overlapping.first.data);
     }
     draggedID = null;
     overlapping = [];

@@ -10,4 +10,4 @@ export 'src/common/node_builder_details.dart' show NodeBuilderDetails;
 
 export 'src/graphs/genogram/genogram.dart' show Genogram;
 export 'src/controllers/genogram_controller.dart' show GenogramController;
-export 'src/common/genogram_enums.dart';
+// export 'src/common/genogram_enums.dart';

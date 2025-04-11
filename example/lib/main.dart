@@ -58,7 +58,7 @@ class _ExampleState extends State<Example> {
       motherProvider: (data) => data.motherId,
       spousesProvider: (data) => data.spouses,
       // Add the new genogram-specific providers - fixing nullable return types
-      genderProvider: (data) => data.gender as Gender?,
+      genderProvider: (data) => data.gender,
       // isDeceasedProvider: (data) => data.isDeceased,
       // relationshipTypesProvider: (data) =>
       //     data.relationshipTypes as Map<String, RelationshipType>?,
@@ -78,7 +78,7 @@ class _ExampleState extends State<Example> {
         // FamilyMember(
         //   id: 'ewtrcae21',
         //   name: 'Sawsaw',
-        //   gender: Gender.female,
+        //   gender: 1,
         //   spouses: [],
         //   // relationshipTypes: {'gm1': RelationshipType.married},
         //   isDeceased: true,
@@ -90,7 +90,7 @@ class _ExampleState extends State<Example> {
         // FamilyMember(
         //   id: 'ewtdre21',
         //   name: 'Sawsaw',
-        //   gender: Gender.female,
+        //   gender: 1,
         //   spouses: [],
         //   // relationshipTypes: {'gm1': RelationshipType.married},
         //   isDeceased: true,
@@ -102,7 +102,7 @@ class _ExampleState extends State<Example> {
         // FamilyMember(
         //   id: 'ewtre21',
         //   name: 'Sawsaw',
-        //   gender: Gender.female,
+        //   gender: 1,
         //   spouses: [],
         //   // relationshipTypes: {'gm1': RelationshipType.married},
         //   isDeceased: true,
@@ -114,7 +114,7 @@ class _ExampleState extends State<Example> {
         // FamilyMember(
         //   id: 'ewdtre',
         //   name: 'Sawsaw',
-        //   gender: Gender.female,
+        //   gender: 1,
         //   spouses: [],
         //   // relationshipTypes: {'gm1': RelationshipType.married},
         //   isDeceased: true,
@@ -126,7 +126,7 @@ class _ExampleState extends State<Example> {
         // FamilyMember(
         //   id: 'ewtre',
         //   name: 'Sawsaw',
-        //   gender: Gender.female,
+        //   gender: 1,
         //   spouses: [],
         //   // relationshipTypes: {'gm1': RelationshipType.married},
         //   isDeceased: true,
@@ -138,7 +138,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gf1',
           name: 'Robert Smith',
-          gender: Gender.male,
+          gender: 0,
           spouses: ['gm1'],
           // relationshipTypes: {'gm1': RelationshipType.married},
           isDeceased: true,
@@ -148,7 +148,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gm1',
           name: 'Mary Smith',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['gf1'],
           // relationshipTypes: {'gf1': RelationshipType.married},
           isDeceased: true,
@@ -160,7 +160,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gf2',
           name: 'James Johnson',
-          gender: Gender.male,
+          gender: 0,
           spouses: ['gm2', 'gm2b'],
           // relationshipTypes: {
           //   'gm2': RelationshipType.divorced,
@@ -173,7 +173,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gm2',
           name: 'Emma Johnson',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['gf2'],
           // relationshipTypes: {'gf2': RelationshipType.divorced},
           birthDate: DateTime(1922),
@@ -183,7 +183,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gm2b',
           name: 'Helen Johnson',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['gf2'],
           // relationshipTypes: {'gf2': RelationshipType.married},
           birthDate: DateTime(1930),
@@ -194,7 +194,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'f1',
           name: 'John Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           spouses: ['m1', 'm2', 'm3', 'm4'],
@@ -205,7 +205,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'm1',
           name: 'Sarah Smith',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'gf2',
           motherId: 'gm2',
           spouses: ['f1'],
@@ -216,7 +216,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'm2',
           name: 'Sarah Smith',
-          gender: Gender.female,
+          gender: 1,
           // fatherId: 'gf2',
           // motherId: 'gm2',
           spouses: ['f1'],
@@ -227,7 +227,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'm3',
           name: 'Sarah Smith',
-          gender: Gender.female,
+          gender: 1,
           // fatherId: 'gf2',
           // motherId: 'gm2',
           spouses: ['f1'],
@@ -238,7 +238,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'm4',
           name: 'Sarah Smith',
-          gender: Gender.female,
+          gender: 1,
           // fatherId: 'gf2',
           // motherId: 'gm2',
           spouses: ['f1'],
@@ -251,7 +251,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u2241',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -265,7 +265,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u201',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -279,7 +279,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u2901',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -293,7 +293,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u-21',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -307,7 +307,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u219=',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -321,7 +321,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u21',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -335,7 +335,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u212',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           // spouses: ['a1', 'a2'],
@@ -350,7 +350,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'u1',
           name: 'Thomas Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'gf1',
           motherId: 'gm1',
           spouses: ['a1', 'a2'],
@@ -364,7 +364,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'a1',
           name: 'Patricia',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['u1'],
           // relationshipTypes: {'u1': RelationshipType.divorced},
           birthDate: DateTime(1958),
@@ -373,7 +373,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'a2',
           name: 'Jennifer',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['u1'],
           // relationshipTypes: {'u1': RelationshipType.married},
           birthDate: DateTime(1960),
@@ -384,7 +384,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'a3',
           name: 'Barbara Johnson',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'gf2',
           motherId: 'gm2b',
           birthDate: DateTime(1962),
@@ -395,7 +395,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c1',
           name: 'Michael Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'f1',
           motherId: 'm1',
           birthDate: DateTime(1975),
@@ -406,7 +406,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c2',
           name: 'David Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'f1',
           motherId: 'm1',
           birthDate: DateTime(1980),
@@ -417,7 +417,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c3',
           name: 'Daniel Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'f1',
           motherId: 'm1',
           birthDate: DateTime(1980),
@@ -428,7 +428,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c4',
           name: 'Emily Smith',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'f1',
           motherId: 'm1',
           birthDate: DateTime(1985),
@@ -439,7 +439,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c5',
           name: 'Jessica',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'u1',
           motherId: 'a1',
           birthDate: DateTime(1978),
@@ -450,7 +450,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c6',
           name: 'Matthew',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'u1',
           motherId: 'a2',
           birthDate: DateTime(1988),
@@ -461,7 +461,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'c7',
           name: 'Olivia',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'u1',
           motherId: 'a2',
           birthDate: DateTime(1988),
@@ -474,7 +474,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'p1',
           name: 'Amanda Smith',
-          gender: Gender.female,
+          gender: 1,
           spouses: ['c1'],
           // relationshipTypes: {'c1': RelationshipType.married},
           birthDate: DateTime(1978),
@@ -483,7 +483,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gc1',
           name: 'Sophia Smith',
-          gender: Gender.female,
+          gender: 1,
           fatherId: 'c1',
           motherId: 'p1',
           birthDate: DateTime(2005),
@@ -492,7 +492,7 @@ class _ExampleState extends State<Example> {
         FamilyMember(
           id: 'gc2',
           name: 'William Smith',
-          gender: Gender.male,
+          gender: 0,
           fatherId: 'c1',
           motherId: 'p1',
           birthDate: DateTime(2008),

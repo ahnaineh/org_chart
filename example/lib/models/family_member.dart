@@ -1,5 +1,3 @@
-import 'package:org_chart/org_chart.dart';
-
 // enum Gender {unknown, male, female}
 
 class FamilyMember {
@@ -10,18 +8,18 @@ class FamilyMember {
   final List<String>? spouses;
 
   // Genogram-specific properties
-  final Gender gender;
+  final int gender;
   final bool isDeceased;
   final DateTime? birthDate;
   final DateTime? deathDate;
 
   FamilyMember({
     required this.id,
+    required this.gender,
     this.name,
     this.fatherId,
     this.motherId,
     this.spouses,
-    this.gender = Gender.unknown,
     this.isDeceased = false,
     this.birthDate,
     this.deathDate,

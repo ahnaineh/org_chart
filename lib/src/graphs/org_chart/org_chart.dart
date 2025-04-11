@@ -9,6 +9,8 @@ import 'package:org_chart/src/graphs/org_chart/edge_painter.dart';
 
 /// A widget that displays an organizational chart
 class OrgChart<E> extends BaseGraph<E> {
+  final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
+
   OrgChart({
     Key? key,
     required OrgChartController<E> controller,
@@ -23,7 +25,7 @@ class OrgChart<E> extends BaseGraph<E> {
     GraphArrowStyle arrowStyle = const SolidGraphArrow(),
     List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder,
     void Function(E item, dynamic value)? onOptionSelect,
-    void Function(E dragged, E target, bool isTargetSubnode)? onDrop,
+    this.onDrop,
   }) : super(
           key: key,
           controller: controller,
@@ -38,7 +40,6 @@ class OrgChart<E> extends BaseGraph<E> {
           cornerRadius: cornerRadius,
           optionsBuilder: optionsBuilder,
           onOptionSelect: onOptionSelect,
-          onDrop: onDrop,
         );
 
   @override
@@ -111,6 +112,8 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
             maintainState: true,
             child: GestureDetector(
               onTapDown: handleTapDown,
+              // TODO: Implement onSecondaryTap
+              // onSecondaryTap: () => showNodeMenu(context, node),
               onLongPress: () => showNodeMenu(context, node),
               onPanStart:
                   widget.isDraggable ? (_) => startDragging(node) : null,

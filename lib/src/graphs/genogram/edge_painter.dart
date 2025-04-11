@@ -57,7 +57,7 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       if (spouses == null || spouses.isEmpty) continue;
 
       // Only process if this person is male, to avoid double-counting marriages
-      if (controller.genderProvider(person.data) != Gender.male) continue;
+      if (!controller.isMale(person.data)) continue;
 
       final Offset personCenter = getCenter(person);
 
@@ -152,11 +152,10 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       if (fatherId == null && motherId == null) continue;
 
       final Offset childTop = getTopCenter(child);
-      final bool isFemale =
-          controller.genderProvider(child.data) == Gender.female;
-      final List<String>? childSpouses = controller.spousesProvider(child.data);
-      final bool isMarriedFemale =
-          isFemale && childSpouses != null && childSpouses.isNotEmpty;
+      final bool isFemale = controller.isFemale(child.data);
+      // final List<String>? childSpouses = controller.spousesProvider(child.data);
+      final List<Node<E>> childSpouses = controller.getSpouseList(child.data);
+      final bool isMarriedFemale = isFemale && childSpouses.isNotEmpty;
 
       // Try to find both parents
       Node<E>? father;
@@ -184,7 +183,7 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
 
       // If both parents exist and they are married
       if (father != null && mother != null) {
-        final String marriageKey = '${fatherId}|${motherId}';
+        final String marriageKey = '$fatherId|$motherId';
 
         // If this marriage has a stored point (it was found in the first pass)
         if (marriagePoints.containsKey(marriageKey)) {

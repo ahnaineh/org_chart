@@ -27,7 +27,6 @@ abstract class BaseGraph<E> extends StatefulWidget {
   // Callback functions
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
   final void Function(E item, dynamic value)? onOptionSelect;
-  final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
 
   BaseGraph({
     Key? key,
@@ -41,7 +40,6 @@ abstract class BaseGraph<E> extends StatefulWidget {
     Paint? linePaint,
     this.optionsBuilder,
     this.onOptionSelect,
-    this.onDrop,
     this.arrowStyle = const SolidGraphArrow(),
     this.cornerRadius = 10.0,
   })  : this.linePaint = linePaint ??
