@@ -1,3 +1,11 @@
+# Org Chart
+A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse/expand, and exteremly easy to customize the node shape!
+Built entirely in flutter, so it works on all platforms supported by it!
+
+[Try it out](https://ahnaineh.github.io/)!
+![The example app](https://github.com/ahnaineh/org_chart/blob/c9d1ed3f80b6a8ceb13f12e3255d3511ec68d865/Sequence%2001_5.gif?raw=True)
+
+
 # TODO
 - ✅ Build a stable, easily customizable API
 - ✅ Add orientation support
@@ -5,19 +13,8 @@
 - ✅ Add arrow styles
 - 🚧 Add arrow animations
 - 🚧 Write a detailed documentation
-
-
+- 
 Do you want to add to this list? Open an issue or a pull request!
-
-# Catuion
-Removed `ontTap` and `onDoubleTap` from the `OrgChart` widget. Because of these, when a button on the node is pressed, running the callback is delayed, so to remove this delay both of these were removed. You can still add a `GestureDetector` in the builder method to achieve the same functionality.
-
-# Org Chart
-A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse/expand, and exteremly easy to customize the node shape!
-Built entirely in flutter, so it works on all platforms supported by it!
-
-[Try it out](https://ahnaineh.github.io/)!
-![The example app](https://github.com/ahnaineh/org_chart/blob/c9d1ed3f80b6a8ceb13f12e3255d3511ec68d865/Sequence%2001_5.gif?raw=True)
 
 
 ## Usage

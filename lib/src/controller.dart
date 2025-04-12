@@ -128,14 +128,14 @@ class OrgChartController<E> {
     }
   }
 
-  Offset getSize({Offset offset = const Offset(0, 0)}) {
+  Size getSize({Size size = const Size(0, 0)}) {
     for (Node<E> node in _nodes) {
-      offset = Offset(
-        math.max(offset.dx, node.position.dx),
-        math.max(offset.dy, node.position.dy),
+      size = Size(
+        math.max(size.width, node.position.dx),
+        math.max(size.height, node.position.dy),
       );
     }
-    return offset + Offset(boxSize.width, boxSize.height);
+    return size + Offset(boxSize.width, boxSize.height);
   }
 
   List<Node<E>> getOverlapping(Node<E> node) {

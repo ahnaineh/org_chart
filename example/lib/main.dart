@@ -160,7 +160,6 @@ class _Example2State extends State<Example2> {
   }
 
   void _handleAddNode(String parentId) {
-    print("test");
     try {
       final newNode = NodeData(
         id: orgChartController.uniqueNodeId,

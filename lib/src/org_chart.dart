@@ -2,11 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:org_chart/src/custom_interactive_viewer/controller.dart';
 import 'package:org_chart/src/edge_painter.dart';
 import 'package:org_chart/src/custom_animated_positioned.dart';
 import 'package:org_chart/src/controller.dart';
 import 'package:org_chart/src/node.dart';
 import 'package:org_chart/src/node_builder_details.dart';
+import 'package:org_chart/src/custom_interactive_viewer/widget.dart';
 
 /// This is the widget that the user adds to their build method
 class OrgChart<E> extends StatefulWidget {
@@ -53,10 +55,10 @@ class OrgChart<E> extends StatefulWidget {
       this.linePaint = linePaint;
     } else {
       this.linePaint = Paint()
-          ..color = Colors.black
-          ..strokeWidth = 0.5
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
+        ..color = Colors.black
+        ..strokeWidth = 0.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
     }
   }
 
@@ -68,7 +70,10 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   List<Node<E>> _overlapping = [];
   String? _draggedID;
   Offset? _panDownPosition;
-  final _transformController = TransformationController();
+  // final _transformController = TransformationController();
+  final CustomInteractiveViewerController _controller =
+      CustomInteractiveViewerController();
+
   bool _trackpadScrollCausesScale = false;
 
   @override
@@ -90,36 +95,33 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   void _centerContent() {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox != null) {
-      final size = renderBox.size;
-      final Offset contentSize = widget.controller.getSize();
-
-      final double x = (size.width - contentSize.dx) / 2;
-      final double y = (size.height - contentSize.dy) / 2;
-
-      _transformController.value = Matrix4.identity()..translate(x, y);
+      _controller.center(renderBox.size, widget.controller.getSize());
     }
   }
 
   @override
   void dispose() {
     ServicesBinding.instance.keyboard.removeHandler(_handleKeyEvent);
-    _transformController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = widget.controller.getSize();
-    return InteractiveViewer(
-      constrained: false,
-      transformationController: _transformController,
-      boundaryMargin: const EdgeInsets.all(500),
-      minScale: widget.minScale,
-      maxScale: widget.maxScale,
-      trackpadScrollCausesScale: _trackpadScrollCausesScale,
+    return CustomInteractiveViewer(
+      controller: _controller,
+      contentSize: widget.controller.getSize(),
+      // constrained: false,
+      // transformationController: _transformController,
+      // boundaryMargin: const EdgeInsets.all(500),
+      // minScale: widget.minScale,
+      // maxScale: widget.maxScale,
+      // trackpadScrollCausesScale: _trackpadScrollCausesScale,
+      // onInteractionEnd: (details) => setState(() {}),
       child: SizedBox(
-        width: size.dx,
-        height: size.dy,
+        width: size.width,
+        height: size.height,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
