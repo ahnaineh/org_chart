@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/custom_interactive_viewer/controller.dart';
 import 'package:org_chart/src/edge_painter.dart';
@@ -34,11 +33,13 @@ class OrgChart<E> extends StatefulWidget {
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
   final void Function(E item, dynamic value)? onOptionSelect;
   final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
+  final bool enableDoubleTapZoom;
 
   OrgChart({
     super.key,
-    this.minScale = 0.001,
-    this.maxScale = 5.6,
+    this.minScale = 1,
+    this.maxScale = 4,
+    this.enableDoubleTapZoom = true,
     required this.controller,
     required this.builder,
     this.optionsBuilder,
@@ -74,12 +75,9 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   final CustomInteractiveViewerController _controller =
       CustomInteractiveViewerController();
 
-  bool _trackpadScrollCausesScale = false;
-
   @override
   void initState() {
     super.initState();
-    ServicesBinding.instance.keyboard.addHandler(_handleKeyEvent);
     _initializeController();
   }
 
@@ -95,13 +93,15 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   void _centerContent() {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox != null) {
-      _controller.center(renderBox.size, widget.controller.getSize());
+      _controller.center(
+        widget.controller.getSize(),
+        renderBox.size,
+      );
     }
   }
 
   @override
   void dispose() {
-    ServicesBinding.instance.keyboard.removeHandler(_handleKeyEvent);
     _controller.dispose();
     super.dispose();
   }
@@ -112,13 +112,9 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
     return CustomInteractiveViewer(
       controller: _controller,
       contentSize: widget.controller.getSize(),
-      // constrained: false,
-      // transformationController: _transformController,
-      // boundaryMargin: const EdgeInsets.all(500),
-      // minScale: widget.minScale,
-      // maxScale: widget.maxScale,
-      // trackpadScrollCausesScale: _trackpadScrollCausesScale,
-      // onInteractionEnd: (details) => setState(() {}),
+      minScale: widget.minScale,
+      maxScale: widget.maxScale,
+      enableDoubleTapZoom: false,
       child: SizedBox(
         width: size.width,
         height: size.height,
@@ -142,6 +138,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
         arrowStyle: widget.arrowStyle,
         cornerRadius: widget.cornerRadius,
       ),
+      child: SizedBox.shrink(),
     );
   }
 
@@ -298,18 +295,6 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
           .firstOrNull;
     }
 
-    return false;
-  }
-
-  bool _handleKeyEvent(KeyEvent event) {
-    if (event is KeyDownEvent &&
-        ServicesBinding.instance.keyboard.isControlPressed) {
-      setState(() => _trackpadScrollCausesScale = true);
-    } else if (_trackpadScrollCausesScale &&
-        event is KeyUpEvent &&
-        !ServicesBinding.instance.keyboard.isControlPressed) {
-      setState(() => _trackpadScrollCausesScale = false);
-    }
     return false;
   }
 }

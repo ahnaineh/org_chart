@@ -13,6 +13,18 @@ Built entirely in flutter, so it works on all platforms supported by it!
 - ✅ Add arrow styles
 - 🚧 Add arrow animations
 - 🚧 Write a detailed documentation
+- zoomToFit / zoomToNode helper in controller
+
+
+snap to grid
+inertial panning / fling physics
+internal boundaries / clamping
+auto-centering to bounds on resize
+auto-zoom to fit on double tap
+layout/size tracking utility
+animating
+
+
 - 
 Do you want to add to this list? Open an issue or a pull request!
 
