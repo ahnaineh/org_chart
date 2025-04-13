@@ -1,13 +1,12 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/custom_interactive_viewer/controller.dart';
 import 'package:org_chart/src/edge_painter.dart';
 import 'package:org_chart/src/custom_animated_positioned.dart';
 import 'package:org_chart/src/controller.dart';
 import 'package:org_chart/src/node.dart';
 import 'package:org_chart/src/node_builder_details.dart';
-import 'package:org_chart/src/custom_interactive_viewer/widget.dart';
+import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 
 /// This is the widget that the user adds to their build method
 class OrgChart<E> extends StatefulWidget {
@@ -17,14 +16,17 @@ class OrgChart<E> extends StatefulWidget {
   /// The builder function used to build the nodes
   final Widget Function(NodeBuilderDetails<E> details) builder;
 
+  /// Callback to expose the interactive viewer controller
+  final CustomInteractiveViewerController? viewerController;
+
   // Chart configurations
   final double minScale;
   final double maxScale;
   final bool isDraggable;
   final Curve curve;
-  final int duration;
+  final Duration duration;
   final double cornerRadius;
-  final GraphArrowStyle arrowStyle;
+  final OrgChartArrowStyle arrowStyle;
 
   // Line painting
   late final Paint linePaint;
@@ -33,24 +35,62 @@ class OrgChart<E> extends StatefulWidget {
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
   final void Function(E item, dynamic value)? onOptionSelect;
   final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
-  final bool enableDoubleTapZoom;
 
+  // Interactive viewer configurations
+  final bool enableZoom;
+  final bool enableRotation;
+  final bool constrainBounds;
+  final bool enableDoubleTapZoom;
+  final double doubleTapZoomFactor;
+  final bool enableKeyboardControls;
+  final double keyboardPanDistance;
+  final double keyboardZoomFactor;
+  final bool enableKeyRepeat;
+  final Duration keyRepeatInitialDelay;
+  final Duration keyRepeatInterval;
+  final bool enableCtrlScrollToScale;
+  final bool enableFling;
+  final bool enablePan;
+  final FocusNode? focusNode;
+  final bool animateKeyboardTransitions;
+  final Curve keyboardAnimationCurve;
+  final Duration keyboardAnimationDuration;
   OrgChart({
     super.key,
-    this.minScale = 1,
-    this.maxScale = 4,
-    this.enableDoubleTapZoom = true,
     required this.controller,
+    this.viewerController,
     required this.builder,
     this.optionsBuilder,
     this.onOptionSelect,
     this.onDrop,
+    this.minScale = 0.5,
+    this.maxScale = 4.0,
     this.isDraggable = true,
     this.curve = Curves.elasticOut,
-    this.arrowStyle = const SolidGraphArrow(),
-    this.duration = 700,
+    this.arrowStyle = const OrgChartSolidGraphArrow(),
+    this.duration = const Duration(milliseconds: 700),
     Paint? linePaint,
     this.cornerRadius = 10.0,
+
+    // Interactive viewer configurations with sensible defaults
+    this.enableZoom = true,
+    this.enableRotation = false,
+    this.constrainBounds = false,
+    this.enableDoubleTapZoom = true,
+    this.doubleTapZoomFactor = 2.0,
+    this.enableKeyboardControls = true,
+    this.keyboardPanDistance = 20.0,
+    this.keyboardZoomFactor = 1.1,
+    this.enableKeyRepeat = true,
+    this.keyRepeatInitialDelay = const Duration(milliseconds: 500),
+    this.keyRepeatInterval = const Duration(milliseconds: 50),
+    this.enableCtrlScrollToScale = true,
+    this.enableFling = true,
+    this.enablePan = true,
+    this.focusNode,
+    this.animateKeyboardTransitions = true,
+    this.keyboardAnimationCurve = Curves.easeInOut,
+    this.keyboardAnimationDuration = const Duration(milliseconds: 300),
   }) {
     if (linePaint != null) {
       this.linePaint = linePaint;
@@ -72,37 +112,29 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   String? _draggedID;
   Offset? _panDownPosition;
   // final _transformController = TransformationController();
-  final CustomInteractiveViewerController _controller =
-      CustomInteractiveViewerController();
+  late final CustomInteractiveViewerController _viewerController;
 
   @override
   void initState() {
     super.initState();
+    _viewerController =
+        widget.viewerController ?? CustomInteractiveViewerController();
     _initializeController();
   }
 
   void _initializeController() {
     widget.controller.setState = setState;
-    widget.controller.centerChart = _centerContent;
+    widget.controller.centerChart = _viewerController.center;
+    widget.controller.setViewerController(_viewerController);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _centerContent();
+      _viewerController.center();
     });
-  }
-
-  void _centerContent() {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      _controller.center(
-        widget.controller.getSize(),
-        renderBox.size,
-      );
-    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _viewerController.dispose();
     super.dispose();
   }
 
@@ -110,11 +142,27 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   Widget build(BuildContext context) {
     final size = widget.controller.getSize();
     return CustomInteractiveViewer(
-      controller: _controller,
+      controller: _viewerController,
       contentSize: widget.controller.getSize(),
       minScale: widget.minScale,
       maxScale: widget.maxScale,
-      enableDoubleTapZoom: false,
+      enableDoubleTapZoom: widget.enableDoubleTapZoom,
+      doubleTapZoomFactor: widget.doubleTapZoomFactor,
+      enableRotation: widget.enableRotation,
+      constrainBounds: widget.constrainBounds,
+      enableKeyboardControls: widget.enableKeyboardControls,
+      keyboardPanDistance: widget.keyboardPanDistance,
+      keyboardZoomFactor: widget.keyboardZoomFactor,
+      enableKeyRepeat: widget.enableKeyRepeat,
+      keyRepeatInitialDelay: widget.keyRepeatInitialDelay,
+      keyRepeatInterval: widget.keyRepeatInterval,
+      enableCtrlScrollToScale: widget.enableCtrlScrollToScale,
+      enableFling: widget.enableFling,
+      focusNode: widget.focusNode,
+      enableZoom: widget.enableZoom,
+      animateKeyboardTransitions: widget.animateKeyboardTransitions,
+      keyboardAnimationCurve: widget.keyboardAnimationCurve,
+      keyboardAnimationDuration: widget.keyboardAnimationDuration,
       child: SizedBox(
         width: size.width,
         height: size.height,
@@ -174,8 +222,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       key: Key("ID: ${widget.controller.idProvider(node.data)}"),
       isBeingDragged: isBeingDragged,
       curve: widget.curve,
-      duration:
-          Duration(milliseconds: _draggedID != null ? 0 : widget.duration),
+      duration: _draggedID != null ? Duration.zero : widget.duration,
       top: node.position.dy,
       left: node.position.dx,
       child: hidden
@@ -208,7 +255,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
           NodeBuilderDetails<E>(
             item: node.data,
             level: level,
-            hideNodes: (hide) => _toggleHideNodes(node, hide),
+            hideNodes: ([bool? hide]) => _toggleHideNodes(node, hide),
             nodesHidden: node.hideNodes,
             isBeingDragged: isBeingDragged,
             isOverlapped: _overlapping.isNotEmpty && _overlapping.first == node,

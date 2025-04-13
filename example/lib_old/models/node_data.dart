@@ -6,8 +6,8 @@ class NodeData {
   NodeData._({
     required this.id,
     required this.text,
-    String? parentId,
-  }) : parentId = parentId;
+    this.parentId,
+  });
 
   factory NodeData({
     required String id,

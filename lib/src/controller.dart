@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/node.dart';
 import 'dart:math' as math;
+import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 
 enum OrgChartOrientation { topToBottom, leftToRight }
 
@@ -128,13 +129,31 @@ class OrgChartController<E> {
     }
   }
 
-  Size getSize({Size size = const Size(0, 0)}) {
-    for (Node<E> node in _nodes) {
-      size = Size(
-        math.max(size.width, node.position.dx),
-        math.max(size.height, node.position.dy),
-      );
+  Size _calculateMaxSize(Node<E> node, Size currentSize) {
+    // Update current max size with this node's position
+    Size updatedSize = Size(
+      math.max(currentSize.width, node.position.dx),
+      math.max(currentSize.height, node.position.dy),
+    );
+
+    // If nodes are not hidden, recursively check children
+    if (!node.hideNodes) {
+      List<Node<E>> children = getSubNodes(node);
+      for (Node<E> child in children) {
+        updatedSize = _calculateMaxSize(child, updatedSize);
+      }
     }
+
+    return updatedSize;
+  }
+
+  Size getSize({Size size = const Size(0, 0)}) {
+    // Start from root nodes
+    for (Node<E> root in roots) {
+      size = _calculateMaxSize(root, size);
+    }
+
+    // Add box dimensions to get final size
     return size + Offset(boxSize.width, boxSize.height);
   }
 
@@ -374,6 +393,49 @@ class OrgChartController<E> {
       }
     }
     return level;
+  }
+
+  /// Centers a specific node in the view
+  ///
+  /// [nodeId] The ID of the node to center
+  /// [scale] Optional scale level to apply when centering (null means no scale change)
+  /// [animate] Whether to animate the centering
+  /// [duration] Animation duration when animate is true
+  /// [curve] Animation curve when animate is true
+  Future<void> centerNode(
+    String nodeId, {
+    double? scale,
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+  }) async {
+    if (_viewerController == null) return;
+    final node = _nodes.firstWhere((node) => idProvider(node.data) == nodeId);
+
+    // Create a rectangle representing the node's position and size
+    final nodeRect = Rect.fromLTWH(
+      node.position.dx,
+      node.position.dy,
+      boxSize.width,
+      boxSize.height,
+    );
+
+    // Center on this rectangle
+    await _viewerController!.centerOnRect(
+      nodeRect,
+      scale: scale,
+      animate: animate,
+      duration: duration,
+      curve: curve,
+    );
+  }
+
+  // Reference to the interactive viewer controller
+  CustomInteractiveViewerController? _viewerController;
+
+  /// Sets the interactive viewer controller for node centering
+  void setViewerController(CustomInteractiveViewerController controller) {
+    _viewerController = controller;
   }
 
   /// Removes a node and all its descendants from the list of nodes
