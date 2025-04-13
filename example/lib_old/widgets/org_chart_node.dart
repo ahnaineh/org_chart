@@ -72,23 +72,25 @@ class OrgChartNode extends StatelessWidget {
 
   Widget _buildToggleButton(BuildContext context) {
     final theme = Theme.of(context);
-    return FilledButton.tonal(
-      onPressed: () => onToggleNodes(!details.nodesHidden),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            details.nodesHidden
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined,
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            details.nodesHidden ? 'Show Children' : 'Hide Children',
-            style: theme.textTheme.labelSmall,
-          ),
-        ],
+    return GestureDetector(
+      child: FilledButton.tonal(
+        onPressed: () => onToggleNodes(!details.nodesHidden),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              details.nodesHidden
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              details.nodesHidden ? 'Show Children' : 'Hide Children',
+              style: theme.textTheme.labelSmall,
+            ),
+          ],
+        ),
       ),
     );
   }

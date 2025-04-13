@@ -20,10 +20,11 @@ class Node<E> {
 
   /// Calculates the offset distance between this node and another node
   Offset distance(Node other) => other.position - position;
-  
+
   /// The squared distance between nodes (faster calculation than actual distance)
-  double get distanceSquared => position.dx * position.dx + position.dy * position.dy;
-  
+  double get distanceSquared =>
+      position.dx * position.dx + position.dy * position.dy;
+
   @override
   String toString() => 'Node(position: $position, hideNodes: $hideNodes)';
 }

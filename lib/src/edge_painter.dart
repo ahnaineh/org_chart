@@ -4,17 +4,17 @@ import 'package:org_chart/src/node.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-abstract class GraphArrowStyle {
-  const GraphArrowStyle();
+abstract class OrgChartArrowStyle {
+  const OrgChartArrowStyle();
 }
 
 /// A graph arrow style that renders a solid arrow using a customizable dash pattern.
-class SolidGraphArrow extends GraphArrowStyle {
-  const SolidGraphArrow();
+class OrgChartSolidGraphArrow extends OrgChartArrowStyle {
+  const OrgChartSolidGraphArrow();
 }
 
 /// A graph arrow style that renders a dashed arrow using a customizable dash pattern.
-class DashedGraphArrow extends GraphArrowStyle {
+class OrgChartDashedGraphArrow extends OrgChartArrowStyle {
   /// The dash pattern is defined by the `pattern` parameter, which specifies
   /// alternating lengths of dashes and gaps.
   ///
@@ -26,7 +26,7 @@ class DashedGraphArrow extends GraphArrowStyle {
   /// The `pattern` length is required to be even to maintain a valid
   /// dash-gap sequence.
   final Iterable<double> pattern;
-  const DashedGraphArrow({
+  const OrgChartDashedGraphArrow({
     this.pattern = const [10, 5],
   });
 }
@@ -36,7 +36,7 @@ class EdgePainter<E> extends CustomPainter {
   /// The graph that contains the nodes we want to draw the arrows for.
   OrgChartController<E> controller;
 
-  GraphArrowStyle arrowStyle;
+  OrgChartArrowStyle arrowStyle;
 
   /// the path of the arrows
   Path linePath = Path();
@@ -336,18 +336,18 @@ class EdgePainter<E> extends CustomPainter {
     required Canvas canvas,
   }) {
     switch (arrowStyle) {
-      case SolidGraphArrow _:
+      case OrgChartSolidGraphArrow _:
         linePath.moveTo(p1.dx, p1.dy);
         linePath.lineTo(
           p2.dx,
           p2.dy,
         );
         break;
-      case DashedGraphArrow _:
+      case OrgChartDashedGraphArrow _:
         drawDashedLine(
           p1: p1,
           p2: p2,
-          pattern: (arrowStyle as DashedGraphArrow).pattern,
+          pattern: (arrowStyle as OrgChartDashedGraphArrow).pattern,
           paint: linePaint,
           canvas: canvas,
           // dashWidth: (arrowStyle as DashedGraphArrow).dashWidth,

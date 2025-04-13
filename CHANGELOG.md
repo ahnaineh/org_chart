@@ -1,3 +1,11 @@
+## [4.2.0] - 2025-05-01
+1) Implemented a [CustomInteractiveViewer](https://pub.dev/packages/custom_interactive_viewer) to replace the default one. Benefits include:
+   - Fixed centering issues when zooming in/out and panning.
+   - A new InteractiveViewerController allowing more control over the zoom and pan (and a new rotational 🔥) behavior in the graph.
+   - fling behavior 😁
+   - Fixed a bug in the `getSize` method of the `OrgChartController`. All nodes were checked, even hidden nodes, returning the wrong size. Which also caused issues in centering the graph.
+   - Traverse the graph using keyboard arrows. zoom in and out using + & -
+
 ## [4.1.0] - 2025-04-11
 
 ### Added
@@ -5,7 +13,7 @@
 - Holding the Ctrl key changes trackpad scroll behavior to "scaling in".
 
 ### Fixed
-- `removeItem` with `ActionOnNodeRemoval.connectToParent` now behaves correctly and no longer mimics `ActionOnNodeRemoval.unlink`.
+- Resolved an issue where `removeItem` with `ActionOnNodeRemoval.connectToParent` incorrectly behaved like `ActionOnNodeRemoval.unlink`.
 
 Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of these features and fixes!
 
