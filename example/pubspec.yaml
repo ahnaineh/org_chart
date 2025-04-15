@@ -12,7 +12,7 @@ dependencies:
   org_chart:
     path: '../'
   
-  custom_interactive_viewer: 0.0.4
+  custom_interactive_viewer: ^0.0.4
 
 dev_dependencies:
   flutter_test:
