@@ -55,6 +55,8 @@ class OrgChart<E> extends StatefulWidget {
   final bool animateKeyboardTransitions;
   final Curve keyboardAnimationCurve;
   final Duration keyboardAnimationDuration;
+  final bool invertArrowKeyDirection;
+
   OrgChart({
     super.key,
     required this.controller,
@@ -91,6 +93,7 @@ class OrgChart<E> extends StatefulWidget {
     this.animateKeyboardTransitions = true,
     this.keyboardAnimationCurve = Curves.easeInOut,
     this.keyboardAnimationDuration = const Duration(milliseconds: 300),
+    this.invertArrowKeyDirection = false,
   }) {
     if (linePaint != null) {
       this.linePaint = linePaint;
@@ -163,6 +166,7 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       animateKeyboardTransitions: widget.animateKeyboardTransitions,
       keyboardAnimationCurve: widget.keyboardAnimationCurve,
       keyboardAnimationDuration: widget.keyboardAnimationDuration,
+      invertArrowKeyDirection: widget.invertArrowKeyDirection,
       child: SizedBox(
         width: size.width,
         height: size.height,
@@ -240,8 +244,8 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
       BuildContext context, Node<E> node, bool isBeingDragged, int level) {
     return GestureDetector(
       onTapDown: _handleTapDown,
-      onLongPress: () => _showNodeMenu(context, node),
       onSecondaryTapDown: _handleTapDown,
+      onLongPress: () => _showNodeMenu(context, node),
       onSecondaryTap: () => _showNodeMenu(context, node),
       onPanStart: widget.isDraggable ? (details) => _startDragging(node) : null,
       onPanEnd: widget.isDraggable ? (details) => _finishDragging(node) : null,
@@ -266,8 +270,8 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
   }
 
   void _handleTapDown(TapDownDetails details) {
-    final RenderBox referenceBox = context.findRenderObject() as RenderBox;
-    _panDownPosition = referenceBox.globalToLocal(details.globalPosition);
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    _panDownPosition = overlay.globalToLocal(details.globalPosition);
   }
 
   void _toggleHideNodes(Node<E> node, bool? hide) {
@@ -316,9 +320,10 @@ class _OrgChartState<E> extends State<OrgChart<E>> {
     final result = await showMenu(
       context: context,
       position: RelativeRect.fromRect(
-          Rect.fromLTWH(_panDownPosition!.dx, _panDownPosition!.dy, 30, 30),
-          Rect.fromLTWH(0, 0, overlay.paintBounds.size.width,
-              overlay.paintBounds.size.height)),
+        Rect.fromLTWH(_panDownPosition!.dx, _panDownPosition!.dy, 30, 30),
+        Rect.fromLTWH(0, 0, overlay.paintBounds.size.width,
+            overlay.paintBounds.size.height),
+      ),
       items: options,
     );
 

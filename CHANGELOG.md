@@ -1,4 +1,20 @@
-## [4.2.0] - 2025-05-01
+## [4.2.1]
+
+### Fixed
+1) Fix, the context menu was being rendered offsetted.
+2) The node is checked for being hidden when centerNode method is used.
+
+### Added
+1) CustomInteractiveViewer now in focus on tap, allowing for the direct use of keyboard arrows, instead of needing to navigate to the graph using tab or arrow keys.
+2) Added invertArrowDirection flag to the OrgChart widget.
+3) Fix bugs in the example, and update with new changes.
+
+Check [CustomInteractiveViewer](https://pub.dev/packages/custom_interactive_viewer/changelog) version 0.0.4 for more details.
+
+
+## [4.2.0]
+
+### Added
 1) Implemented a [CustomInteractiveViewer](https://pub.dev/packages/custom_interactive_viewer) to replace the default one. Benefits include:
    - Fixed centering issues when zooming in/out and panning.
    - A new InteractiveViewerController allowing more control over the zoom and pan (and a new rotational 🔥) behavior in the graph.
@@ -6,7 +22,7 @@
    - Fixed a bug in the `getSize` method of the `OrgChartController`. All nodes were checked, even hidden nodes, returning the wrong size. Which also caused issues in centering the graph.
    - Traverse the graph using keyboard arrows. zoom in and out using + & -
 
-## [4.1.0] - 2025-04-11
+## [4.1.0]
 
 ### Added
 - Recursive node removal functionality.

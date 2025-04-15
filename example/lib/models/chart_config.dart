@@ -43,11 +43,13 @@ class ChartConfig {
   // Zoom on node Settings
   String? zoomOnNodeId;
   double zoomOnNodeScaleFactor;
-
   // Keyboard animation settings
   bool animateKeyboardTransitions;
   Curve keyboardAnimationCurve;
   Duration keyboardAnimationDuration;
+
+  // Keyboard direction settings
+  bool invertArrowKeyDirection;
 
   ChartConfig({
     this.orientation = OrgChartOrientation.topToBottom,
@@ -81,6 +83,7 @@ class ChartConfig {
     this.animateKeyboardTransitions = true,
     this.keyboardAnimationCurve = Curves.easeInOut,
     this.keyboardAnimationDuration = const Duration(milliseconds: 300),
+    this.invertArrowKeyDirection = false,
   })  : dashPattern = dashPattern ?? [8.0, 4.0],
         arrowStyle = arrowStyle ?? const OrgChartSolidGraphArrow();
 

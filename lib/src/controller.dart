@@ -412,6 +412,13 @@ class OrgChartController<E> {
     if (_viewerController == null) return;
     final node = _nodes.firstWhere((node) => idProvider(node.data) == nodeId);
 
+    // Check if the node is hidden
+    Node<E>? parent = getParent(node);
+    while (parent != null) {
+      if (parent.hideNodes) return;
+      parent = getParent(parent);
+    }
+
     // Create a rectangle representing the node's position and size
     final nodeRect = Rect.fromLTWH(
       node.position.dx,
@@ -456,5 +463,11 @@ class OrgChartController<E> {
 
     collectDescendantNodes(nodeToRemove);
     nodes.removeWhere((node) => nodesToRemove.contains(node));
+  }
+
+  Node<E>? getParent(Node<E> node) {
+    final parentId = toProvider(node.data);
+    if (parentId == null) return null;
+    return _nodes.where((n) => idProvider(n.data) == parentId).firstOrNull;
   }
 }

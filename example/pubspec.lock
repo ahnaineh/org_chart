@@ -44,10 +44,9 @@ packages:
   custom_interactive_viewer:
     dependency: "direct main"
     description:
-      name: custom_interactive_viewer
-      sha256: "17eae1a3bee017ff160a817e48d9eaee324009f9c9aa14db5a3473238a17d63f"
-      url: "https://pub.dev"
-    source: hosted
+      path: "C:\\Users\\ahnai\\Projects\\custom_interactive_viewer"
+      relative: false
+    source: path
     version: "0.0.3"
   fake_async:
     dependency: transitive

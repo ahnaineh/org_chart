@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ChartOptionsSidebar(
             config: config,
             controller: controller,
-            interactiveController: _interactiveController,
+            interactiveViewerController: _interactiveController,
             onConfigChanged: (newConfig) {
               setState(() {
                 config = newConfig;
@@ -149,18 +149,18 @@ class _HomeScreenState extends State<HomeScreen> {
           constrainBounds: config.constrainBounds,
           enableDoubleTapZoom: config.enableDoubleTapZoom,
           doubleTapZoomFactor: config.doubleTapZoomFactor,
-          enableKeyboardControls: config.enableKeyboardControls,
-          keyboardPanDistance: config.keyboardPanDistance,
-          keyboardZoomFactor: config.keyboardZoomFactor,
           enableKeyRepeat: config.enableKeyRepeat,
           keyRepeatInitialDelay: config.keyRepeatInitialDelay,
           keyRepeatInterval: config.keyRepeatInterval,
           enableCtrlScrollToScale: config.enableCtrlScrollToScale,
-          enableFling: config.enableFling,
-          enablePan: config.enablePan,
+          enableFling: config.enableFling, enablePan: config.enablePan,
+          enableKeyboardControls: config.enableKeyboardControls,
+          keyboardPanDistance: config.keyboardPanDistance,
+          keyboardZoomFactor: config.keyboardZoomFactor,
           animateKeyboardTransitions: config.animateKeyboardTransitions,
           keyboardAnimationCurve: config.keyboardAnimationCurve,
           keyboardAnimationDuration: config.keyboardAnimationDuration,
+          invertArrowKeyDirection: config.invertArrowKeyDirection,
           focusNode: focusNode,
           linePaint: config.getLinePaint(context),
           onDrop: (dragged, target, isTargetSubnode) {

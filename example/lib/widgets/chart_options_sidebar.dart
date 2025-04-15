@@ -10,7 +10,7 @@ import '../utils/chart_utils.dart';
 class ChartOptionsSidebar extends StatelessWidget {
   final ChartConfig config;
   final OrgChartController controller;
-  final CustomInteractiveViewerController interactiveController;
+  final CustomInteractiveViewerController interactiveViewerController;
   final Function(ChartConfig) onConfigChanged;
   final VoidCallback onAddNodePressed;
   final VoidCallback onResetLayoutPressed;
@@ -19,7 +19,7 @@ class ChartOptionsSidebar extends StatelessWidget {
     super.key,
     required this.config,
     required this.controller,
-    required this.interactiveController,
+    required this.interactiveViewerController,
     required this.onConfigChanged,
     required this.onAddNodePressed,
     required this.onResetLayoutPressed,
@@ -504,7 +504,7 @@ class ChartOptionsSidebar extends StatelessWidget {
         ),
         SwitchListTile(
           title: const Text('Double-tap Zoom'),
-          subtitle: const Text('Experimnetal!\nZoom in on double-tap'),
+          subtitle: const Text('Experimental!\nZoom in on double-tap'),
           value: config.enableDoubleTapZoom,
           onChanged: (value) {
             config.enableDoubleTapZoom = value;
@@ -634,9 +634,7 @@ class ChartOptionsSidebar extends StatelessWidget {
           title: const Text('Select Node to Center'),
           subtitle: DropdownButton<String>(
             isExpanded: true,
-            value: controller.items.isNotEmpty
-                ? controller.items.first['id']
-                : null,
+            value: config.zoomOnNodeId,
             items: controller.items
                 .map((node) => DropdownMenuItem(
                       value: node['id'] as String,
@@ -644,9 +642,6 @@ class ChartOptionsSidebar extends StatelessWidget {
                     ))
                 .toList(),
             onChanged: (value) {
-              // if (value != null) {
-              //   controller.centerNode(value, scale: 1.5);
-              // }
               config.zoomOnNodeId = value;
               onConfigChanged(config);
             },
@@ -701,28 +696,28 @@ class ChartOptionsSidebar extends StatelessWidget {
               icon: const Icon(Icons.zoom_in),
               tooltip: 'Zoom In',
               onPressed: () {
-                interactiveController.zoomIn();
+                interactiveViewerController.zoom(factor: 0.2);
               },
             ),
             IconButton(
               icon: const Icon(Icons.zoom_out),
               tooltip: 'Zoom Out',
               onPressed: () {
-                interactiveController.zoomOut();
+                interactiveViewerController.zoom(factor: -0.2);
               },
             ),
             IconButton(
               icon: const Icon(Icons.rotate_90_degrees_ccw),
               tooltip: 'Rotate Left',
               onPressed: () {
-                interactiveController.rotate(math.pi / 5);
+                interactiveViewerController.rotate(math.pi / 5);
               },
             ),
             IconButton(
               icon: const Icon(Icons.rotate_90_degrees_cw),
               tooltip: 'Rotate Right',
               onPressed: () {
-                interactiveController.rotate(-math.pi / 5);
+                interactiveViewerController.rotate(-math.pi / 5);
               },
             ),
           ],
@@ -735,28 +730,28 @@ class ChartOptionsSidebar extends StatelessWidget {
               icon: const Icon(Icons.arrow_upward),
               tooltip: 'Pan Up',
               onPressed: () {
-                interactiveController.panBy(const Offset(0, -50));
+                interactiveViewerController.pan(const Offset(0, -50));
               },
             ),
             IconButton(
               icon: const Icon(Icons.arrow_downward),
               tooltip: 'Pan Down',
               onPressed: () {
-                interactiveController.panBy(const Offset(0, 50));
+                interactiveViewerController.pan(const Offset(0, 50));
               },
             ),
             IconButton(
               icon: const Icon(Icons.arrow_back),
               tooltip: 'Pan Left',
               onPressed: () {
-                interactiveController.panBy(const Offset(-50, 0));
+                interactiveViewerController.pan(const Offset(-50, 0));
               },
             ),
             IconButton(
               icon: const Icon(Icons.arrow_forward),
               tooltip: 'Pan Right',
               onPressed: () {
-                interactiveController.panBy(const Offset(50, 0));
+                interactiveViewerController.pan(const Offset(50, 0));
               },
             ),
           ],
@@ -766,14 +761,14 @@ class ChartOptionsSidebar extends StatelessWidget {
           leading: const Icon(Icons.center_focus_strong),
           title: const Text('Center Chart'),
           onTap: () {
-            interactiveController.center();
+            interactiveViewerController.center();
           },
         ),
         ListTile(
           leading: const Icon(Icons.restart_alt),
           title: const Text('Reset Transforms'),
           onTap: () {
-            interactiveController.reset();
+            interactiveViewerController.reset();
           },
         ),
       ],
@@ -793,6 +788,15 @@ class ChartOptionsSidebar extends StatelessWidget {
           value: config.enableKeyboardControls,
           onChanged: (value) {
             config.enableKeyboardControls = value;
+            onConfigChanged(config);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('Invert Arrow Key Direction'),
+          subtitle: const Text('Reverse the direction of arrow key navigation'),
+          value: config.invertArrowKeyDirection,
+          onChanged: (value) {
+            config.invertArrowKeyDirection = value;
             onConfigChanged(config);
           },
         ),
