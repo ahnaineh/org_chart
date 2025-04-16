@@ -1,6 +1,6 @@
 # Org Chart
 
-A Flutter organizational chart package with drag and drop, zoom and pan, search, collapse/expand, and extremely easy node customization. Built entirely in Flutter, so it works on all platforms supported by Flutter!
+A Flutter organizational chart package with drag and drop, zoom and pan, collapse/expand, and extremely easy node customization. Built entirely in Flutter, so it works on all platforms supported by Flutter!
 
 [![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](https://pub.dev/packages/org_chart)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
@@ -14,7 +14,6 @@ A Flutter organizational chart package with drag and drop, zoom and pan, search,
 - 📊 Versatile organizational chart with multiple layout options
 - 🔍 Zoomable and pannable interface
 - 🔄 Dynamic drag and drop functionality
-- 🔍 Search capabilities
 - 📱 Responsive design that works across all Flutter platforms
 - 🎨 Highly customizable node appearance and behavior
 - ↔️ Multiple orientation support (top-to-bottom, left-to-right)
