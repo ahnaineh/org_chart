@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
+
 /// The orientation of the organizational chart
 enum OrgChartOrientation { topToBottom, leftToRight }
 
-/// Defines actions to take when removing nodes from the org chart
-enum ActionOnNodeRemoval { unlink, connectToParent }
+enum ActionOnNodeRemoval { unlink, connectToParent, removeDescendants }
 
 /// Controller specifically for organizational charts
 class OrgChartController<E> extends BaseGraphController<E> {
@@ -104,8 +105,14 @@ class OrgChartController<E> extends BaseGraphController<E> {
 
   /// Remove an item from the chart
   void removeItem(String? id, ActionOnNodeRemoval action) {
-    assert(toSetter != null,
-        "toSetter is not provided, you can't use this function without providing a toSetter");
+    if (action == ActionOnNodeRemoval.unlink ||
+        action == ActionOnNodeRemoval.connectToParent) {
+      assert(toSetter != null,
+          "toSetter is not provided, you can't use this function without providing a toSetter");
+    }
+
+    final nodeToRemove =
+        nodes.firstWhere((element) => idProvider(element.data) == id);
 
     final subnodes =
         roots.where((element) => toProvider(element.data) == id).toList();
@@ -116,12 +123,16 @@ class OrgChartController<E> extends BaseGraphController<E> {
           toSetter!(node.data, null);
           break;
         case ActionOnNodeRemoval.connectToParent:
-          toSetter!(node.data, toProvider(node.data));
+          toSetter!(node.data, toProvider(nodeToRemove.data));
+          break;
+        case ActionOnNodeRemoval.removeDescendants:
+          removeNodeAndDescendants(nodes, node);
           break;
       }
     }
 
-    items = items.where((element) => idProvider(element) != id).toList();
+    nodes.remove(nodeToRemove);
+    calculatePosition();
   }
 
   @override
@@ -140,6 +151,35 @@ class OrgChartController<E> extends BaseGraphController<E> {
     if (center) {
       centerGraph?.call();
     }
+  }
+
+  Size _calculateMaxSize(Node<E> node, Size currentSize) {
+    // Update current max size with this node's position
+    Size updatedSize = Size(
+      math.max(currentSize.width, node.position.dx),
+      math.max(currentSize.height, node.position.dy),
+    );
+
+    // If nodes are not hidden, recursively check children
+    if (!node.hideNodes) {
+      List<Node<E>> children = getSubNodes(node);
+      for (Node<E> child in children) {
+        updatedSize = _calculateMaxSize(child, updatedSize);
+      }
+    }
+
+    return updatedSize;
+  }
+
+  @override
+  Size getSize({Size size = const Size(0, 0)}) {
+    // Start from root nodes
+    for (Node<E> root in roots) {
+      size = _calculateMaxSize(root, size);
+    }
+
+    // Add box dimensions to get final size
+    return size + Offset(boxSize.width, boxSize.height);
   }
 
   // Private position calculation methods
@@ -325,5 +365,73 @@ class OrgChartController<E> extends BaseGraphController<E> {
       }
       return relativeOffset;
     }
+  }
+  /// Centers a specific node in the view
+  ///
+  /// [nodeId] The ID of the node to center
+  /// [scale] Optional scale level to apply when centering (null means no scale change)
+  /// [animate] Whether to animate the centering
+  /// [duration] Animation duration when animate is true
+  /// [curve] Animation curve when animate is true
+  Future<void> centerNode(
+    String nodeId, {
+    double? scale,
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+  }) async {
+    if (viewerController == null) return;
+    final node = nodes.firstWhere((node) => idProvider(node.data) == nodeId);
+
+    // Check if the node is hidden
+    Node<E>? parent = getParent(node);
+    while (parent != null) {
+      if (parent.hideNodes) return;
+      parent = getParent(parent);
+    }
+
+    // Create a rectangle representing the node's position and size
+    final nodeRect = Rect.fromLTWH(
+      node.position.dx,
+      node.position.dy,
+      boxSize.width,
+      boxSize.height,
+    );
+
+    // Center on this rectangle
+    await viewerController!.centerOnRect(
+      nodeRect,
+      scale: scale,
+      animate: animate,
+      duration: duration,
+      curve: curve,
+    );
+  }
+
+
+  /// Removes a node and all its descendants from the list of nodes
+  void removeNodeAndDescendants(List<Node<E>> nodes, Node<E> nodeToRemove) {
+    Set<Node<E>> nodesToRemove = {};
+
+    void collectDescendantNodes(Node<E> currentNode) {
+      nodesToRemove.add(currentNode);
+
+      final nodeId = idProvider(currentNode.data);
+      final subnodes =
+          nodes.where((element) => toProvider(element.data) == nodeId);
+
+      for (final node in subnodes) {
+        collectDescendantNodes(node);
+      }
+    }
+
+    collectDescendantNodes(nodeToRemove);
+    nodes.removeWhere((node) => nodesToRemove.contains(node));
+  }
+
+  Node<E>? getParent(Node<E> node) {
+    final parentId = toProvider(node.data);
+    if (parentId == null) return null;
+    return nodes.where((n) => idProvider(n.data) == parentId).firstOrNull;
   }
 }
