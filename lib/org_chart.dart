@@ -1,4 +1,4 @@
-library org_chart;
+library;
 
 // Re-export from the specific OrgChart modules for backward compatibility
 export 'src/graphs/org_chart/org_chart.dart' show OrgChart;

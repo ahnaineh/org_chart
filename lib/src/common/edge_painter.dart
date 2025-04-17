@@ -91,7 +91,6 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
           p1: p1,
           p2: p2,
           pattern: (arrowStyle as DashedGraphArrow).pattern,
-          paint: linePaint,
           canvas: canvas,
         );
         linePath.moveTo(p2.dx, p2.dy);
@@ -101,11 +100,10 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
 
   /// Helper method to draw a dashed line between two points
   void drawDashedLine({
-    required Canvas canvas,
     required Offset p1,
     required Offset p2,
+    required Canvas canvas,
     required Iterable<double> pattern,
-    required Paint paint,
   }) {
     assert(
         pattern.length.isEven, "Pattern must have an even number of elements");
@@ -121,6 +119,6 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
       t += normalizedPattern[i++]; // dashSpace
       i %= normalizedPattern.length;
     }
-    canvas.drawPoints(ui.PointMode.lines, points, paint);
+    canvas.drawPoints(ui.PointMode.lines, points, linePaint);
   }
 }

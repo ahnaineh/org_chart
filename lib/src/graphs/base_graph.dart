@@ -29,7 +29,7 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final void Function(E item, dynamic value)? onOptionSelect;
 
   BaseGraph({
-    Key? key,
+    super.key,
     required this.controller,
     required this.builder,
     this.minScale = 0.001,
@@ -42,13 +42,12 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.onOptionSelect,
     this.arrowStyle = const SolidGraphArrow(),
     this.cornerRadius = 10.0,
-  })  : this.linePaint = linePaint ??
+  })  : linePaint = linePaint ??
             (Paint()
               ..color = Colors.black
               ..strokeWidth = 0.5
               ..style = PaintingStyle.stroke
-              ..strokeCap = StrokeCap.round),
-        super(key: key);
+              ..strokeCap = StrokeCap.round);
 }
 
 /// Base state class for graph widgets

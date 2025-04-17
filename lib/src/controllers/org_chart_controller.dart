@@ -21,24 +21,18 @@ class OrgChartController<E> extends BaseGraphController<E> {
   void Function(E data, String? newID)? toSetter;
 
   OrgChartController({
-    required List<E> items,
-    Size boxSize = const Size(200, 100),
-    double spacing = 20,
-    double runSpacing = 50,
-    required String Function(E data) idProvider,
+    required super.items,
+    super.boxSize,
+    super.spacing,
+    super.runSpacing,
+    required super.idProvider,
     required this.toProvider,
     this.toSetter,
     OrgChartOrientation orientation = OrgChartOrientation.leftToRight,
-  })  : _orientation = orientation,
-        super(
-          items: items,
-          boxSize: boxSize,
-          spacing: spacing,
-          runSpacing: runSpacing,
-          idProvider: idProvider,
-        );
+  })  : _orientation = orientation;
 
   // Node-related methods
+  @override
   List<Node<E>> get roots =>
       nodes.where((node) => getLevel(node) == 1).toList();
 

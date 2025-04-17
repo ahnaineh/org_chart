@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
@@ -43,6 +44,12 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// Used for correct positioning in family groups and relationship visualization
   int Function(E data) genderProvider;
 
+  /// Cache for getParents method to improve performance
+  final Map<String, List<Node<E>>> _parentsCache = {};
+
+  /// Cache for getSpouseList method to improve performance
+  final Map<String, List<Node<E>>> _spousesCache = {};
+
   /// Creates a genogram controller with the specified parameters
   ///
   /// [items]: List of data items to display in the genogram
@@ -56,24 +63,30 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// [genderProvider]: Function to determine gender (0=male, 1=female) of a data item
   /// [orientation]: Initial layout orientation (default: topToBottom)
   GenogramController({
-    required List<E> items,
-    Size boxSize = const Size(150, 150),
-    double spacing = 30,
-    double runSpacing = 60,
-    required String Function(E data) idProvider,
+    required super.items,
+    super.boxSize = const Size(150, 150),
+    super.spacing = 30,
+    super.runSpacing = 60,
+    required super.idProvider,
     required this.fatherProvider,
     required this.motherProvider,
     required this.spousesProvider,
     required this.genderProvider,
     GenogramOrientation orientation = GenogramOrientation.topToBottom,
-  })  : _orientation = orientation,
-        super(
-          items: items,
-          boxSize: boxSize,
-          spacing: spacing,
-          runSpacing: runSpacing,
-          idProvider: idProvider,
-        );
+  }) : _orientation = orientation;
+
+  /// Clears all caches when items change
+  @override
+  set items(List<E> items) {
+    _clearCaches();
+    super.items = items;
+  }
+
+  /// Clears all internal caches
+  void _clearCaches() {
+    _parentsCache.clear();
+    _spousesCache.clear();
+  }
 
   /// Identifies the root nodes of the genogram
   ///
@@ -118,32 +131,51 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// Retrieves the parent nodes for a given child node
   ///
   /// This function finds the father and mother nodes of a specific individual.
+  /// Results are cached for performance.
   ///
   /// [node]: Child node to find parents for
   /// Returns a list of nodes containing the father and/or mother nodes (0-2 items)
   List<Node<E>> getParents(Node<E> node) {
+    final String nodeId = idProvider(node.data);
+
+    // Return cached result if available
+    if (_parentsCache.containsKey(nodeId)) {
+      return _parentsCache[nodeId]!;
+    }
+
     // Extract the father and mother IDs from the child data
     final fatherId = fatherProvider(node.data);
     final motherId = motherProvider(node.data);
 
-    // Return nodes that match either father or mother ID
-    return nodes
+    // Find nodes that match either father or mother ID
+    final result = nodes
         .where((element) =>
             idProvider(element.data) == fatherId ||
             idProvider(element.data) == motherId)
         .toList();
+
+    // Cache the result for future calls
+    _parentsCache[nodeId] = result;
+
+    return result;
   }
 
   /// Retrieves all spouse nodes for a given data item
   ///
   /// This function finds all individuals who are married to the specified person,
   /// whether the relationship is stored on this person or on their spouse.
+  /// Results are cached for performance.
   ///
   /// [data]: Data item to find spouses for
   /// Returns a list of nodes representing the spouses of the input data
   List<Node<E>> getSpouseList(E data) {
     // Get the unique ID of this person
     final String personId = idProvider(data);
+
+    // Return cached result if available
+    if (_spousesCache.containsKey(personId)) {
+      return _spousesCache[personId]!;
+    }
 
     // Create a set to avoid duplicate spouses
     final Set<Node<E>> spouses = {};
@@ -152,20 +184,23 @@ class GenogramController<E> extends BaseGraphController<E> {
     final spouseIds = spousesProvider(data) ?? [];
     spouses.addAll(
         nodes.where((node) => spouseIds.contains(idProvider(node.data))));
-    // TODO: update this. use a where function
+
     // Method 2: Reverse lookup - find nodes that list this person as their spouse
-    for (final Node<E> potentialSpouse in nodes) {
+    // Using where function for better readability and performance
+    spouses.addAll(nodes.where((potentialSpouse) {
       // Skip self
-      if (idProvider(potentialSpouse.data) == personId) continue;
+      if (idProvider(potentialSpouse.data) == personId) return false;
 
       // Check if this potential spouse lists our person as their spouse
       final otherSpouseIds = spousesProvider(potentialSpouse.data) ?? [];
-      if (otherSpouseIds.contains(personId)) {
-        spouses.add(potentialSpouse);
-      }
-    }
+      return otherSpouseIds.contains(personId);
+    }));
 
-    return spouses.toList();
+    // Cache the result for future calls
+    final result = spouses.toList();
+    _spousesCache[personId] = result;
+
+    return result;
   }
 
   /// Changes the orientation of the genogram layout
@@ -200,14 +235,18 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// [center]: Whether to center the graph after layout (default: true)
   @override
   void calculatePosition({bool center = true}) {
+    // Clear caches before recalculating positions
+    _clearCaches();
+
     // Track nodes that have been positioned to avoid duplicates
     final Set<Node<E>> laidOut = <Node<E>>{};
 
-    // For each level (generation), track the rightmost edge to prevent overlaps
-    final Map<int, double> levelRightEdges = {};
+    // For each level (generation), track the rightmost edge (or bottommost edge for leftToRight)
+    // to prevent overlaps
+    final Map<int, double> levelEdges = {};
 
-    // Minimum X position to ensure nothing goes negative
-    final double minX = spacing * 2;
+    // Minimum position to ensure nothing goes negative
+    final double minPos = spacing * 2;
 
     /// Internal helper: Gets all children of a given couple group
     ///
@@ -231,25 +270,37 @@ class GenogramController<E> extends BaseGraphController<E> {
     /// Recursive function to layout a family subtree
     ///
     /// This function positions a node, its spouses, and all descendants.
-    /// Returns the total width required for this subtree.
+    /// Returns the total width (or height for leftToRight) required for this subtree.
     ///
     /// [node]: Current node being positioned
     /// [x]: Starting x-coordinate for this node
     /// [y]: Y-coordinate for this node
     /// [level]: Current generation level (0 = roots)
     double layoutFamily(Node<E> node, double x, double y, int level) {
-      // Ensure x is never less than minX
-      x = max(x, minX);
+      // Ensure starting position is never less than minimum
+      if (_orientation == GenogramOrientation.topToBottom) {
+        x = max(x, minPos);
+      } else {
+        y = max(y, minPos);
+      }
 
       // Skip if this node has already been positioned
       if (laidOut.contains(node)) {
-        return 0; // No additional width required
+        return 0; // No additional space required
       }
 
-      // Check if we need to adjust horizontal position to avoid overlapping with existing nodes
-      if (levelRightEdges.containsKey(level)) {
-        // Ensure we start after the rightmost node at this level plus spacing
-        x = max(x, levelRightEdges[level]! + spacing * 2);
+      // Check if we need to adjust position to avoid overlapping with existing nodes
+      if (levelEdges.containsKey(level)) {
+        if (_orientation == GenogramOrientation.topToBottom) {
+          // Ensure we start after the rightmost node at this level plus spacing
+          x = max(x, levelEdges[level]! + spacing);
+        } else {
+          // For leftToRight, ensure we start after the bottommost node plus spacing
+          y = max(y, levelEdges[level]! + spacing);
+        }
+      } else {
+        levelEdges[level] =
+            _orientation == GenogramOrientation.topToBottom ? x : y;
       }
 
       // Build the couple group (a husband and his wife/wives, or just a single individual)
@@ -270,7 +321,7 @@ class GenogramController<E> extends BaseGraphController<E> {
           laidOut.remove(spouse);
         }
 
-        // Add all wives to the right of the husband
+        // Add all wives to the right/below of the husband depending on orientation
         coupleGroup.addAll(spouses);
         laidOut.addAll(spouses);
       }
@@ -297,16 +348,28 @@ class GenogramController<E> extends BaseGraphController<E> {
         return 0;
       }
 
-      // Calculate the total width needed for this couple group
-      // groupWidth = number of individuals * box width + spacing between them
+      // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
-      final double groupWidth =
-          groupCount * boxSize.width + (groupCount - 1) * spacing;
+      final double groupSize = groupCount *
+              (_orientation == GenogramOrientation.topToBottom
+                  ? boxSize.width
+                  : boxSize.height) +
+          (groupCount - 1) * spacing;
 
-      // Position each person in the couple group horizontally in a row
+      // Position each person in the couple group in a row or column depending on orientation
       for (int i = 0; i < groupCount; i++) {
-        final double nodeX = x + i * (boxSize.width + spacing);
-        coupleGroup[i].position = Offset(nodeX, y);
+        final double offset = i *
+            (_orientation == GenogramOrientation.topToBottom
+                ? boxSize.width + spacing
+                : boxSize.height + spacing);
+
+        if (_orientation == GenogramOrientation.topToBottom) {
+          final double nodeX = x + offset;
+          coupleGroup[i].position = Offset(nodeX, y);
+        } else {
+          final double nodeY = y + offset;
+          coupleGroup[i].position = Offset(x, nodeY);
+        }
       }
 
       // Get all children for this couple group that haven't been positioned yet
@@ -314,123 +377,99 @@ class GenogramController<E> extends BaseGraphController<E> {
           .where((child) => !laidOut.contains(child))
           .toList();
 
-      // Sort children by parent combinations to group siblings with the same parents
-      children.sort((a, b) {
-        // First, identify the husband in the couple group (if any)
-        final Node<E>? husband =
-            coupleGroup.where((node) => isMale(node.data)).firstOrNull;
-
-        if (husband != null) {
-          final String husbandId = idProvider(husband.data);
-
-          // Get all wives/spouses in the order they appear in the couple group
-          final List<String> spouseIds = coupleGroup
-              .where((node) => !isMale(node.data))
-              .map((node) => idProvider(node.data))
-              .toList();
-
-          // Check if each child belongs to the husband
-          final bool aIsHusbandChild = fatherProvider(a.data) == husbandId;
-          final bool bIsHusbandChild = fatherProvider(b.data) == husbandId;
-
-          if (aIsHusbandChild && bIsHusbandChild) {
-            // Both are husband's children, now check mother
-            final String? aMotherId = motherProvider(a.data);
-            final String? bMotherId = motherProvider(b.data);
-
-            // If either has no mother, those come first
-            if (aMotherId == null && bMotherId != null) return -1;
-            if (aMotherId != null && bMotherId == null) return 1;
-            if (aMotherId == null && bMotherId == null) return 0;
-
-            // Both have mothers, sort by the mother's position in spouse list
-            final int aMotherIndex = spouseIds.indexOf(aMotherId!);
-            final int bMotherIndex = spouseIds.indexOf(bMotherId!);
-
-            // If mother is in spouse list, sort by their order
-            if (aMotherIndex != -1 && bMotherIndex != -1) {
-              return aMotherIndex - bMotherIndex;
-            }
-
-            // If one mother is in spouse list but other isn't
-            if (aMotherIndex != -1) return -1;
-            if (bMotherIndex != -1) return 1;
-          }
-
-          // If only one is husband's child, put it first
-          if (aIsHusbandChild && !bIsHusbandChild) return -1;
-          if (!aIsHusbandChild && bIsHusbandChild) return 1;
-        }
-
-        // Default fallback: sort by parent combinations as before
-        final aFather = fatherProvider(a.data);
-        final bFather = fatherProvider(b.data);
-        final aMother = motherProvider(a.data);
-        final bMother = motherProvider(b.data);
-
-        // Compare parent combinations
-        final aCombo = '${aFather ?? ""}:${aMother ?? ""}';
-        final bCombo = '${bFather ?? ""}:${bMother ?? ""}';
-        return aCombo.compareTo(bCombo);
-      });
+      // Sort children using the dedicated method
+      sortChildrenBySiblingGroups(children, coupleGroup);
 
       // If no children, this subtree is just the couple group with no descendants
       if (children.isEmpty) {
-        // Update the rightmost edge for this level
-        levelRightEdges[level] = x + groupWidth;
-        return groupWidth;
+        // Update the edge for this level
+        levelEdges[level] = _orientation == GenogramOrientation.topToBottom
+            ? x + groupSize
+            : y + groupSize;
+        return groupSize;
       }
 
-      // Position all children below their parents
-      final double childrenY = y + boxSize.height + runSpacing;
-      double childrenTotalWidth =
-          0; // Track total width required for all children
-      double childX = x; // Starting x position for first child
+      // Distance for children from parent
+      final double childDistance =
+          _orientation == GenogramOrientation.topToBottom
+              ? boxSize.height + runSpacing
+              : boxSize.width + runSpacing;
+
+      // Position coordinates for children based on orientation
+      final double childrenX = _orientation == GenogramOrientation.topToBottom
+          ? x
+          : x + childDistance;
+
+      final double childrenY = _orientation == GenogramOrientation.topToBottom
+          ? y + childDistance
+          : y;
+
+      double childrenTotalSize =
+          0; // Track total width/height required for all children
+      double childPos = _orientation == GenogramOrientation.topToBottom
+          ? childrenX
+          : childrenY;
 
       // Position each child and their descendants recursively
       for (final child in children) {
-        // For each child, calculate the width of their entire subtree
-        final double subtreeWidth =
-            layoutFamily(child, childX, childrenY, level + 1);
+        // For each child, calculate the size of their entire subtree
+        final double subtreeSize =
+            _orientation == GenogramOrientation.topToBottom
+                ? layoutFamily(child, childPos, childrenY, level + 1)
+                : layoutFamily(child, childrenX, childPos, level + 1);
 
-        // Add this subtree's width to the running total
-        childrenTotalWidth += subtreeWidth;
+        // Add this subtree's size to the running total
+        childrenTotalSize += subtreeSize;
 
-        // Move the next child's position to the right, adding extra spacing
-        // The 1.5x spacing factor provides better separation between sibling families
-        childX += subtreeWidth + spacing * 1.5;
+        // Move the next child's position, adding extra spacing
+        childPos += subtreeSize + spacing * 1.5;
       }
 
-      // Remove the extra spacing after the last child (which wasn't needed)
-      if (children.isNotEmpty) {
-        childrenTotalWidth -=
-            spacing * 0.5; // Adjust for the extra spacing we added
+      // Calculate true children size by removing the extra spacing after the last child
+      final double trueChildrenSize = children.isNotEmpty
+          ? childrenTotalSize -
+              spacing * 0.5 // Remove extra spacing from last child
+          : 0;
+
+      // Center the parent couple group above/before their children to make the tree visually balanced
+      double parentCenter, childrenCenter, shift;
+
+      if (_orientation == GenogramOrientation.topToBottom) {
+        parentCenter = x + groupSize / 2;
+        childrenCenter = x + trueChildrenSize / 2;
+      } else {
+        parentCenter = y + groupSize / 2;
+        childrenCenter = y + trueChildrenSize / 2;
       }
 
-      // Center the parent couple group above their children to make the tree visually balanced
-      // 1. Calculate center point of couple group
-      final double parentCenter = x + groupWidth / 2;
-      // 2. Calculate center point of children's total width
-      final double childrenCenter = x + childrenTotalWidth / 2;
-      // 3. Calculate how much to shift parents to center them
-      final double shift = childrenCenter - parentCenter;
+      shift = childrenCenter - parentCenter;
 
-      // Apply the shift to each parent in the couple group
-      for (final parent in coupleGroup) {
-        parent.position =
-            Offset(parent.position.dx + shift, parent.position.dy);
+      // Only apply shifts when there are actually children and their size is greater than parents
+      if (children.isNotEmpty && trueChildrenSize > groupSize) {
+        // Apply the shift to each parent in the couple group
+        for (final parent in coupleGroup) {
+          if (_orientation == GenogramOrientation.topToBottom) {
+            parent.position =
+                Offset(parent.position.dx + shift, parent.position.dy);
+          } else {
+            parent.position =
+                Offset(parent.position.dx, parent.position.dy + shift);
+          }
+        }
       }
 
-      // The total width of this subtree is the maximum of:
-      // - couple group width (parents)
-      // - total width of all children subtrees
-      final totalWidth = max(groupWidth, childrenTotalWidth);
+      // The total size of this subtree is the maximum of:
+      // - couple group size (parents)
+      // - total size of all children subtrees
+      final totalSize = max(groupSize, trueChildrenSize);
 
-      // Update the rightmost edge for this level
-      levelRightEdges[level] = x + totalWidth;
+      // Update the edge for this level
+      levelEdges[level] = _orientation == GenogramOrientation.topToBottom
+          ? x + totalSize
+          : y + totalSize;
 
-      // Return the total width needed for this entire family subtree
-      return totalWidth;
+      // Return the total size needed for this entire family subtree
+      return totalSize;
     }
 
     // Prioritize processing male nodes first among roots
@@ -444,18 +483,19 @@ class GenogramController<E> extends BaseGraphController<E> {
       return idProvider(a.data).compareTo(idProvider(b.data));
     });
 
-    // Layout each family tree (starting with each root) horizontally
-    double currentX = minX; // Start with minimum X value
-
     // Process each root node (individuals with no parents)
+    double currentPos = minPos; // Start with minimum position value
+
     for (final root in sortedRoots) {
       if (laidOut.contains(root)) continue; // Skip if already positioned
 
-      // Layout this root's entire family tree and get its width
-      final double subtreeWidth = layoutFamily(root, currentX, 0, 0);
+      // Layout this root's entire family tree and get its size
+      final double subtreeSize = _orientation == GenogramOrientation.topToBottom
+          ? layoutFamily(root, currentPos, 0, 0)
+          : layoutFamily(root, 0, currentPos, 0);
 
       // Move to the position for the next root, adding extra spacing
-      currentX += subtreeWidth + spacing * 3;
+      currentPos += subtreeSize + spacing * 3;
     }
 
     // Notify listeners that positions have been updated
@@ -467,5 +507,77 @@ class GenogramController<E> extends BaseGraphController<E> {
     if (center) {
       centerGraph?.call();
     }
+  }
+
+  /// Sorts children by sibling groups to keep children of the same parents together
+  ///
+  /// This method organizes children in a logical order:
+  /// 1. Children of the husband (male in couple) come first
+  /// 2. Children with the same mother are grouped together
+  /// 3. Children are ordered based on their mother's position in the couple
+  /// 4. Children without a specified mother come before those with mothers
+  ///
+  /// [children]: List of child nodes to sort
+  /// [coupleGroup]: List of parent nodes forming a family unit
+  void sortChildrenBySiblingGroups(
+      List<Node<E>> children, List<Node<E>> coupleGroup) {
+    children.sort((a, b) {
+      // First, identify the husband in the couple group (if any)
+      final Node<E>? husband =
+          coupleGroup.where((node) => isMale(node.data)).firstOrNull;
+
+      if (husband != null) {
+        final String husbandId = idProvider(husband.data);
+
+        // Get all wives/spouses in the order they appear in the couple group
+        final List<String> spouseIds = coupleGroup
+            .where((node) => !isMale(node.data))
+            .map((node) => idProvider(node.data))
+            .toList();
+
+        // Check if each child belongs to the husband
+        final bool aIsHusbandChild = fatherProvider(a.data) == husbandId;
+        final bool bIsHusbandChild = fatherProvider(b.data) == husbandId;
+
+        if (aIsHusbandChild && bIsHusbandChild) {
+          // Both are husband's children, now check mother
+          final String? aMotherId = motherProvider(a.data);
+          final String? bMotherId = motherProvider(b.data);
+
+          // If either has no mother, those come first
+          if (aMotherId == null && bMotherId != null) return -1;
+          if (aMotherId != null && bMotherId == null) return 1;
+          if (aMotherId == null && bMotherId == null) return 0;
+
+          // Both have mothers, sort by the mother's position in spouse list
+          final int aMotherIndex = spouseIds.indexOf(aMotherId!);
+          final int bMotherIndex = spouseIds.indexOf(bMotherId!);
+
+          // If mother is in spouse list, sort by their order
+          if (aMotherIndex != -1 && bMotherIndex != -1) {
+            return aMotherIndex - bMotherIndex;
+          }
+
+          // If one mother is in spouse list but other isn't
+          if (aMotherIndex != -1) return -1;
+          if (bMotherIndex != -1) return 1;
+        }
+
+        // If only one is husband's child, put it first
+        if (aIsHusbandChild && !bIsHusbandChild) return -1;
+        if (!aIsHusbandChild && bIsHusbandChild) return 1;
+      }
+
+      // Default fallback: sort by parent combinations as before
+      final aFather = fatherProvider(a.data);
+      final bFather = fatherProvider(b.data);
+      final aMother = motherProvider(a.data);
+      final bMother = motherProvider(b.data);
+
+      // Compare parent combinations
+      final aCombo = '${aFather ?? ""}:${aMother ?? ""}';
+      final bCombo = '${bFather ?? ""}:${bMother ?? ""}';
+      return aCombo.compareTo(bCombo);
+    });
   }
 }

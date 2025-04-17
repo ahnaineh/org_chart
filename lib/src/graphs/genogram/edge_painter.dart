@@ -7,18 +7,16 @@ import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/genogram_controller.dart';
 
 class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
+  @override
   final GenogramController<E> controller;
 
   GenogramEdgePainter({
     required this.controller,
-    required Paint linePaint,
-    double cornerRadius = 10,
-    required GraphArrowStyle arrowStyle,
+    required super.linePaint,
+    super.cornerRadius,
+    required super.arrowStyle,
   }) : super(
           controller: controller,
-          linePaint: linePaint,
-          cornerRadius: cornerRadius,
-          arrowStyle: arrowStyle,
         );
 
   // Predefined colors to differentiate each marriage connection.
@@ -30,12 +28,35 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
     Colors.purple,
     Colors.teal,
   ];
-  // Compute key points on a node.
+
+  // Compute key points on a node based on orientation
   Offset getCenter(Node<E> node) =>
       node.position +
       Offset(controller.boxSize.width / 2, controller.boxSize.height / 2);
-  Offset getTopCenter(Node<E> node) =>
-      node.position + Offset(controller.boxSize.width / 2, 0);
+
+  // Get the connection point for parent-child relationship based on orientation
+  Offset getParentConnPoint(Node<E> node) {
+    if (controller.orientation == GenogramOrientation.topToBottom) {
+      // For topToBottom, connect from bottom center of parent
+      return node.position +
+          Offset(controller.boxSize.width / 2, controller.boxSize.height);
+    } else {
+      // For leftToRight, connect from right center of parent
+      return node.position +
+          Offset(controller.boxSize.width, controller.boxSize.height / 2);
+    }
+  }
+
+  // Get the connection point for child based on orientation
+  Offset getChildConnPoint(Node<E> node) {
+    if (controller.orientation == GenogramOrientation.topToBottom) {
+      // For topToBottom, connect to top center of child
+      return node.position + Offset(controller.boxSize.width / 2, 0);
+    } else {
+      // For leftToRight, connect to left center of child
+      return node.position + Offset(0, controller.boxSize.height / 2);
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -112,11 +133,18 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       final int totalSpouses = connection['totalSpouses'];
 
       // Add a small offset for multiple marriages to prevent overlap
-      const double offsetY = 2.0;
-      final Offset adjustedHusbandCenter =
-          husbandCenter + Offset(0, spouseIndex * offsetY);
-      final Offset adjustedWifeCenter =
-          wifeCenter + Offset(0, spouseIndex * offsetY);
+      final double offset = 2.0;
+      Offset adjustedHusbandCenter, adjustedWifeCenter;
+
+      if (controller.orientation == GenogramOrientation.topToBottom) {
+        // For topToBottom, offset in Y direction
+        adjustedHusbandCenter = husbandCenter + Offset(0, spouseIndex * offset);
+        adjustedWifeCenter = wifeCenter + Offset(0, spouseIndex * offset);
+      } else {
+        // For leftToRight, offset in X direction
+        adjustedHusbandCenter = husbandCenter + Offset(spouseIndex * offset, 0);
+        adjustedWifeCenter = wifeCenter + Offset(spouseIndex * offset, 0);
+      }
 
       // Draw the marriage line
       canvas.drawLine(adjustedHusbandCenter, adjustedWifeCenter, marriagePaint);
@@ -129,9 +157,6 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       // Additional wives: move closer to wife position (ratio > 0.5)
       double connectionRatio = 0.5;
       if (spouseIndex > 0 && totalSpouses > 1) {
-        // For additional wives, move connection point closer to wife
-        // Use 0.65 for 2nd wife, 0.75 for 3rd wife, etc.
-        // connectionRatio = 0.5 + (0.15 * spouseIndex);
         connectionRatio = 0.5 + 0.25;
       }
 
@@ -142,6 +167,7 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
           adjustedHusbandCenter.dy +
               (adjustedWifeCenter.dy - adjustedHusbandCenter.dy) *
                   connectionRatio);
+
       marriagePoints[marriageKey] = marriagePoint;
     }
 
@@ -151,9 +177,8 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
       final String? motherId = controller.motherProvider(child.data);
       if (fatherId == null && motherId == null) continue;
 
-      final Offset childTop = getTopCenter(child);
+      final Offset childConnPoint = getChildConnPoint(child);
       final bool isFemale = controller.isFemale(child.data);
-      // final List<String>? childSpouses = controller.spousesProvider(child.data);
       final List<Node<E>> childSpouses = controller.getSpouseList(child.data);
       final bool isMarriedFemale = isFemale && childSpouses.isNotEmpty;
 
@@ -197,22 +222,22 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
 
           if (isMarriedFemale) {
             drawTwoSegmentArrow(
-                canvas, connectionStart, childTop, connectionPaint);
+                canvas, connectionStart, childConnPoint, connectionPaint);
           } else {
             drawSegmentedArrow(
-                canvas, connectionStart, childTop, connectionPaint);
+                canvas, connectionStart, childConnPoint, connectionPaint);
           }
         } else {
           // This is a parent pair that didn't have a marriage in first pass
           // Draw single parent connections instead
           childConnections.add({
             'parent': father,
-            'childTop': childTop,
+            'childConnPoint': childConnPoint,
             'isMarriedFemale': isMarriedFemale,
           });
           childConnections.add({
             'parent': mother,
-            'childTop': childTop,
+            'childConnPoint': childConnPoint,
             'isMarriedFemale': isMarriedFemale,
           });
         }
@@ -221,14 +246,14 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
         if (father != null) {
           childConnections.add({
             'parent': father,
-            'childTop': childTop,
+            'childConnPoint': childConnPoint,
             'isMarriedFemale': isMarriedFemale,
           });
         }
         if (mother != null) {
           childConnections.add({
             'parent': mother,
-            'childTop': childTop,
+            'childConnPoint': childConnPoint,
             'isMarriedFemale': isMarriedFemale,
           });
         }
@@ -238,13 +263,15 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
     // Draw all single parent connections
     for (final connection in childConnections) {
       final bool isMarriedFemale = connection['isMarriedFemale'] ?? false;
+      final Node<E> parent = connection['parent'];
+      final Offset parentConnPoint = getParentConnPoint(parent);
 
       if (isMarriedFemale) {
-        drawTwoSegmentArrow(canvas, getCenter(connection['parent']),
-            connection['childTop'], linePaint);
+        drawTwoSegmentArrow(
+            canvas, parentConnPoint, connection['childConnPoint'], linePaint);
       } else {
-        drawStraightArrow(canvas, getCenter(connection['parent']),
-            connection['childTop'], linePaint);
+        drawStraightArrow(
+            canvas, parentConnPoint, connection['childConnPoint'], linePaint);
       }
     }
   }
@@ -284,37 +311,44 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
   void drawSegmentedArrow(
     Canvas canvas,
     Offset arrowStart,
-    Offset childTop,
+    Offset childConnPoint,
     Paint paint,
   ) {
-    final double midY = (arrowStart.dy + childTop.dy) / 2;
-    final Offset p1 = arrowStart;
-    final Offset p2 = Offset(arrowStart.dx, midY);
-    final Offset p3 = Offset(childTop.dx, midY);
-    final Offset p4 = childTop;
-    canvas.drawLine(p1, p2, paint);
-    canvas.drawLine(p2, p3, paint);
-    canvas.drawLine(p3, p4, paint);
+    if (controller.orientation == GenogramOrientation.topToBottom) {
+      // For topToBottom, use vertical then horizontal segments
+      final double midY = (arrowStart.dy + childConnPoint.dy) / 2;
+      final Offset p1 = arrowStart;
+      final Offset p2 = Offset(arrowStart.dx, midY);
+      final Offset p3 = Offset(childConnPoint.dx, midY);
+      final Offset p4 = childConnPoint;
 
-    const double arrowHeadLength = 10.0;
-    const double arrowHeadAngle = math.pi / 6;
-    final double angle = math.atan2(p4.dy - p3.dy, p4.dx - p3.dx);
-    final Offset arrowPoint1 = p4 -
-        Offset(
-          arrowHeadLength * math.cos(angle - arrowHeadAngle),
-          arrowHeadLength * math.sin(angle - arrowHeadAngle),
-        );
-    final Offset arrowPoint2 = p4 -
-        Offset(
-          arrowHeadLength * math.cos(angle + arrowHeadAngle),
-          arrowHeadLength * math.sin(angle + arrowHeadAngle),
-        );
-    final Path arrowPath = Path()
-      ..moveTo(p4.dx, p4.dy)
-      ..lineTo(arrowPoint1.dx, arrowPoint1.dy)
-      ..moveTo(p4.dx, p4.dy)
-      ..lineTo(arrowPoint2.dx, arrowPoint2.dy);
-    canvas.drawPath(arrowPath, paint);
+      canvas.drawLine(p1, p2, paint);
+      canvas.drawLine(p2, p3, paint);
+      canvas.drawLine(p3, p4, paint);
+
+      // Draw arrow head
+      const double arrowHeadLength = 10.0;
+      const double arrowHeadAngle = math.pi / 6;
+      final double angle = math.atan2(p4.dy - p3.dy, p4.dx - p3.dx);
+      drawArrowHead(canvas, p4, angle, arrowHeadLength, arrowHeadAngle, paint);
+    } else {
+      // For leftToRight, use horizontal then vertical segments
+      final double midX = (arrowStart.dx + childConnPoint.dx) / 2;
+      final Offset p1 = arrowStart;
+      final Offset p2 = Offset(midX, arrowStart.dy);
+      final Offset p3 = Offset(midX, childConnPoint.dy);
+      final Offset p4 = childConnPoint;
+
+      canvas.drawLine(p1, p2, paint);
+      canvas.drawLine(p2, p3, paint);
+      canvas.drawLine(p3, p4, paint);
+
+      // Draw arrow head
+      const double arrowHeadLength = 10.0;
+      const double arrowHeadAngle = math.pi / 6;
+      final double angle = math.atan2(p4.dy - p3.dy, p4.dx - p3.dx);
+      drawArrowHead(canvas, p4, angle, arrowHeadLength, arrowHeadAngle, paint);
+    }
   }
 
   void drawTwoSegmentArrow(
@@ -323,28 +357,43 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
     Offset end,
     Paint paint,
   ) {
-    final Offset midPoint = Offset(start.dx, (start.dy + end.dy) / 2);
+    Offset midPoint;
+
+    if (controller.orientation == GenogramOrientation.topToBottom) {
+      // For topToBottom, middle point is vertically aligned with start
+      midPoint = Offset(start.dx, (start.dy + end.dy) / 2);
+    } else {
+      // For leftToRight, middle point is horizontally aligned with start
+      midPoint = Offset((start.dx + end.dx) / 2, start.dy);
+    }
 
     canvas.drawLine(start, midPoint, paint);
     canvas.drawLine(midPoint, end, paint);
 
+    // Draw arrow head
     const double arrowHeadLength = 10.0;
     const double arrowHeadAngle = math.pi / 6;
     final double angle = math.atan2(end.dy - midPoint.dy, end.dx - midPoint.dx);
-    final Offset arrowPoint1 = end -
+    drawArrowHead(canvas, end, angle, arrowHeadLength, arrowHeadAngle, paint);
+  }
+
+  // Helper method to draw arrow heads
+  void drawArrowHead(Canvas canvas, Offset tip, double angle, double headLength,
+      double headAngle, Paint paint) {
+    final Offset arrowPoint1 = tip -
         Offset(
-          arrowHeadLength * math.cos(angle - arrowHeadAngle),
-          arrowHeadLength * math.sin(angle - arrowHeadAngle),
+          headLength * math.cos(angle - headAngle),
+          headLength * math.sin(angle - headAngle),
         );
-    final Offset arrowPoint2 = end -
+    final Offset arrowPoint2 = tip -
         Offset(
-          arrowHeadLength * math.cos(angle + arrowHeadAngle),
-          arrowHeadLength * math.sin(angle + arrowHeadAngle),
+          headLength * math.cos(angle + headAngle),
+          headLength * math.sin(angle + headAngle),
         );
     final Path arrowPath = Path()
-      ..moveTo(end.dx, end.dy)
+      ..moveTo(tip.dx, tip.dy)
       ..lineTo(arrowPoint1.dx, arrowPoint1.dy)
-      ..moveTo(end.dx, end.dy)
+      ..moveTo(tip.dx, tip.dy)
       ..lineTo(arrowPoint2.dx, arrowPoint2.dy);
     canvas.drawPath(arrowPath, paint);
   }

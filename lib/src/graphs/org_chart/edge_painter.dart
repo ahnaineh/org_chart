@@ -12,14 +12,11 @@ class OrgChartEdgePainter<E> extends BaseEdgePainter<E> {
 
   OrgChartEdgePainter({
     required this.chartController,
-    required Paint linePaint,
-    double cornerRadius = 10,
-    required GraphArrowStyle arrowStyle,
+    required super.linePaint,
+    super.cornerRadius,
+    required super.arrowStyle,
   }) : super(
           controller: chartController,
-          linePaint: linePaint,
-          cornerRadius: cornerRadius,
-          arrowStyle: arrowStyle,
         );
 
   @override

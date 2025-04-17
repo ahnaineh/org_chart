@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
-import 'package:org_chart/src/common/edge_painter.dart';
 import 'package:org_chart/src/controllers/genogram_controller.dart';
 import 'package:org_chart/src/graphs/base_graph.dart';
 import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
@@ -13,35 +12,21 @@ class Genogram<E> extends BaseGraph<E> {
   final void Function(E dragged, E target)? onDrop;
   
   Genogram({
-    Key? key,
-    required GenogramController<E> controller,
-    required Widget Function(NodeBuilderDetails<E> details) builder,
-    double minScale = 0.00001,
-    double maxScale = 5.6,
-    bool isDraggable = true,
-    Curve curve = Curves.elasticOut,
-    int duration = 700,
-    Paint? linePaint,
-    double cornerRadius = 10,
-    GraphArrowStyle arrowStyle = const SolidGraphArrow(),
-    List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder,
-    void Function(E item, dynamic value)? onOptionSelect,
+    super.key,
+    required GenogramController<E> super.controller,
+    required super.builder,
+    super.minScale = 0.00001,
+    super.maxScale,
+    super.isDraggable,
+    super.curve,
+    super.duration,
+    super.linePaint,
+    super.cornerRadius,
+    super.arrowStyle,
+    super.optionsBuilder,
+    super.onOptionSelect,
     this.onDrop,
-  }) : super(
-          key: key,
-          controller: controller,
-          builder: builder,
-          minScale: minScale,
-          maxScale: maxScale,
-          isDraggable: isDraggable,
-          curve: curve,
-          duration: duration,
-          linePaint: linePaint,
-          arrowStyle: arrowStyle,
-          cornerRadius: cornerRadius,
-          optionsBuilder: optionsBuilder,
-          onOptionSelect: onOptionSelect,
-        );
+  });
 
   @override
   GenogramState<E> createState() => GenogramState<E>();
@@ -92,7 +77,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
     final List<CustomAnimatedPositioned> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
-      final String? nodeId = controller.idProvider(node.data);
+      final String nodeId = controller.idProvider(node.data);
       nodeWidgets.add(
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),

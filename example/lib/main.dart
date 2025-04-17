@@ -75,6 +75,7 @@ class _ExampleState extends State<Example> {
 
   List<FamilyMember> get _sampleFamilyMembers => [
         // First generation - Grandparents
+
         // FamilyMember(
         //   id: 'ewtrcae21',
         //   name: 'Sawsaw',
@@ -423,7 +424,6 @@ class _ExampleState extends State<Example> {
           birthDate: DateTime(1980),
           isDeceased: false,
           // birthType: BirthType.identical,
-        
         ),
         FamilyMember(
           id: 'c4',
@@ -491,10 +491,24 @@ class _ExampleState extends State<Example> {
         ),
         FamilyMember(
           id: 'gc2',
-          name: 'William Smith',
+          name: 'JJJ',
+          spouses: ['45gc1'],
           gender: 0,
-          fatherId: 'c1',
-          motherId: 'p1',
+          birthDate: DateTime(2008),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: '45gc1',
+          name: 'FFF',
+          gender: 1,
+          spouses: ['gc2'],
+          birthDate: DateTime(2005),
+          isDeceased: false,
+        ),
+        FamilyMember(
+          id: 'gc542',
+          name: 'CCC',
+          gender: 0,
           birthDate: DateTime(2008),
           isDeceased: false,
         ),
@@ -534,10 +548,8 @@ class _ExampleState extends State<Example> {
           FloatingActionButton.extended(
             label: const Text('Change Orientation'),
             icon: const Icon(Icons.rotate_90_degrees_ccw),
-            onPressed: () => 
-            showOrgChart
-                ? 
-                orgChartController.switchOrientation()
+            onPressed: () => showOrgChart
+                ? orgChartController.switchOrientation()
                 : genogramController.switchOrientation(),
           ),
         ],
