@@ -82,8 +82,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
-          duration:
-              Duration(milliseconds: nodeId == draggedID ? 0 : widget.duration),
+          duration: nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
           left: node.position.dx,
           top: node.position.dy,
@@ -107,7 +106,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
                 NodeBuilderDetails(
                   item: node.data,
                   level: level,
-                  hideNodes: (hide) => toggleHideNodes(node, hide),
+                  hideNodes: ([hide]) => toggleHideNodes(node, hide),
                   nodesHidden: node.hideNodes,
                   isBeingDragged: nodeId == draggedID,
                   isOverlapped: overlappingNodes.isNotEmpty &&

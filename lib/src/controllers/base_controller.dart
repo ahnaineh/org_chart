@@ -1,3 +1,4 @@
+import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 
@@ -8,6 +9,15 @@ abstract class BaseGraphController<E> {
   double spacing;
   double runSpacing;
   String Function(E data) idProvider;
+
+
+ // Reference to the interactive viewer controller
+  CustomInteractiveViewerController? viewerController;
+
+  /// Sets the interactive viewer controller for node centering
+  void setViewerController(CustomInteractiveViewerController controller) {
+    viewerController = controller;
+  }
 
   // Internal state management
   void Function(void Function() function)? setState;
@@ -58,21 +68,21 @@ abstract class BaseGraphController<E> {
     nodes.insert(index == -1 ? nodes.length : index, node);
   }
 
-  // Methods to be implemented by subclasses
+
   void calculatePosition({bool center = true});
 
-  Offset getSize({Offset offset = const Offset(0, 0)}) {
+  Size getSize({Size size = const Size(0, 0)}) {
     for (Node<E> node in nodes) {
-      offset = Offset(
-        offset.dx > node.position.dx + boxSize.width
-            ? offset.dx
+      size = Size(
+        size.width > node.position.dx + boxSize.width
+            ? size.width
             : node.position.dx + boxSize.width,
-        offset.dy > node.position.dy + boxSize.height
-            ? offset.dy
+        size.height > node.position.dy + boxSize.height
+            ? size.height
             : node.position.dy + boxSize.height,
       );
     }
-    return offset;
+    return size;
   }
 
   List<Node<E>> getOverlapping(Node<E> node) {

@@ -229,7 +229,7 @@ class ChartOptionsSidebar extends StatelessWidget {
           title: const Text('Arrow Style'),
           subtitle: DropdownButton<String>(
             isExpanded: true,
-            value: config.arrowStyle is OrgChartSolidGraphArrow
+            value: config.arrowStyle is SolidGraphArrow
                 ? 'straight'
                 : 'dashed',
             items: [
@@ -240,11 +240,11 @@ class ChartOptionsSidebar extends StatelessWidget {
             onChanged: (value) {
               switch (value) {
                 case 'straight':
-                  config.arrowStyle = const OrgChartSolidGraphArrow();
+                  config.arrowStyle = const SolidGraphArrow();
                   break;
                 case 'dashed':
                   config.arrowStyle =
-                      OrgChartDashedGraphArrow(pattern: config.dashPattern);
+                      DashedGraphArrow(pattern: config.dashPattern);
                   break;
               }
               onConfigChanged(config);
@@ -253,7 +253,7 @@ class ChartOptionsSidebar extends StatelessWidget {
         ),
 
         // Enhanced Dashed Arrow Options - Show only when dashed style is selected
-        if (config.arrowStyle is OrgChartDashedGraphArrow) ...[
+        if (config.arrowStyle is DashedGraphArrow) ...[
           const Padding(
             padding: EdgeInsets.only(left: 16.0, top: 8.0, bottom: 4.0),
             child: Text(

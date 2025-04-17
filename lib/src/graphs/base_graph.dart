@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/edge_painter.dart';
 import 'package:org_chart/src/common/node.dart';
@@ -19,7 +20,7 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final double maxScale;
   final bool isDraggable;
   final Curve curve;
-  final int duration;
+  final Duration duration;
   final Paint linePaint;
   final double cornerRadius;
   final GraphArrowStyle arrowStyle;
@@ -27,6 +28,30 @@ abstract class BaseGraph<E> extends StatefulWidget {
   // Callback functions
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
   final void Function(E item, dynamic value)? onOptionSelect;
+
+  /// Callback to expose the interactive viewer controller
+  final CustomInteractiveViewerController? viewerController;
+
+  // Interactive viewer configurations
+  final bool enableZoom;
+  final bool enableRotation;
+  final bool constrainBounds;
+  final bool enableDoubleTapZoom;
+  final double doubleTapZoomFactor;
+  final bool enableKeyboardControls;
+  final double keyboardPanDistance;
+  final double keyboardZoomFactor;
+  final bool enableKeyRepeat;
+  final Duration keyRepeatInitialDelay;
+  final Duration keyRepeatInterval;
+  final bool enableCtrlScrollToScale;
+  final bool enableFling;
+  final bool enablePan;
+  final FocusNode? focusNode;
+  final bool animateKeyboardTransitions;
+  final Curve keyboardAnimationCurve;
+  final Duration keyboardAnimationDuration;
+  final bool invertArrowKeyDirection;
 
   BaseGraph({
     super.key,
@@ -36,12 +61,32 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.maxScale = 5.6,
     this.isDraggable = true,
     this.curve = Curves.elasticOut,
-    this.duration = 700,
+    this.duration = const Duration(milliseconds: 700),
     Paint? linePaint,
     this.optionsBuilder,
     this.onOptionSelect,
     this.arrowStyle = const SolidGraphArrow(),
     this.cornerRadius = 10.0,
+    this.viewerController,
+    this.enableZoom = true,
+    this.enableRotation = false,
+    this.constrainBounds = false,
+    this.enableDoubleTapZoom = true,
+    this.doubleTapZoomFactor = 2.0,
+    this.enableKeyboardControls = true,
+    this.keyboardPanDistance = 20.0,
+    this.keyboardZoomFactor = 1.1,
+    this.enableKeyRepeat = true,
+    this.keyRepeatInitialDelay = const Duration(milliseconds: 500),
+    this.keyRepeatInterval = const Duration(milliseconds: 50),
+    this.enableCtrlScrollToScale = true,
+    this.enableFling = true,
+    this.enablePan = true,
+    this.focusNode,
+    this.animateKeyboardTransitions = true,
+    this.keyboardAnimationCurve = Curves.easeInOut,
+    this.keyboardAnimationDuration = const Duration(milliseconds: 300),
+    this.invertArrowKeyDirection = false,
   })  : linePaint = linePaint ??
             (Paint()
               ..color = Colors.black
@@ -59,14 +104,11 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   @protected
   Offset? panDownPosition;
   @protected
-  final transformController = TransformationController();
+  late final CustomInteractiveViewerController viewerController;
 
   // Protected getters for subclasses
   @protected
   List<Node<E>> get overlappingNodes => overlapping;
-
-  // @protected
-  // String? get draggedID => _draggedID;
 
   @override
   void initState() {
@@ -76,45 +118,49 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
   void _initializeController() {
     widget.controller.setState = setState;
-    widget.controller.centerGraph = _centerContent;
+    widget.controller.centerGraph = viewerController.center;
+    widget.controller.setViewerController(viewerController);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _centerContent();
+      viewerController.center();
     });
-  }
-
-  void _centerContent() {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      final size = renderBox.size;
-      final Offset contentSize = widget.controller.getSize();
-
-      final double x = (size.width - contentSize.dx) / 2;
-      final double y = (size.height - contentSize.dy) / 2;
-
-      transformController.value = Matrix4.identity()..translate(x, y);
-
-    }
   }
 
   @override
   void dispose() {
-    transformController.dispose();
+    viewerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = widget.controller.getSize();
-    return InteractiveViewer(
-      constrained: false,
-      transformationController: transformController,
-      boundaryMargin: const EdgeInsets.all(500),
+    return CustomInteractiveViewer(
+      controller: viewerController,
+      contentSize: widget.controller.getSize(),
       minScale: widget.minScale,
       maxScale: widget.maxScale,
+      enableDoubleTapZoom: widget.enableDoubleTapZoom,
+      doubleTapZoomFactor: widget.doubleTapZoomFactor,
+      enableRotation: widget.enableRotation,
+      constrainBounds: widget.constrainBounds,
+      enableKeyboardControls: widget.enableKeyboardControls,
+      keyboardPanDistance: widget.keyboardPanDistance,
+      keyboardZoomFactor: widget.keyboardZoomFactor,
+      enableKeyRepeat: widget.enableKeyRepeat,
+      keyRepeatInitialDelay: widget.keyRepeatInitialDelay,
+      keyRepeatInterval: widget.keyRepeatInterval,
+      enableCtrlScrollToScale: widget.enableCtrlScrollToScale,
+      enableFling: widget.enableFling,
+      focusNode: widget.focusNode,
+      enableZoom: widget.enableZoom,
+      animateKeyboardTransitions: widget.animateKeyboardTransitions,
+      keyboardAnimationCurve: widget.keyboardAnimationCurve,
+      keyboardAnimationDuration: widget.keyboardAnimationDuration,
+      invertArrowKeyDirection: widget.invertArrowKeyDirection,
       child: SizedBox(
-        width: size.dx,
-        height: size.dy,
+        width: size.width,
+        height: size.height,
         child: Stack(
           clipBehavior: Clip.none,
           children: buildGraphElements(context),

@@ -10,7 +10,7 @@ class ChartConfig {
   double cornerRadius;
 
   // Arrow style
-  OrgChartArrowStyle arrowStyle;
+  GraphArrowStyle arrowStyle;
   List<double> dashPattern;
   double dashThickness;
 
@@ -56,7 +56,7 @@ class ChartConfig {
     this.nodeSpacing = 20.0,
     this.levelSpacing = 40.0,
     this.cornerRadius = 8.0,
-    OrgChartArrowStyle? arrowStyle,
+    GraphArrowStyle? arrowStyle,
     List<double>? dashPattern,
     this.dashThickness = 2.0,
     this.isDraggable = true,
@@ -85,21 +85,21 @@ class ChartConfig {
     this.keyboardAnimationDuration = const Duration(milliseconds: 300),
     this.invertArrowKeyDirection = false,
   })  : dashPattern = dashPattern ?? [8.0, 4.0],
-        arrowStyle = arrowStyle ?? const OrgChartSolidGraphArrow();
+        arrowStyle = arrowStyle ?? const SolidGraphArrow();
 
   /// Get a Paint object for lines based on current settings
   Paint getLinePaint(BuildContext context) {
     return Paint()
       ..color = Theme.of(context).colorScheme.primary
-      ..strokeWidth = arrowStyle is OrgChartDashedGraphArrow ? dashThickness : 2
+      ..strokeWidth = arrowStyle is DashedGraphArrow ? dashThickness : 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
   }
 
   /// Update the arrow style based on current dash pattern
   void updateDashedArrowStyle() {
-    if (arrowStyle is OrgChartDashedGraphArrow) {
-      arrowStyle = OrgChartDashedGraphArrow(pattern: dashPattern);
+    if (arrowStyle is DashedGraphArrow) {
+      arrowStyle = DashedGraphArrow(pattern: dashPattern);
     }
   }
 

@@ -24,6 +24,26 @@ class OrgChart<E> extends BaseGraph<E> {
     super.arrowStyle,
     super.optionsBuilder,
     super.onOptionSelect,
+    super.viewerController,
+    super.enableZoom,
+    super.enableRotation,
+    super.constrainBounds,
+    super.enableDoubleTapZoom,
+    super.doubleTapZoomFactor,
+    super.enableKeyboardControls,
+    super.keyboardPanDistance,
+    super.keyboardZoomFactor,
+    super.enableKeyRepeat,
+    super.keyRepeatInitialDelay,
+    super.keyRepeatInterval,
+    super.enableCtrlScrollToScale,
+    super.enableFling,
+    super.enablePan,
+    super.focusNode,
+    super.animateKeyboardTransitions,
+    super.keyboardAnimationCurve,
+    super.keyboardAnimationDuration,
+    super.invertArrowKeyDirection,
     this.onDrop,
   });
 
@@ -67,6 +87,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   Widget buildEdges() {
     return CustomPaint(
       painter: _edgePainter,
+      child: SizedBox.shrink(),
     );
   }
 
@@ -83,8 +104,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
-          duration:
-              Duration(milliseconds: nodeId == draggedID ? 0 : widget.duration),
+          duration:nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
           left: node.position.dx,
           top: node.position.dy,
@@ -110,7 +130,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
                 NodeBuilderDetails(
                   item: node.data,
                   level: level,
-                  hideNodes: (hide) => toggleHideNodes(node, hide),
+                  hideNodes: ([hide]) => toggleHideNodes(node, hide),
                   nodesHidden: node.hideNodes,
                   isBeingDragged: nodeId == draggedID,
                   isOverlapped: overlappingNodes.isNotEmpty &&
