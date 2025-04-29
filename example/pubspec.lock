@@ -77,10 +77,10 @@ packages:
     dependency: transitive
     description:
       name: custom_interactive_viewer
-      sha256: "5ab3c951adf9e65512df0caeccaf7cdceaf19e6c73072c5181815f738659c51f"
+      sha256: "52b64f9e1c5b25cd0c277dfb609663c75b79f5af64c2254ae6ae1145f898255e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.5"
+    version: "0.0.6"
   fake_async:
     dependency: transitive
     description:
@@ -206,7 +206,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "5.0.0-alpha.1"
+    version: "4.2.2"
   path:
     dependency: transitive
     description:

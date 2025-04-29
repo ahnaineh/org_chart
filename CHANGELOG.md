@@ -24,6 +24,11 @@ Bumped `custom_interactive_viewer` to version 0.0.6.
 Initial genogram implementation.
 
 
+## [4.2.2]
+### Fixed
+1) Fixed an issue with node overlapping detection.
+
+
 ## [4.2.1]
 
 ### Fixed
