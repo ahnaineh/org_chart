@@ -5,10 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
-/// Defines the orientation mode for genogram chart layout
-/// - topToBottom: Family trees are laid out from top (ancestors) to bottom (descendants)
-/// - leftToRight: Family trees are laid out from left (ancestors) to right (descendants)
-enum GenogramOrientation { topToBottom, leftToRight }
 
 /// Controller responsible for managing and laying out genogram (family tree) charts
 ///
@@ -20,12 +16,6 @@ enum GenogramOrientation { topToBottom, leftToRight }
 /// - Gender-based node positioning
 /// - Multi-generational hierarchy visualization
 class GenogramController<E> extends BaseGraphController<E> {
-  /// Current orientation setting for the chart
-  GenogramOrientation _orientation;
-
-  /// Returns the current orientation setting of the chart
-  GenogramOrientation get orientation => _orientation;
-
   /// Function to extract the father's ID from an item
   /// Returns null if the item has no father (root node)
   String? Function(E data) fatherProvider;
@@ -67,13 +57,13 @@ class GenogramController<E> extends BaseGraphController<E> {
     super.boxSize = const Size(150, 150),
     super.spacing = 30,
     super.runSpacing = 60,
+    super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
     required this.fatherProvider,
     required this.motherProvider,
     required this.spousesProvider,
     required this.genderProvider,
-    GenogramOrientation orientation = GenogramOrientation.topToBottom,
-  }) : _orientation = orientation;
+  });
 
   /// Clears all caches when items change
   @override
@@ -203,25 +193,6 @@ class GenogramController<E> extends BaseGraphController<E> {
     return result;
   }
 
-  /// Changes the orientation of the genogram layout
-  ///
-  /// If no orientation is provided, toggles between topToBottom and leftToRight.
-  /// After changing orientation, repositions all nodes according to the new layout.
-  ///
-  /// [orientation]: Optional specific orientation to switch to
-  /// [center]: Whether to center the graph after layout (default: true)
-  void switchOrientation(
-      {GenogramOrientation? orientation, bool center = true}) {
-    // Switch orientation (toggle if not specified)
-    _orientation = orientation ??
-        (_orientation == GenogramOrientation.topToBottom
-            ? GenogramOrientation.leftToRight
-            : GenogramOrientation.topToBottom);
-
-    // Recalculate all positions with the new orientation
-    calculatePosition(center: center);
-  }
-
   /// Calculates the positions of all nodes in the genogram
   ///
   /// This is the core layout algorithm for the genogram. It:
@@ -278,7 +249,7 @@ class GenogramController<E> extends BaseGraphController<E> {
     /// [level]: Current generation level (0 = roots)
     double layoutFamily(Node<E> node, double x, double y, int level) {
       // Ensure starting position is never less than minimum
-      if (_orientation == GenogramOrientation.topToBottom) {
+      if (orientation == GraphOrientation.topToBottom) {
         x = max(x, minPos);
       } else {
         y = max(y, minPos);
@@ -291,7 +262,7 @@ class GenogramController<E> extends BaseGraphController<E> {
 
       // Check if we need to adjust position to avoid overlapping with existing nodes
       if (levelEdges.containsKey(level)) {
-        if (_orientation == GenogramOrientation.topToBottom) {
+        if (orientation == GraphOrientation.topToBottom) {
           // Ensure we start after the rightmost node at this level plus spacing
           x = max(x, levelEdges[level]! + spacing);
         } else {
@@ -300,7 +271,7 @@ class GenogramController<E> extends BaseGraphController<E> {
         }
       } else {
         levelEdges[level] =
-            _orientation == GenogramOrientation.topToBottom ? x : y;
+            orientation == GraphOrientation.topToBottom ? x : y;
       }
 
       // Build the couple group (a husband and his wife/wives, or just a single individual)
@@ -351,7 +322,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
       final double groupSize = groupCount *
-              (_orientation == GenogramOrientation.topToBottom
+              (orientation == GraphOrientation.topToBottom
                   ? boxSize.width
                   : boxSize.height) +
           (groupCount - 1) * spacing;
@@ -359,11 +330,11 @@ class GenogramController<E> extends BaseGraphController<E> {
       // Position each person in the couple group in a row or column depending on orientation
       for (int i = 0; i < groupCount; i++) {
         final double offset = i *
-            (_orientation == GenogramOrientation.topToBottom
+            (orientation == GraphOrientation.topToBottom
                 ? boxSize.width + spacing
                 : boxSize.height + spacing);
 
-        if (_orientation == GenogramOrientation.topToBottom) {
+        if (orientation == GraphOrientation.topToBottom) {
           final double nodeX = x + offset;
           coupleGroup[i].position = Offset(nodeX, y);
         } else {
@@ -383,7 +354,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       // If no children, this subtree is just the couple group with no descendants
       if (children.isEmpty) {
         // Update the edge for this level
-        levelEdges[level] = _orientation == GenogramOrientation.topToBottom
+        levelEdges[level] = orientation == GraphOrientation.topToBottom
             ? x + groupSize
             : y + groupSize;
         return groupSize;
@@ -391,22 +362,22 @@ class GenogramController<E> extends BaseGraphController<E> {
 
       // Distance for children from parent
       final double childDistance =
-          _orientation == GenogramOrientation.topToBottom
+          orientation == GraphOrientation.topToBottom
               ? boxSize.height + runSpacing
               : boxSize.width + runSpacing;
 
       // Position coordinates for children based on orientation
-      final double childrenX = _orientation == GenogramOrientation.topToBottom
+      final double childrenX = orientation == GraphOrientation.topToBottom
           ? x
           : x + childDistance;
 
-      final double childrenY = _orientation == GenogramOrientation.topToBottom
+      final double childrenY = orientation == GraphOrientation.topToBottom
           ? y + childDistance
           : y;
 
       double childrenTotalSize =
           0; // Track total width/height required for all children
-      double childPos = _orientation == GenogramOrientation.topToBottom
+      double childPos = orientation == GraphOrientation.topToBottom
           ? childrenX
           : childrenY;
 
@@ -414,7 +385,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       for (final child in children) {
         // For each child, calculate the size of their entire subtree
         final double subtreeSize =
-            _orientation == GenogramOrientation.topToBottom
+            orientation == GraphOrientation.topToBottom
                 ? layoutFamily(child, childPos, childrenY, level + 1)
                 : layoutFamily(child, childrenX, childPos, level + 1);
 
@@ -434,7 +405,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       // Center the parent couple group above/before their children to make the tree visually balanced
       double parentCenter, childrenCenter, shift;
 
-      if (_orientation == GenogramOrientation.topToBottom) {
+      if (orientation == GraphOrientation.topToBottom) {
         parentCenter = x + groupSize / 2;
         childrenCenter = x + trueChildrenSize / 2;
       } else {
@@ -448,7 +419,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       if (children.isNotEmpty && trueChildrenSize > groupSize) {
         // Apply the shift to each parent in the couple group
         for (final parent in coupleGroup) {
-          if (_orientation == GenogramOrientation.topToBottom) {
+          if (orientation == GraphOrientation.topToBottom) {
             parent.position =
                 Offset(parent.position.dx + shift, parent.position.dy);
           } else {
@@ -464,7 +435,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       final totalSize = max(groupSize, trueChildrenSize);
 
       // Update the edge for this level
-      levelEdges[level] = _orientation == GenogramOrientation.topToBottom
+      levelEdges[level] = orientation == GraphOrientation.topToBottom
           ? x + totalSize
           : y + totalSize;
 
@@ -490,7 +461,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       if (laidOut.contains(root)) continue; // Skip if already positioned
 
       // Layout this root's entire family tree and get its size
-      final double subtreeSize = _orientation == GenogramOrientation.topToBottom
+      final double subtreeSize = orientation == GraphOrientation.topToBottom
           ? layoutFamily(root, currentPos, 0, 0)
           : layoutFamily(root, 0, currentPos, 0);
 

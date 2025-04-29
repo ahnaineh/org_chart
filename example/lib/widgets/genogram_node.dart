@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/org_chart.dart';
-import '../models/family_member.dart';
+import 'package:org_chart/src/common/node_builder_details.dart';
+import 'package:org_chart_example/models/family_member.dart';
 
 class GenogramNode extends StatelessWidget {
-  final NodeBuilderDetails<FamilyMember> details;
-  final void Function(bool? hide) onToggleNodes;
-
   const GenogramNode({
     super.key,
     required this.details,
     required this.onToggleNodes,
   });
+
+  final NodeBuilderDetails<FamilyMember> details;
+  final Function(bool? hide) onToggleNodes;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,6 @@ class GenogramNode extends StatelessWidget {
           gender: member.gender,
           isDeceased: member.isDeceased,
           isSelected: details.isBeingDragged || details.isOverlapped,
-          // birthType: member.birthType,
           color: _getNodeColor(theme, member),
           borderColor: _getBorderColor(theme, details.isOverlapped),
         ),
@@ -36,12 +35,12 @@ class GenogramNode extends StatelessWidget {
           width: 150,
           height: 150,
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  member.name ?? 'Unknown',
+                  member.name,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: _getTextColor(member.gender),
@@ -50,25 +49,48 @@ class GenogramNode extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
                 ),
-                if (member.birthDate != null) ...[
-                  const SizedBox(height: 4),
+                if (member.dateOfBirth != null) ...[
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cake,
+                          size: 14,
+                          color: _getTextColor(member.gender).withOpacity(0.7)),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(member.dateOfBirth!),
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ],
+                if (member.isDeceased && member.dateOfDeath != null)
                   Text(
-                    _formatDate(member.birthDate!),
-                    style: theme.textTheme.bodySmall,
+                    _formatDate(member.dateOfDeath!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                if (!member.isDeceased && member.dateOfBirth != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    _calculateAge(member.dateOfBirth!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
-                if (member.isDeceased && member.deathDate != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'D ${_formatDate(member.deathDate!)}',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(fontStyle: FontStyle.italic),
-                    textAlign: TextAlign.center,
-                  ),
+                if (member.spouses.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  _buildRelationshipIndicator(member, theme),
                 ],
                 if (!_isRoot(member) && details.level > 1) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   _buildCollapseButton(),
                 ],
               ],
@@ -94,6 +116,26 @@ class GenogramNode extends StatelessWidget {
     );
   }
 
+  Widget _buildRelationshipIndicator(FamilyMember member, ThemeData theme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.favorite,
+          size: 14,
+          color: Colors.red.shade300,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '${member.spouses.length}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: _getTextColor(member.gender).withOpacity(0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
   bool _isRoot(FamilyMember member) {
     return member.fatherId == null && member.motherId == null;
   }
@@ -102,14 +144,26 @@ class GenogramNode extends StatelessWidget {
     return '${date.year}';
   }
 
+  String _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return '$age years';
+  }
+
   Color _getNodeColor(ThemeData theme, FamilyMember member) {
+    final isDark = theme.brightness == Brightness.dark;
+
     switch (member.gender) {
-      case 0:
-        return Colors.blue.shade50;
-      case 1:
-        return Colors.pink.shade50;
-      case _:
-        return Colors.black;
+      case 0: // Male
+        return isDark ? Colors.blue.shade900 : Colors.blue.shade50;
+      case 1: // Female
+        return isDark ? Colors.pink.shade900 : Colors.pink.shade50;
+      default: // Other
+        return isDark ? Colors.purple.shade900 : Colors.purple.shade50;
     }
   }
 
@@ -121,13 +175,31 @@ class GenogramNode extends StatelessWidget {
   }
 
   Color _getTextColor(int gender) {
-    switch (gender) {
-      case 0:
-        return Colors.blue.shade900;
-      case 1:
-        return Colors.pink.shade900;
-      case _:
-        return Colors.black87;
+    // Get current brightness mode
+    final BuildContext? context =
+        WidgetsBinding.instance.focusManager.primaryFocus?.context;
+    final bool isDark =
+        context != null && Theme.of(context).brightness == Brightness.dark;
+
+    // Use light colors for dark theme and vice versa
+    if (isDark) {
+      switch (gender) {
+        case 0:
+          return Colors.blue.shade100;
+        case 1:
+          return Colors.pink.shade100;
+        default:
+          return Colors.purple.shade100;
+      }
+    } else {
+      switch (gender) {
+        case 0:
+          return Colors.blue.shade900;
+        case 1:
+          return Colors.pink.shade900;
+        default:
+          return Colors.purple.shade900;
+      }
     }
   }
 }
@@ -137,7 +209,6 @@ class GenogramShapePainter extends CustomPainter {
   final int gender;
   final bool isDeceased;
   final bool isSelected;
-  // final BirthType birthType;
   final Color color;
   final Color borderColor;
 
@@ -145,7 +216,6 @@ class GenogramShapePainter extends CustomPainter {
     required this.gender,
     required this.isDeceased,
     required this.isSelected,
-    // required this.birthType,
     required this.color,
     required this.borderColor,
   });
@@ -190,8 +260,8 @@ class GenogramShapePainter extends CustomPainter {
         );
         break;
 
-      case _:
-        // Unknown: Diamond
+      default:
+        // Unknown or Other: Diamond
         final path = Path();
         path.moveTo(center.dx, center.dy - size.height * 0.4); // Top
         path.lineTo(center.dx + size.width * 0.4, center.dy); // Right
@@ -213,9 +283,10 @@ class GenogramShapePainter extends CustomPainter {
 
       // Diagonal line from top-left to bottom-right
       canvas.drawLine(
-          Offset(center.dx - size.width * 0.4, center.dy - size.height * 0.4),
-          Offset(center.dx + size.width * 0.4, center.dy + size.height * 0.4),
-          deceasedPaint);
+        Offset(center.dx - size.width * 0.4, center.dy - size.height * 0.4),
+        Offset(center.dx + size.width * 0.4, center.dy + size.height * 0.4),
+        deceasedPaint,
+      );
     }
   }
 
@@ -224,7 +295,6 @@ class GenogramShapePainter extends CustomPainter {
     return oldDelegate.gender != gender ||
         oldDelegate.isDeceased != isDeceased ||
         oldDelegate.isSelected != isSelected ||
-        // oldDelegate.birthType != birthType ||
         oldDelegate.color != color ||
         oldDelegate.borderColor != borderColor;
   }

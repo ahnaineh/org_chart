@@ -110,31 +110,33 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,
-          child: Visibility(
-            visible: !hidden,
-            maintainAnimation: true,
-            maintainSize: true,
-            maintainState: true,
-            child: GestureDetector(
-              onTapDown: handleTapDown,
-              // TODO: Implement onSecondaryTap
-              // onSecondaryTap: () => showNodeMenu(context, node),
-              onLongPress: () => showNodeMenu(context, node),
-              onPanStart:
-                  widget.isDraggable ? (_) => startDragging(node) : null,
-              onPanUpdate: widget.isDraggable
-                  ? (details) => updateDragging(node, details)
-                  : null,
-              onPanEnd: widget.isDraggable ? (_) => finishDragging(node) : null,
-              child: widget.builder(
-                NodeBuilderDetails(
-                  item: node.data,
-                  level: level,
-                  hideNodes: ([hide]) => toggleHideNodes(node, hide),
-                  nodesHidden: node.hideNodes,
-                  isBeingDragged: nodeId == draggedID,
-                  isOverlapped: overlappingNodes.isNotEmpty &&
-                      overlappingNodes.first.data == node.data,
+          child: RepaintBoundary  (
+            child: Visibility(
+              visible: !hidden,
+              maintainAnimation: true,
+              maintainSize: true,
+              maintainState: true,
+              child: GestureDetector(
+                onTapDown: handleTapDown,
+                // TODO: Implement onSecondaryTap
+                // onSecondaryTap: () => showNodeMenu(context, node),
+                onLongPress: () => showNodeMenu(context, node),
+                onPanStart:
+                    widget.isDraggable ? (_) => startDragging(node) : null,
+                onPanUpdate: widget.isDraggable
+                    ? (details) => updateDragging(node, details)
+                    : null,
+                onPanEnd: widget.isDraggable ? (_) => finishDragging(node) : null,
+                child: widget.builder(
+                  NodeBuilderDetails(
+                    item: node.data,
+                    level: level,
+                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    nodesHidden: node.hideNodes,
+                    isBeingDragged: nodeId == draggedID,
+                    isOverlapped: overlappingNodes.isNotEmpty &&
+                        overlappingNodes.first.data == node.data,
+                  ),
                 ),
               ),
             ),

@@ -87,7 +87,7 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.keyboardAnimationCurve = Curves.easeInOut,
     this.keyboardAnimationDuration = const Duration(milliseconds: 300),
     this.invertArrowKeyDirection = false,
-  })  : linePaint = linePaint ??
+  }) : linePaint = linePaint ??
             (Paint()
               ..color = Colors.black
               ..strokeWidth = 0.5
@@ -113,6 +113,8 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   @override
   void initState() {
     super.initState();
+    viewerController =
+        widget.viewerController ?? CustomInteractiveViewerController();
     _initializeController();
   }
 
@@ -128,7 +130,9 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
   @override
   void dispose() {
-    viewerController.dispose();
+    if (widget.viewerController == null) {
+      viewerController.dispose();
+    }
     super.dispose();
   }
 
@@ -158,12 +162,18 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
       keyboardAnimationCurve: widget.keyboardAnimationCurve,
       keyboardAnimationDuration: widget.keyboardAnimationDuration,
       invertArrowKeyDirection: widget.invertArrowKeyDirection,
-      child: SizedBox(
-        width: size.width,
-        height: size.height,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: buildGraphElements(context),
+      child: RepaintBoundary(
+        key: widget.controller.repaintBoundaryKey,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            width: size.width,
+            height: size.height,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: buildGraphElements(context),
+            ),
+          ),
         ),
       ),
     );
@@ -185,13 +195,13 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     panDownPosition = referenceBox.globalToLocal(details.globalPosition);
   }
 
-  void toggleHideNodes(Node<E> node, bool? hide) {
+  void toggleHideNodes(Node<E> node, bool? hide, bool center) {
     final newValue = hide ?? !node.hideNodes;
     if (newValue == node.hideNodes) return;
 
     setState(() {
       node.hideNodes = newValue;
-      widget.controller.calculatePosition();
+      widget.controller.calculatePosition(center: center);
     });
   }
 

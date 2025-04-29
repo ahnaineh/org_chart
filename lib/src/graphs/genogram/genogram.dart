@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
+import 'package:org_chart/src/common/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 import 'package:org_chart/src/controllers/genogram_controller.dart';
 import 'package:org_chart/src/graphs/base_graph.dart';
 import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
+import 'package:org_chart/src/graphs/genogram/genogram_edge_config.dart';
 
 /// A widget that displays an organizational chart
 class Genogram<E> extends BaseGraph<E> {
-
   final void Function(E dragged, E target)? onDrop;
-  
+
+  /// Configuration for edge painter styling
+  final GenogramEdgeConfig edgeConfig;
+
+  /// Function to determine marriage status between two people
+  final MarriageStatus Function(E person, E spouse)? marriageStatusProvider;
+
   Genogram({
     super.key,
     required GenogramController<E> super.controller,
     required super.builder,
-    super.minScale = 0.00001,
+    super.minScale,
     super.maxScale,
     super.isDraggable,
     super.curve,
@@ -25,6 +32,28 @@ class Genogram<E> extends BaseGraph<E> {
     super.arrowStyle,
     super.optionsBuilder,
     super.onOptionSelect,
+    super.viewerController,
+    super.enableZoom,
+    super.enableRotation,
+    super.constrainBounds,
+    super.enableDoubleTapZoom,
+    super.doubleTapZoomFactor,
+    this.edgeConfig = const GenogramEdgeConfig(),
+    this.marriageStatusProvider,
+    super.enableKeyboardControls,
+    super.keyboardPanDistance,
+    super.keyboardZoomFactor,
+    super.enableKeyRepeat,
+    super.keyRepeatInitialDelay,
+    super.keyRepeatInterval,
+    super.enableCtrlScrollToScale,
+    super.enableFling,
+    super.enablePan,
+    super.focusNode,
+    super.animateKeyboardTransitions,
+    super.keyboardAnimationCurve,
+    super.keyboardAnimationDuration,
+    super.invertArrowKeyDirection,
     this.onDrop,
   });
 
@@ -34,7 +63,6 @@ class Genogram<E> extends BaseGraph<E> {
 
 class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   late GenogramEdgePainter<E> _edgePainter;
-
   @override
   void initState() {
     super.initState();
@@ -43,6 +71,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
+      config: widget.edgeConfig,
+      marriageStatusProvider: widget.marriageStatusProvider,
     );
   }
 
@@ -56,7 +86,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
   void finishDragging(Node<E> node) {
     if (overlapping.isNotEmpty) {
-        widget.onDrop?.call(node.data, overlapping.first.data);
+      widget.onDrop?.call(node.data, overlapping.first.data);
     }
     draggedID = null;
     overlapping = [];
@@ -88,29 +118,32 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,
-          child: Visibility(
-            visible: !hidden,
-            maintainAnimation: true,
-            maintainSize: true,
-            maintainState: true,
-            child: GestureDetector(
-              onTapDown: handleTapDown,
-              onLongPress: () => showNodeMenu(context, node),
-              onPanStart:
-                  widget.isDraggable ? (_) => startDragging(node) : null,
-              onPanUpdate: widget.isDraggable
-                  ? (details) => updateDragging(node, details)
-                  : null,
-              onPanEnd: widget.isDraggable ? (_) => finishDragging(node) : null,
-              child: widget.builder(
-                NodeBuilderDetails(
-                  item: node.data,
-                  level: level,
-                  hideNodes: ([hide]) => toggleHideNodes(node, hide),
-                  nodesHidden: node.hideNodes,
-                  isBeingDragged: nodeId == draggedID,
-                  isOverlapped: overlappingNodes.isNotEmpty &&
-                      overlappingNodes.first.data == node.data,
+          child: RepaintBoundary(
+            child: Visibility(
+              visible: !hidden,
+              maintainAnimation: true,
+              maintainSize: true,
+              maintainState: true,
+              child: GestureDetector(
+                onTapDown: handleTapDown,
+                onLongPress: () => showNodeMenu(context, node),
+                onPanStart:
+                    widget.isDraggable ? (_) => startDragging(node) : null,
+                onPanUpdate: widget.isDraggable
+                    ? (details) => updateDragging(node, details)
+                    : null,
+                onPanEnd:
+                    widget.isDraggable ? (_) => finishDragging(node) : null,
+                child: widget.builder(
+                  NodeBuilderDetails(
+                    item: node.data,
+                    level: level,
+                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    nodesHidden: node.hideNodes,
+                    isBeingDragged: nodeId == draggedID,
+                    isOverlapped: overlappingNodes.isNotEmpty &&
+                        overlappingNodes.first.data == node.data,
+                  ),
                 ),
               ),
             ),

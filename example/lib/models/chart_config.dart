@@ -4,10 +4,14 @@ import 'package:org_chart/org_chart.dart';
 /// Configuration class for organization chart settings
 class ChartConfig {
   // Layout settings
-  OrgChartOrientation orientation;
+  GraphOrientation orientation;
   double nodeSpacing;
   double levelSpacing;
   double cornerRadius;
+
+  /// Number of columns to arrange leaf nodes in (nodes without children)
+  /// Higher values create wider but shorter charts
+  int leafColumnCount;
 
   // Arrow style
   GraphArrowStyle arrowStyle;
@@ -50,12 +54,12 @@ class ChartConfig {
 
   // Keyboard direction settings
   bool invertArrowKeyDirection;
-
   ChartConfig({
-    this.orientation = OrgChartOrientation.topToBottom,
+    this.orientation = GraphOrientation.topToBottom,
     this.nodeSpacing = 20.0,
     this.levelSpacing = 40.0,
     this.cornerRadius = 8.0,
+    this.leafColumnCount = 4,
     GraphArrowStyle? arrowStyle,
     List<double>? dashPattern,
     this.dashThickness = 2.0,
@@ -67,7 +71,7 @@ class ChartConfig {
     this.animationCurve = Curves.easeInOut,
     this.enableRotation = false,
     this.constrainBounds = false,
-    this.enableDoubleTapZoom = true,
+    this.enableDoubleTapZoom = false,
     this.doubleTapZoomFactor = 2.0,
     this.enableKeyboardControls = true,
     this.keyboardPanDistance = 20.0,

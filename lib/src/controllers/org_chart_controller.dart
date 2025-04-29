@@ -4,33 +4,30 @@ import 'dart:math' as math;
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
-
-/// The orientation of the organizational chart
-enum OrgChartOrientation { topToBottom, leftToRight }
-
 enum ActionOnNodeRemoval { unlink, connectToParent, removeDescendants }
 
 /// Controller specifically for organizational charts
 class OrgChartController<E> extends BaseGraphController<E> {
-  // Private fields
-  OrgChartOrientation _orientation;
-
-  /// Get the current orientation of the chart
-  OrgChartOrientation get orientation => _orientation;
+  // /// Get the current orientation of the chart
+  // OrgChartOrientation get orientation => _orientation;
 
   String? Function(E data) toProvider;
   void Function(E data, String? newID)? toSetter;
+
+  /// Number of columns to arrange leaf nodes in (default: 2)
+  int leafColumns;
 
   OrgChartController({
     required super.items,
     super.boxSize,
     super.spacing,
     super.runSpacing,
+    super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
     required this.toProvider,
     this.toSetter,
-    OrgChartOrientation orientation = OrgChartOrientation.leftToRight,
-  })  : _orientation = orientation;
+    this.leafColumns = 4,
+  });
 
   // Node-related methods
   @override
@@ -93,16 +90,6 @@ class OrgChartController<E> extends BaseGraphController<E> {
     return false;
   }
 
-  /// Switch the orientation of the chart
-  void switchOrientation(
-      {OrgChartOrientation? orientation, bool center = true}) {
-    _orientation = orientation ??
-        (_orientation == OrgChartOrientation.topToBottom
-            ? OrgChartOrientation.leftToRight
-            : OrgChartOrientation.topToBottom);
-    calculatePosition(center: center);
-  }
-
   /// Remove an item from the chart
   void removeItem(String? id, ActionOnNodeRemoval action) {
     if (action == ActionOnNodeRemoval.unlink ||
@@ -141,7 +128,7 @@ class OrgChartController<E> extends BaseGraphController<E> {
     for (Node<E> node in roots) {
       offset += _calculateNodePositions(
         node,
-        offset: _orientation == OrgChartOrientation.topToBottom
+        offset: orientation == GraphOrientation.topToBottom
             ? Offset(offset, 0)
             : Offset(0, offset),
       );
@@ -185,7 +172,7 @@ class OrgChartController<E> extends BaseGraphController<E> {
   // Private position calculation methods
   double _calculateNodePositions(Node<E> node,
       {Offset offset = const Offset(0, 0)}) {
-    return _orientation == OrgChartOrientation.topToBottom
+    return orientation == GraphOrientation.topToBottom
         ? _calculatePositionsTopToBottom(node, offset: offset)
         : _calculatePositionsLeftToRight(node, offset: offset);
   }
@@ -215,199 +202,204 @@ class OrgChartController<E> extends BaseGraphController<E> {
   // Position calculations for leaf nodes (nodes without hidden children)
   double _positionLeafNodesTopToBottom(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
+    // Handle empty subNodes case
+    if (subNodes.isEmpty) {
+      node.position = offset +
+          Offset(
+            0,
+            (getLevel(node) - 1) * (boxSize.height + runSpacing),
+          );
+      return boxSize.width + spacing;
+    }
+
+    // Use minimum of available children and leafColumns
+    int effectiveColumns = math.min(subNodes.length, leafColumns);
+
+    // Position subnodes in a grid pattern with the specified columns
     for (var i = 0; i < subNodes.length; i++) {
+      int row = i ~/ effectiveColumns;
+      int col = i % effectiveColumns;
+
       subNodes[i].position = offset +
           Offset(
-            i % 2 == 0
-                ? subNodes.length > i + 1 || subNodes.length == 1
-                    ? 0
-                    : boxSize.width / 2 + spacing / 2
-                : spacing + boxSize.width,
-            ((getLevel(subNodes[i]) - 1) + i ~/ 2) *
-                (boxSize.height + runSpacing),
+            col * (boxSize.width + spacing),
+            (getLevel(subNodes[i]) - 1 + row) * (boxSize.height + runSpacing),
           );
     }
 
+    // Calculate width of the last row (which may be different)
+    int itemsInLastRow = subNodes.length % effectiveColumns == 0
+        ? effectiveColumns
+        : subNodes.length % effectiveColumns;
+    double lastRowWidth =
+        itemsInLastRow * boxSize.width + (itemsInLastRow - 1) * spacing;
+
+    // Full row width
+    double fullRowWidth =
+        effectiveColumns * boxSize.width + (effectiveColumns - 1) * spacing;
+
+    // The width is the maximum of the full row width and the last row width
+    double maxRowWidth = math.max(fullRowWidth, lastRowWidth);
+
+    // Center the parent node above its children
     node.position = offset +
         Offset(
-          (subNodes.length > 1 ? boxSize.width / 2 + spacing / 2 : 0),
+          (maxRowWidth - boxSize.width) / 2,
           (getLevel(node) - 1) * (boxSize.height + runSpacing),
         );
 
-    return (subNodes.length > 1
-        ? boxSize.width * 2 + spacing * 3
-        : boxSize.width + spacing * 2);
+    // Return the total width needed for this subtree
+    return maxRowWidth + spacing;
   }
 
   // Position calculations for non-leaf nodes (nodes with visible children)
   double _positionNonLeafNodesTopToBottom(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
-    double dxOff = 0;
+    // If no subnodes or they're hidden, return minimal width
+    if (subNodes.isEmpty || node.hideNodes) {
+      node.position = offset +
+          Offset(
+            0,
+            (getLevel(node) - 1) * (boxSize.height + runSpacing),
+          );
+      return boxSize.width + spacing;
+    }
+
+    // Calculate positions for all subnodes
+    double totalWidth = 0;
+    List<double> nodeWidths = [];
+
     for (var i = 0; i < subNodes.length; i++) {
-      dxOff += _calculatePositionsTopToBottom(
+      double nodeWidth = _calculatePositionsTopToBottom(
         subNodes[i],
-        offset: offset + Offset(dxOff, 0),
+        offset: offset + Offset(totalWidth, 0),
+      );
+      nodeWidths.add(nodeWidth);
+      totalWidth += nodeWidth;
+    }
+
+    // Center parent above children
+    if (subNodes.length == 1) {
+      // For single child, align directly above
+      node.position = Offset(
+        subNodes.first.position.dx,
+        (getLevel(node) - 1) * (boxSize.height + runSpacing),
+      );
+    } else {
+      // For multiple children, center above the group
+      double leftmostX = subNodes.first.position.dx;
+      double rightmostX = subNodes.last.position.dx + boxSize.width;
+      double centerX = (leftmostX + rightmostX) / 2 - boxSize.width / 2;
+
+      node.position = Offset(
+        centerX,
+        (getLevel(node) - 1) * (boxSize.height + runSpacing),
       );
     }
 
-    double relOff = _getRelativeOffset(node);
-
-    node.position = subNodes.length == 1
-        ? Offset(
-            subNodes.first.position.dx,
-            (getLevel(node) - 1) * (boxSize.height + runSpacing),
-          )
-        : offset +
-            Offset(
-              relOff / 2 - boxSize.width / 2 - spacing,
-              (getLevel(node) - 1) * (boxSize.height + runSpacing),
-            );
-
-    return relOff;
+    return totalWidth;
   }
 
   // Position calculations for leaf nodes in left-to-right orientation
   double _positionLeafNodesLeftToRight(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
+    // Handle empty subNodes case
+    if (subNodes.isEmpty) {
+      node.position = offset +
+          Offset(
+            (getLevel(node) - 1) * (boxSize.width + runSpacing),
+            0,
+          );
+      return boxSize.height + spacing;
+    }
+
+    // Use minimum of available children and leafColumns
+    int effectiveColumns = math.min(subNodes.length, leafColumns);
+
+    // Position subnodes in a grid pattern with the specified rows
     for (var i = 0; i < subNodes.length; i++) {
+      int col = i ~/ effectiveColumns;
+      int row = i % effectiveColumns;
+
       subNodes[i].position = offset +
           Offset(
-            ((getLevel(subNodes[i]) - 1) + i ~/ 2) *
-                (boxSize.width + runSpacing),
-            i % 2 == 0
-                ? subNodes.length > i + 1 || subNodes.length == 1
-                    ? 0
-                    : boxSize.height / 2 + spacing / 2
-                : spacing + boxSize.height,
+            (getLevel(subNodes[i]) - 1 + col) * (boxSize.width + runSpacing),
+            row * (boxSize.height + spacing),
           );
     }
 
+    // Calculate height of the last column (which may be different)
+    int itemsInLastCol = subNodes.length % effectiveColumns == 0
+        ? effectiveColumns
+        : subNodes.length % effectiveColumns;
+    double lastColHeight =
+        itemsInLastCol * boxSize.height + (itemsInLastCol - 1) * spacing;
+
+    // Full column height
+    double fullColHeight =
+        effectiveColumns * boxSize.height + (effectiveColumns - 1) * spacing;
+
+    // The height is the maximum of the full column height and the last column height
+    double maxColHeight = math.max(fullColHeight, lastColHeight);
+
+    // Center the parent node to the left of its children
     node.position = offset +
         Offset(
           (getLevel(node) - 1) * (boxSize.width + runSpacing),
-          (subNodes.length > 1 ? boxSize.height / 2 + spacing / 2 : 0),
+          (maxColHeight - boxSize.height) / 2,
         );
 
-    return (subNodes.length > 1
-        ? boxSize.height * 2 + spacing * 3
-        : boxSize.height + spacing * 2);
+    // Return the total height needed for this subtree
+    return maxColHeight + spacing;
   }
 
   // Position calculations for non-leaf nodes in left-to-right orientation
   double _positionNonLeafNodesLeftToRight(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
-    double dyOff = 0;
+    // If no subnodes or they're hidden, return minimal height
+    if (subNodes.isEmpty || node.hideNodes) {
+      node.position = offset +
+          Offset(
+            (getLevel(node) - 1) * (boxSize.width + runSpacing),
+            0,
+          );
+      return boxSize.height + spacing;
+    }
+
+    // Calculate positions for all subnodes
+    double totalHeight = 0;
+    List<double> nodeHeights = [];
+
     for (var i = 0; i < subNodes.length; i++) {
-      dyOff += _calculatePositionsLeftToRight(
+      double nodeHeight = _calculatePositionsLeftToRight(
         subNodes[i],
-        offset: offset + Offset(0, dyOff),
+        offset: offset + Offset(0, totalHeight),
+      );
+      nodeHeights.add(nodeHeight);
+      totalHeight += nodeHeight;
+    }
+
+    // Center parent to the left of children
+    if (subNodes.length == 1) {
+      // For single child, align directly to the left
+      node.position = Offset(
+        (getLevel(node) - 1) * (boxSize.width + runSpacing),
+        subNodes.first.position.dy,
+      );
+    } else {
+      // For multiple children, center to the left of the group
+      double topmostY = subNodes.first.position.dy;
+      double bottommostY = subNodes.last.position.dy + boxSize.height;
+      double centerY = (topmostY + bottommostY) / 2 - boxSize.height / 2;
+
+      node.position = Offset(
+        (getLevel(node) - 1) * (boxSize.width + runSpacing),
+        centerY,
       );
     }
 
-    double relOff = _getRelativeOffset(node);
-
-    node.position = subNodes.length == 1
-        ? Offset(
-            (getLevel(node) - 1) * (boxSize.width + runSpacing),
-            subNodes.first.position.dy,
-          )
-        : offset +
-            Offset(
-              (getLevel(node) - 1) * (boxSize.width + runSpacing),
-              relOff / 2 - boxSize.height / 2 - spacing,
-            );
-
-    return relOff;
+    return totalHeight;
   }
-
-  // Calculate relative offsets between nodes
-  double _getRelativeOffset(Node<E> node) {
-    return _orientation == OrgChartOrientation.topToBottom
-        ? _getRelativeOffsetTopToBottom(node)
-        : _getRelativeOffsetLeftToRight(node);
-  }
-
-  double _getRelativeOffsetTopToBottom(Node<E> node) {
-    List<Node<E>> subNodes = getSubNodes(node);
-
-    if (node.hideNodes || subNodes.isEmpty) {
-      return boxSize.width + spacing * 2;
-    }
-
-    if (allLeaf(subNodes)) {
-      return (subNodes.length > 1
-          ? boxSize.width * 2 + spacing * 3
-          : boxSize.width + spacing * 2);
-    } else {
-      double relativeOffset = 0.0;
-      for (var subNode in subNodes) {
-        relativeOffset += _getRelativeOffsetTopToBottom(subNode);
-      }
-      return relativeOffset;
-    }
-  }
-
-  double _getRelativeOffsetLeftToRight(Node<E> node) {
-    List<Node<E>> subNodes = getSubNodes(node);
-
-    if (node.hideNodes || subNodes.isEmpty) {
-      return boxSize.height + spacing * 2;
-    }
-
-    if (allLeaf(subNodes)) {
-      return (subNodes.length > 1
-          ? boxSize.height * 2 + spacing * 3
-          : boxSize.height + spacing * 2);
-    } else {
-      double relativeOffset = 0.0;
-      for (var subNode in subNodes) {
-        relativeOffset += _getRelativeOffsetLeftToRight(subNode);
-      }
-      return relativeOffset;
-    }
-  }
-  /// Centers a specific node in the view
-  ///
-  /// [nodeId] The ID of the node to center
-  /// [scale] Optional scale level to apply when centering (null means no scale change)
-  /// [animate] Whether to animate the centering
-  /// [duration] Animation duration when animate is true
-  /// [curve] Animation curve when animate is true
-  Future<void> centerNode(
-    String nodeId, {
-    double? scale,
-    bool animate = true,
-    Duration duration = const Duration(milliseconds: 300),
-    Curve curve = Curves.easeInOut,
-  }) async {
-    if (viewerController == null) return;
-    final node = nodes.firstWhere((node) => idProvider(node.data) == nodeId);
-
-    // Check if the node is hidden
-    Node<E>? parent = getParent(node);
-    while (parent != null) {
-      if (parent.hideNodes) return;
-      parent = getParent(parent);
-    }
-
-    // Create a rectangle representing the node's position and size
-    final nodeRect = Rect.fromLTWH(
-      node.position.dx,
-      node.position.dy,
-      boxSize.width,
-      boxSize.height,
-    );
-
-    // Center on this rectangle
-    await viewerController!.centerOnRect(
-      nodeRect,
-      scale: scale,
-      animate: animate,
-      duration: duration,
-      curve: curve,
-    );
-  }
-
 
   /// Removes a node and all its descendants from the list of nodes
   void removeNodeAndDescendants(List<Node<E>> nodes, Node<E> nodeToRemove) {
@@ -433,5 +425,42 @@ class OrgChartController<E> extends BaseGraphController<E> {
     final parentId = toProvider(node.data);
     if (parentId == null) return null;
     return nodes.where((n) => idProvider(n.data) == parentId).firstOrNull;
+  }
+
+  @override
+  List<Node<E>> getOverlapping(Node<E> node) {
+    List<Node<E>> overlapping = [];
+    final String nodeId = idProvider(node.data);
+
+    for (Node<E> n in nodes) {
+      final String nId = idProvider(n.data);
+      if (nodeId != nId) {
+        Offset offset = node.position - n.position;
+        if (offset.dx.abs() < boxSize.width &&
+            offset.dy.abs() < boxSize.height) {
+          // Check if the node is hidden
+          if (!isNodeHidden(n)) {
+            overlapping.add(n);
+          }
+        }
+      }
+    }
+
+    overlapping.sort((a, b) => a
+        .distance(node)
+        .distanceSquared
+        .compareTo(b.distance(node).distanceSquared));
+
+    return overlapping;
+  }
+
+  bool isNodeHidden(Node<E> node) {
+    // Check if any parent nodes are hidden
+    Node<E>? parent = getParent(node);
+    while (parent != null) {
+      if (parent.hideNodes) return true;
+      parent = getParent(parent);
+    }
+    return false;
   }
 }

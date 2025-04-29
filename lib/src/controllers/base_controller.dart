@@ -1,17 +1,35 @@
+import 'dart:typed_data';
+
 import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
+import 'package:org_chart/src/exporting/exporting.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+/// The orientation of the organizational chart
+enum GraphOrientation { topToBottom, leftToRight }
 
 /// Base controller class that all specific graph controllers should extend
 abstract class BaseGraphController<E> {
+  GraphOrientation orientation;
+
+  GlobalKey repaintBoundaryKey = GlobalKey();
+
+  Future<Uint8List?> exportAsImage() async {
+    return await exportChartAsImage(repaintBoundaryKey);
+  }
+
+  Future<pw.Document?> exportAsPdf() async {
+    return await exportChartAsPdf(repaintBoundaryKey);
+  }
+
   // Common graph controller properties
   Size boxSize;
   double spacing;
   double runSpacing;
   String Function(E data) idProvider;
 
-
- // Reference to the interactive viewer controller
+  // Reference to the interactive viewer controller
   CustomInteractiveViewerController? viewerController;
 
   /// Sets the interactive viewer controller for node centering
@@ -28,6 +46,7 @@ abstract class BaseGraphController<E> {
     this.boxSize = const Size(200, 100),
     this.spacing = 20,
     this.runSpacing = 50,
+    this.orientation = GraphOrientation.topToBottom,
     required this.idProvider,
   }) {
     this.items = items;
@@ -55,6 +74,15 @@ abstract class BaseGraphController<E> {
     calculatePosition();
   }
 
+  /// Switch the orientation of the chart
+  void switchOrientation({GraphOrientation? orientation, bool center = true}) {
+    this.orientation = orientation ??
+        (this.orientation == GraphOrientation.topToBottom
+            ? GraphOrientation.leftToRight
+            : GraphOrientation.topToBottom);
+    calculatePosition(center: center);
+  }
+
   String get uniqueNodeId {
     int id = 0;
     while (nodes.any((element) => idProvider(element.data) == id.toString())) {
@@ -67,7 +95,6 @@ abstract class BaseGraphController<E> {
     nodes.remove(node);
     nodes.insert(index == -1 ? nodes.length : index, node);
   }
-
 
   void calculatePosition({bool center = true});
 
@@ -106,5 +133,49 @@ abstract class BaseGraphController<E> {
         .compareTo(b.distance(node).distanceSquared));
 
     return overlapping;
+  }
+
+
+  /// Centers a specific node in the view
+  ///
+  /// [nodeId] The ID of the node to center
+  /// [scale] Optional scale level to apply when centering (null means no scale change)
+  /// [animate] Whether to animate the centering
+  /// [duration] Animation duration when animate is true
+  /// [curve] Animation curve when animate is true
+  Future<void> centerNode(
+    String nodeId, {
+    double? scale,
+    bool animate = true,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+  }) async {
+    if (viewerController == null) return;
+    final node = nodes.firstWhere((node) => idProvider(node.data) == nodeId);
+
+    // TODO: implement this!
+    // // Check if the node is hidden
+    // Node<E>? parent = getParent(node);
+    // while (parent != null) {
+    //   if (parent.hideNodes) return;
+    //   parent = getParent(parent);
+    // }
+
+    // Create a rectangle representing the node's position and size
+    final nodeRect = Rect.fromLTWH(
+      node.position.dx,
+      node.position.dy,
+      boxSize.width,
+      boxSize.height,
+    );
+
+    // Center on this rectangle
+    await viewerController!.centerOnRect(
+      nodeRect,
+      scale: scale,
+      animate: animate,
+      duration: duration,
+      curve: curve,
+    );
   }
 }

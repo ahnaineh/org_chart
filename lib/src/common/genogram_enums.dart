@@ -9,7 +9,4 @@ enum Gender {
 enum MarriageStatus {
   married,
   divorced,
-  separated,
-  cohabiting,
-  engaged,
 }
