@@ -157,6 +157,7 @@ class OrgChartController<E> {
     return size + Offset(boxSize.width, boxSize.height);
   }
 
+
   List<Node<E>> getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
     final String nodeId = idProvider(node.data) ?? '';
@@ -167,7 +168,10 @@ class OrgChartController<E> {
         Offset offset = node.position - n.position;
         if (offset.dx.abs() < boxSize.width &&
             offset.dy.abs() < boxSize.height) {
-          overlapping.add(n);
+          // Check if the node is hidden
+          if (!isNodeHidden(n)) {
+            overlapping.add(n);
+          }
         }
       }
     }
@@ -178,6 +182,16 @@ class OrgChartController<E> {
         .compareTo(b.distance(node).distanceSquared));
 
     return overlapping;
+  }
+
+  bool isNodeHidden(Node<E> node) {
+    // Check if any parent nodes are hidden
+    Node<E>? parent = getParent(node);
+    while (parent != null) {
+      if (parent.hideNodes) return true;
+      parent = getParent(parent);
+    }
+    return false;
   }
 
   // Node-related methods
