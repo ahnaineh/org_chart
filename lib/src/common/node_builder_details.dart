@@ -1,5 +1,5 @@
 /// Contains all necessary properties that are passed to the node builder function
-/// to customize the appearance and behavior of each node in the organization chart.
+/// to customize the appearance and behavior of each node in the graph.
 class NodeBuilderDetails<T> {
   /// The data item associated with this node
   final T item;
@@ -11,7 +11,7 @@ class NodeBuilderDetails<T> {
   /// - Pass true to hide subnodes
   /// - Pass false to show subnodes
   /// - Pass null to toggle current state
-  final void Function([bool? hide]) hideNodes;
+  final void Function({bool? hide, bool center}) hideNodes;
 
   /// Whether the subnodes of this node are currently hidden/collapsed
   final bool nodesHidden;
@@ -36,7 +36,7 @@ class NodeBuilderDetails<T> {
   NodeBuilderDetails<T> copyWith({
     T? item,
     int? level,
-    void Function([bool? hide])? hideNodes,
+    void Function({bool? hide, bool center})? hideNodes,
     bool? nodesHidden,
     bool? isBeingDragged,
     bool? isOverlapped,

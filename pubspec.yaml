@@ -14,7 +14,8 @@ dependencies:
   flutter:
     sdk: flutter
   
-  custom_interactive_viewer: ^0.0.4
+  custom_interactive_viewer: ^0.0.6
+  pdf: ^3.11.3
 
 dev_dependencies:
   flutter_test:

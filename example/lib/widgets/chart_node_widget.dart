@@ -27,7 +27,7 @@ class ChartNodeWidget extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        onTap: () => details.hideNodes(),
+        onTap: () => details.hideNodes(center: false),
         child: Container(
           // width: controller.boxSize.width,
           // height: controller.boxSize.height,

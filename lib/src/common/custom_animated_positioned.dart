@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class CustomAnimatedPositioned extends AnimatedPositioned {
   /// Whether the node is being dragged or not
   final bool isBeingDragged;
+
   const CustomAnimatedPositioned({
     super.key,
     required super.child,

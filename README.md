@@ -2,7 +2,7 @@
 
 A Flutter organizational chart package with drag and drop, zoom and pan, collapse/expand, and extremely easy node customization. Built entirely in Flutter, so it works on all platforms supported by Flutter!
 
-[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](https://pub.dev/packages/org_chart)
+[![Version](https://img.shields.io/badge/version-5.0.0--alpha.1-blue.svg)](https://pub.dev/packages/org_chart)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
 
 [Try it out online!](https://ahnaineh.github.io/)
@@ -19,6 +19,9 @@ A Flutter organizational chart package with drag and drop, zoom and pan, collaps
 - ↔️ Multiple orientation support (top-to-bottom, left-to-right)
 - 🎯 Custom arrow styles and appearance
 - 🧩 Collapsible/expandable nodes
+- 👪 Genogram support with full relationship visualization
+- ✨ Customizable edge styling for genogram relationships
+- 💍 Different marriage line styles (married, divorced)
 
 ## Installation
 
@@ -26,7 +29,7 @@ Add `org_chart` as a dependency in your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  org_chart: ^4.2.0
+  org_chart: ^5.0.0-alpha.1
 ```
 
 Then run:
@@ -101,6 +104,85 @@ controller.switchOrientation(
 );
 ```
 
+## Genogram Features
+
+The package includes full support for family trees (genograms) with customizable relationship edges.
+
+### Basic Genogram Usage
+
+```dart
+// Create a controller
+final controller = GenogramController<Person>(
+  items: people,
+  idProvider: (person) => person.id,
+  fatherProvider: (person) => person.fatherId,
+  motherProvider: (person) => person.motherId,
+  genderProvider: (person) => person.gender,
+  spousesProvider: (person) => person.spouses,
+);
+
+// Create the genogram
+Genogram<Person>(
+  controller: controller,
+  builder: (details) => YourCustomNodeWidget(person: details.item),
+)
+```
+
+### Customizing Genogram Edges
+
+The package offers extensive edge styling for genograms, including:
+
+- Different marriage relationship styles (married, divorced, separated)
+- Adoption and foster child indicators
+- Custom colors, line types, and decorators
+
+```dart
+// Create a custom edge configuration
+final edgeConfig = GenogramEdgeConfig(
+  // Marriage line styles
+  defaultMarriageStyle: MarriageStyle(
+    lineStyle: MarriageLineStyle(
+      color: Colors.blue.shade700,
+      strokeWidth: 1.5,
+    ),
+  ),
+  divorcedMarriageStyle: MarriageStyle(
+    lineStyle: MarriageLineStyle(color: Colors.red),
+    decorator: DivorceDecorator(), // Adds divorce indicator
+  ),
+  separatedMarriageStyle: MarriageStyle(
+    lineStyle: MarriageLineStyle(
+      color: Colors.orange,
+      dashPattern: [5, 3], // Dashed line
+    ),
+  ),
+  
+  // Parent-child connection styles
+  parentChildStyle: ParentChildConnectionStyle(
+    color: Colors.black87,
+    strokeWidth: 1.2,
+  ),
+  adoptedChildStyle: AdoptionStyle(
+    type: AdoptionType.adopted,
+    color: Colors.purple,
+  ),
+  fosterChildStyle: AdoptionStyle(
+    type: AdoptionType.foster,
+    color: Colors.teal,
+  ),
+);
+
+// Apply to genogram
+Genogram<Person>(
+  controller: controller,
+  edgeConfig: edgeConfig,
+  // Providers to determine relationship types
+  marriageStatusProvider: (person, spouse) => getMarriageStatus(person, spouse),
+  adoptionTypeProvider: (child, father, mother) => getAdoptionType(child, father, mother),
+  builder: (details) => YourCustomNodeWidget(person: details.item),
+)
+```
+
 ## Documentation
 
 For more detailed documentation and examples, please check:
@@ -119,6 +201,7 @@ Completed:
 In Progress:
 - 🚧 Add arrow animations
 - 🚧 Write detailed documentation
+- 🚧 update toSetter. Allow using consts. 
 
 
 

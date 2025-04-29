@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Represents a node in the organizational chart
+/// Represents a node in a graph
 class Node<E> {
   /// The position of the node in the graph
   Offset position;
@@ -22,8 +22,8 @@ class Node<E> {
   Offset distance(Node other) => other.position - position;
 
   /// The squared distance between nodes (faster calculation than actual distance)
-  double get distanceSquared =>
-      position.dx * position.dx + position.dy * position.dy;
+  // double get distanceSquared =>
+  //     position.dx * position.dx + position.dy * position.dy;
 
   @override
   String toString() => 'Node(position: $position, hideNodes: $hideNodes)';

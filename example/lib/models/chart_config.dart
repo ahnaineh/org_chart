@@ -4,13 +4,17 @@ import 'package:org_chart/org_chart.dart';
 /// Configuration class for organization chart settings
 class ChartConfig {
   // Layout settings
-  OrgChartOrientation orientation;
+  GraphOrientation orientation;
   double nodeSpacing;
   double levelSpacing;
   double cornerRadius;
 
+  /// Number of columns to arrange leaf nodes in (nodes without children)
+  /// Higher values create wider but shorter charts
+  int leafColumnCount;
+
   // Arrow style
-  OrgChartArrowStyle arrowStyle;
+  GraphArrowStyle arrowStyle;
   List<double> dashPattern;
   double dashThickness;
 
@@ -50,13 +54,13 @@ class ChartConfig {
 
   // Keyboard direction settings
   bool invertArrowKeyDirection;
-
   ChartConfig({
-    this.orientation = OrgChartOrientation.topToBottom,
+    this.orientation = GraphOrientation.topToBottom,
     this.nodeSpacing = 20.0,
     this.levelSpacing = 40.0,
     this.cornerRadius = 8.0,
-    OrgChartArrowStyle? arrowStyle,
+    this.leafColumnCount = 4,
+    GraphArrowStyle? arrowStyle,
     List<double>? dashPattern,
     this.dashThickness = 2.0,
     this.isDraggable = true,
@@ -67,7 +71,7 @@ class ChartConfig {
     this.animationCurve = Curves.easeInOut,
     this.enableRotation = false,
     this.constrainBounds = false,
-    this.enableDoubleTapZoom = true,
+    this.enableDoubleTapZoom = false,
     this.doubleTapZoomFactor = 2.0,
     this.enableKeyboardControls = true,
     this.keyboardPanDistance = 20.0,
@@ -85,21 +89,21 @@ class ChartConfig {
     this.keyboardAnimationDuration = const Duration(milliseconds: 300),
     this.invertArrowKeyDirection = false,
   })  : dashPattern = dashPattern ?? [8.0, 4.0],
-        arrowStyle = arrowStyle ?? const OrgChartSolidGraphArrow();
+        arrowStyle = arrowStyle ?? const SolidGraphArrow();
 
   /// Get a Paint object for lines based on current settings
   Paint getLinePaint(BuildContext context) {
     return Paint()
       ..color = Theme.of(context).colorScheme.primary
-      ..strokeWidth = arrowStyle is OrgChartDashedGraphArrow ? dashThickness : 2
+      ..strokeWidth = arrowStyle is DashedGraphArrow ? dashThickness : 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
   }
 
   /// Update the arrow style based on current dash pattern
   void updateDashedArrowStyle() {
-    if (arrowStyle is OrgChartDashedGraphArrow) {
-      arrowStyle = OrgChartDashedGraphArrow(pattern: dashPattern);
+    if (arrowStyle is DashedGraphArrow) {
+      arrowStyle = DashedGraphArrow(pattern: dashPattern);
     }
   }
 

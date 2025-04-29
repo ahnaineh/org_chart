@@ -49,9 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {});
     });
     // Initialize with default configuration
-    config = ChartConfig();
-
-    // Initialize the controller with sample data
+    config = ChartConfig(); // Initialize the controller with sample data
     controller = OrgChartController<Map<String, dynamic>>(
       items: ChartUtils.nodesToMaps(ChartUtils.getSampleData()),
       idProvider: (item) => item['id'],
@@ -60,7 +58,15 @@ class _HomeScreenState extends State<HomeScreen> {
       boxSize: const Size(180, 90),
       spacing: config.nodeSpacing,
       runSpacing: config.levelSpacing,
+      leafColumns: config.leafColumnCount,
     );
+  }
+
+  @override
+  void dispose() {
+    focusNode.dispose();
+    _interactiveController.dispose();
+    super.dispose();
   }
 
   @override
@@ -85,6 +91,12 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: controller,
             interactiveViewerController: _interactiveController,
             onConfigChanged: (newConfig) {
+              // Check if leaf column count has changed
+              if (config.leafColumnCount != newConfig.leafColumnCount) {
+                controller.leafColumns = newConfig.leafColumnCount;
+                controller.calculatePosition();
+              }
+
               setState(() {
                 config = newConfig;
               });

@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
 import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
+import 'package:printing/printing.dart';
 import 'dart:math' as math;
 
 import '../models/chart_config.dart';
@@ -9,7 +11,7 @@ import '../utils/chart_utils.dart';
 /// Widget that displays a sidebar with all chart configuration options
 class ChartOptionsSidebar extends StatelessWidget {
   final ChartConfig config;
-  final OrgChartController controller;
+  final BaseGraphController controller;
   final CustomInteractiveViewerController interactiveViewerController;
   final Function(ChartConfig) onConfigChanged;
   final VoidCallback onAddNodePressed;
@@ -73,26 +75,26 @@ class ChartOptionsSidebar extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Core settings that most users will need
-            _buildCategoryHeader(context, 'Basic Settings'),
+            // Layout & Appearance
+            _buildCategoryHeader(context, 'Layout & Appearance'),
             _buildLayoutSection(context),
             _buildAppearanceSection(context),
-            _buildInteractionSection(context),
 
-            // Navigation-focused controls
-            _buildCategoryHeader(context, 'Navigation'),
+            // Navigation & Controls
+            _buildCategoryHeader(context, 'Navigation & Controls'),
             _buildNodeFocusSection(context),
             _buildControllerActionsSection(context),
             _buildScaleSection(context),
-
-            // Advanced settings for power users
-            _buildCategoryHeader(context, 'Advanced Settings'),
-            _buildAnimationSection(context),
-            _buildInteractiveViewerSection(context),
             _buildKeyboardControlsSection(context),
 
-            // Actions at the end
-            _buildCategoryHeader(context, 'Actions'),
+            // Interaction
+            _buildCategoryHeader(context, 'Interaction'),
+            _buildInteractionSection(context),
+            _buildAnimationSection(context),
+            _buildInteractiveViewerSection(context),
+
+            // Export & Actions
+            _buildCategoryHeader(context, 'Export & Actions'),
             _buildActionsSection(context),
           ],
         ),
@@ -135,12 +137,12 @@ class ChartOptionsSidebar extends StatelessWidget {
                 child: DropdownButtonHideUnderline(
                   child: ButtonTheme(
                     alignedDropdown: true,
-                    child: DropdownButton<OrgChartOrientation>(
+                    child: DropdownButton<GraphOrientation>(
                       isExpanded: true,
                       value: config.orientation,
                       borderRadius: BorderRadius.circular(8),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      items: OrgChartOrientation.values
+                      items: GraphOrientation.values
                           .map(
                             (e) => DropdownMenuItem(
                               value: e,
@@ -200,6 +202,75 @@ class ChartOptionsSidebar extends StatelessWidget {
             },
           ),
         ),
+        ListTile(
+          title: Row(
+            children: [
+              const Text('Leaf Column Count'),
+              const SizedBox(width: 4),
+              Tooltip(
+                message:
+                    'Number of columns to use when arranging leaf nodes (nodes without children)',
+                child: Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: Text(
+                  'Columns: ${config.leafColumnCount}',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: config.leafColumnCount.toDouble(),
+                      min: 1,
+                      max: 8,
+                      divisions: 7,
+                      label: '${config.leafColumnCount}',
+                      onChanged: (value) {
+                        // Since leafColumns is final, we need to recreate the controller
+                        config.leafColumnCount = value.toInt();
+                        (controller as OrgChartController).leafColumns =
+                            value.toInt();
+
+                        controller.calculatePosition();
+                        onConfigChanged(config);
+                      },
+                    ),
+                  ),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${config.leafColumnCount}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -229,9 +300,7 @@ class ChartOptionsSidebar extends StatelessWidget {
           title: const Text('Arrow Style'),
           subtitle: DropdownButton<String>(
             isExpanded: true,
-            value: config.arrowStyle is OrgChartSolidGraphArrow
-                ? 'straight'
-                : 'dashed',
+            value: config.arrowStyle is SolidGraphArrow ? 'straight' : 'dashed',
             items: [
               const DropdownMenuItem(
                   value: 'straight', child: Text('Straight')),
@@ -240,11 +309,11 @@ class ChartOptionsSidebar extends StatelessWidget {
             onChanged: (value) {
               switch (value) {
                 case 'straight':
-                  config.arrowStyle = const OrgChartSolidGraphArrow();
+                  config.arrowStyle = const SolidGraphArrow();
                   break;
                 case 'dashed':
                   config.arrowStyle =
-                      OrgChartDashedGraphArrow(pattern: config.dashPattern);
+                      DashedGraphArrow(pattern: config.dashPattern);
                   break;
               }
               onConfigChanged(config);
@@ -253,7 +322,7 @@ class ChartOptionsSidebar extends StatelessWidget {
         ),
 
         // Enhanced Dashed Arrow Options - Show only when dashed style is selected
-        if (config.arrowStyle is OrgChartDashedGraphArrow) ...[
+        if (config.arrowStyle is DashedGraphArrow) ...[
           const Padding(
             padding: EdgeInsets.only(left: 16.0, top: 8.0, bottom: 4.0),
             child: Text(
@@ -609,9 +678,48 @@ class ChartOptionsSidebar extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(Icons.save),
-          title: const Text('Export Chart'),
-          onTap: () {
-            // Implementation for export functionality will come in future
+          title: const Text('Export Chart As PDF'),
+          onTap: () async {
+            if (kIsWeb) {
+              await _showWebExportWarning(context);
+            }
+
+            final pdf = await controller.exportAsPdf();
+            if (pdf != null) {
+              await Printing.layoutPdf(onLayout: (format) async {
+                return await compute((data) async {
+                  return await data.save();
+                }, pdf);
+              });
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.save),
+          title: const Text('Export Chart As Image'),
+          onTap: () async {
+            if (kIsWeb) {
+              await _showWebExportWarning(context);
+            }
+
+            final image = await controller.exportAsImage();
+            if (image != null) {
+              await showDialog(
+                  context: context,
+                  builder: (c) {
+                    return AlertDialog(
+                      content: Image.memory(image),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    );
+                  });
+            }
           },
         ),
         ListTile(
@@ -620,6 +728,32 @@ class ChartOptionsSidebar extends StatelessWidget {
           onTap: onResetLayoutPressed,
         ),
       ],
+    );
+  }
+
+  /// Shows a warning dialog for web exports which may freeze the UI thread
+  Future<void> _showWebExportWarning(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.error),
+            const SizedBox(width: 8),
+            const Text('Export Warning'),
+          ],
+        ),
+        content: const Text(
+            'On web platforms, the UI thread may temporarily be freezed when exporting.\n\n'
+            'This is expected behavior and the application will be resumed once the export is complete.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
     );
   }
 

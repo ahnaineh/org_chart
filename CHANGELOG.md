@@ -1,3 +1,29 @@
+## [5.0.0-alpha.2]
+
+### Added
+1) Export functionality for charts - ability to export as PDF or image
+2) Additional node styling options for better visualization (genogram)
+
+### Improved
+1) Performance optimizations for large charts with many nodes
+2) More intuitive zoom and pan controls with configurable settings
+3) Better handling of node visibility and centering
+4) Refined user interface for chart manipulation
+
+### Fixed
+1) Resolved edge rendering issues in complex hierarchies
+2) Fixed positioning calculation for nodes with specific relationship patterns
+3) Improved node centering when some nodes are hidden
+4) Addressed bugs related to node dragging and dropping
+
+
+Bumped `custom_interactive_viewer` to version 0.0.6.
+
+
+## [5.0.0-alpha.1]
+Initial genogram implementation.
+
+
 ## [4.2.2]
 ### Fixed
 1) Fixed an issue with node overlapping detection.
@@ -38,21 +64,18 @@ Check [CustomInteractiveViewer](https://pub.dev/packages/custom_interactive_view
 
 Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of these features and fixes!
 
----
 
 ## [4.0.2]
 
 ### Fixed
 - Graph not being drawn due to a recursion issue.
 
----
 
 ## [4.0.1]
 
 ### Fixed
 - Bug when centering the graph with some hidden nodes.
 
----
 
 ## [4.0.0]
 
@@ -83,7 +106,6 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
 ### Updated
 - Example project improvements.
 
----
 
 ## [3.1.0]
 
@@ -106,14 +128,12 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
      - `ActionOnNodeRemoval.unlink`
      - `ActionOnNodeRemoval.linkToParent`
 
----
 
 ## [3.0.0+1]
 
 ### Changed
 - Updated README.
 
----
 
 ## [3.0.0]
 
@@ -128,7 +148,6 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
 8. Automatic UI updates after `calculatePosition` — no more need to call `setState`.
 9. Only the first tree is shown if multiple roots exist.
 
----
 
 ## [2.2.0]
 
@@ -140,7 +159,6 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
 ### Fixed
 - Positioning bug for nodes with a single subnode chain.
 
----
 
 ## [2.1.0]
 
@@ -153,14 +171,12 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
 ### Changed
 - Minor arrow drawing tweaks.
 
----
 
 ## [2.0.1]
 
 ### Changed
 - Code cleanup.
 
----
 
 ## [2.0.0]
 
@@ -175,14 +191,12 @@ Thanks to [@fabionuno](https://github.com/fabionuno) for implementing all of the
 3. Added customizable animation curve and duration when resetting positions.
 4. Added documentation and internal tweaks.
 
----
 
 ## [1.0.1]
 
 ### Changed
 - No API changes.
 
----
 
 ## [1.0.0]
 
