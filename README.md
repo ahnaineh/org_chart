@@ -150,25 +150,10 @@ final edgeConfig = GenogramEdgeConfig(
     lineStyle: MarriageLineStyle(color: Colors.red),
     decorator: DivorceDecorator(), // Adds divorce indicator
   ),
-  separatedMarriageStyle: MarriageStyle(
-    lineStyle: MarriageLineStyle(
-      color: Colors.orange,
-      dashPattern: [5, 3], // Dashed line
-    ),
-  ),
-  
   // Parent-child connection styles
   parentChildStyle: ParentChildConnectionStyle(
     color: Colors.black87,
     strokeWidth: 1.2,
-  ),
-  adoptedChildStyle: AdoptionStyle(
-    type: AdoptionType.adopted,
-    color: Colors.purple,
-  ),
-  fosterChildStyle: AdoptionStyle(
-    type: AdoptionType.foster,
-    color: Colors.teal,
   ),
 );
 
@@ -176,9 +161,7 @@ final edgeConfig = GenogramEdgeConfig(
 Genogram<Person>(
   controller: controller,
   edgeConfig: edgeConfig,
-  // Providers to determine relationship types
   marriageStatusProvider: (person, spouse) => getMarriageStatus(person, spouse),
-  adoptionTypeProvider: (child, father, mother) => getAdoptionType(child, father, mother),
   builder: (details) => YourCustomNodeWidget(person: details.item),
 )
 ```
