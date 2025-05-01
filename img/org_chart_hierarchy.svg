@@ -1,0 +1,44 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="180" height="180" fill="#f8f9fa" rx="10" ry="10" />
+  
+  <!-- CEO Node -->
+  <rect x="65" y="10" width="50" height="30" rx="5" fill="#3578e5" />
+  <text x="90" y="30" font-family="Arial" font-size="12" fill="white" text-anchor="middle">CEO</text>
+  
+  <!-- Connection Lines -->
+  <line x1="90" y1="40" x2="90" y2="55" stroke="#718096" stroke-width="2" />
+  <line x1="90" y1="55" x2="40" y2="55" stroke="#718096" stroke-width="2" />
+  <line x1="90" y1="55" x2="140" y2="55" stroke="#718096" stroke-width="2" />
+  <line x1="40" y1="55" x2="40" y2="70" stroke="#718096" stroke-width="2" />
+  <line x1="90" y1="55" x2="90" y2="70" stroke="#718096" stroke-width="2" />
+  <line x1="140" y1="55" x2="140" y2="70" stroke="#718096" stroke-width="2" />
+  
+  <!-- Manager Nodes -->
+  <rect x="15" y="70" width="50" height="25" rx="5" fill="#4caf50" />
+  <text x="40" y="86" font-family="Arial" font-size="10" fill="white" text-anchor="middle">Manager</text>
+  
+  <rect x="65" y="70" width="50" height="25" rx="5" fill="#4caf50" />
+  <text x="90" y="86" font-family="Arial" font-size="10" fill="white" text-anchor="middle">Manager</text>
+  
+  <rect x="115" y="70" width="50" height="25" rx="5" fill="#4caf50" />
+  <text x="140" y="86" font-family="Arial" font-size="10" fill="white" text-anchor="middle">Manager</text>
+  
+  <!-- Staff Connections -->
+  <line x1="40" y1="95" x2="40" y2="110" stroke="#718096" stroke-width="2" />
+  <line x1="90" y1="95" x2="90" y2="110" stroke="#718096" stroke-width="2" />
+  <line x1="140" y1="95" x2="140" y2="110" stroke="#718096" stroke-width="2" />
+  <line x1="40" y1="110" x2="15" y2="110" stroke="#718096" stroke-width="2" />
+  <line x1="40" y1="110" x2="65" y2="110" stroke="#718096" stroke-width="2" />
+  <line x1="15" y1="110" x2="15" y2="125" stroke="#718096" stroke-width="2" />
+  <line x1="65" y1="110" x2="65" y2="125" stroke="#718096" stroke-width="2" />
+  
+  <!-- Staff Nodes -->
+  <rect x="5" y="125" width="20" height="20" rx="3" fill="#ff9800" />
+  <rect x="55" y="125" width="20" height="20" rx="3" fill="#ff9800" />
+  <rect x="80" y="110" width="20" height="20" rx="3" fill="#ff9800" />
+  <rect x="130" y="110" width="20" height="20" rx="3" fill="#ff9800" />
+  
+  <!-- Legend -->
+  <text x="90" y="165" font-family="Arial" font-size="10" fill="#333" text-anchor="middle">Organizational Hierarchy</text>
+</svg>
