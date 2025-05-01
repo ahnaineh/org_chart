@@ -36,7 +36,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/ahnaineh/orgchart/tree/docs/docs/',
+            'https://github.com/ahnaineh/org_chart/tree/docs/docs/',
         },
         // blog: {
         //   showReadingTime: true,
