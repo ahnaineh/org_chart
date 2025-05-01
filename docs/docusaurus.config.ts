@@ -62,6 +62,12 @@ const config: Config = {
   ],
 
   themeConfig: {
+    algolia: {
+      appId: "L821DBNWTZ",
+      apiKey: "52057088db326099ebce184a8d77b4b4",
+      indexName: "ahnainehio",
+      contextualSearch: true,
+    },
     image: 'img/org-chart-showcase.png',
     colorMode: {
       defaultMode: 'light',

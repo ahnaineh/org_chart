@@ -32,8 +32,8 @@ export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title}`}
-      description="Create beautiful charts with ease">
+      title={`Hello from ${siteConfig.title}`}
+      description="Description will go into a meta tag in <head />">
       <HomepageHeader />
       <main>
         <section className={styles.features}>
@@ -43,7 +43,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/org_chart/img/org_chart_hierarchy.svg"
+                    src="/img/org_chart_hierarchy.svg"
                     alt="Organization Hierarchy"
                   />
                 </div>
@@ -56,7 +56,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/org_chart/img/org_chart_data.svg"
+                    src="/img/org_chart_data.svg"
                     alt="Data Integration"
                   />
                 </div>
@@ -69,7 +69,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/org_chart/img/org_chart_responsive.svg"
+                    src="/img/org_chart_responsive.svg"
                     alt="Responsive Design"
                   />
                 </div>
