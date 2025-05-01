@@ -1,0 +1,182 @@
+---
+title: Genogram Widget
+description: Component for rendering family trees and relationship diagrams
+---
+
+# Genogram Widget
+
+The `Genogram` widget displays family trees with complex relationships including marriages, parental connections, and gender distinctions.
+
+## Basic Usage
+
+```dart
+Genogram<Person>(
+  controller: controller,
+  builder: (details) {
+    return Card(
+      // Gender-based styling
+      color: controller.isMale(details.item) 
+          ? Colors.lightBlue.shade100 
+          : Colors.pink.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundImage: details.item.photoUrl != null
+                ? NetworkImage(details.item.photoUrl!)
+                : null,
+              child: details.item.photoUrl == null
+                ? Icon(controller.isMale(details.item) 
+                    ? Icons.male 
+                    : Icons.female)
+                : null,
+            ),
+            SizedBox(height: 8),
+            Text(details.item.name),
+            Text("${details.item.birthYear}-${details.item.deathYear ?? ''}"),
+          ],
+        ),
+      ),
+    );
+  },
+)
+```
+
+## Constructor Parameters
+
+The `Genogram` widget extends `BaseGraph` and inherits all its [common properties](../common/graph.mdx), plus:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `controller` | `GenogramController<E>` | required | Controller managing chart data and layout |
+| `edgeConfig` | `GenogramEdgeConfig` | `GenogramEdgeConfig()` | Configuration for edge styling |
+| `marriageStatusProvider` | `MarriageStatus Function(E,E)?` | null | Function to determine marriage status between two individuals |
+| `onDrop` | `Function(E dragged, E target)?` | null | Callback when a node is dropped onto another |
+
+## Edge Configuration
+
+Family trees have specialized edge styling for different types of relationships:
+
+```dart
+Genogram<Person>(
+  controller: controller,
+  builder: personBuilder,
+  edgeConfig: GenogramEdgeConfig(
+    marriageLineWidth: 2.0,
+    marriageColor: Colors.red,
+    siblingLineColor: Colors.blueGrey,
+    parentChildLineColor: Colors.green,
+    parentChildLineWidth: 1.5,
+    parentChildLineStyle: ParentChildLineStyle.angular,
+    marriageDashPattern: [5, 2], // For divorced/separated relationships
+  ),
+)
+```
+
+### GenogramEdgeConfig Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `marriageLineWidth` | `double` | `1.5` | Width of the line connecting spouses |
+| `marriageColor` | `Color?` | null | Color for marriage lines (null = use linePaint color) |
+| `siblingLineWidth` | `double` | `1.0` | Width of the horizontal line connecting siblings |
+| `siblingLineColor` | `Color?` | null | Color for sibling connecting lines |
+| `parentChildLineWidth` | `double` | `1.0` | Width of the lines connecting parents to children |
+| `parentChildLineColor` | `Color?` | null | Color for parent-child lines |
+| `marriageDashPattern` | `List<double>?` | null | Pattern for dashed marriage lines |
+| `parentChildLineStyle` | `ParentChildLineStyle` | `ParentChildLineStyle.standard` | Style of parent-child connections |
+
+## Marriage Status
+
+You can customize how different relationship statuses are displayed:
+
+```dart
+Genogram<Person>(
+  controller: controller,
+  builder: personBuilder,
+  marriageStatusProvider: (person, spouse) {
+    if (person.divorceIds?.contains(spouse.id) ?? false) {
+      return MarriageStatus.divorced;
+    }
+    if (person.separationIds?.contains(spouse.id) ?? false) {
+      return MarriageStatus.separated;
+    }
+    return MarriageStatus.married;
+  },
+)
+```
+
+The available marriage statuses are:
+
+| Status | Visual Representation |
+|--------|----------------------|
+| `married` | Solid line connecting spouses |
+| `divorced` | Dashed/broken line with two slashes |
+| `separated` | Dashed/dotted line |
+| `engaged` | Lighter or thinner line |
+
+## Gender-Based Styling
+
+The genogram automatically positions nodes based on gender, but you can also use gender information in your node builder:
+
+```dart
+builder: (details) {
+  return Card(
+    shape: controller.isMale(details.item)
+      ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4))
+      : CircleBorder(), // Traditional: rectangle for males, circle for females
+    color: controller.isMale(details.item)
+      ? Colors.lightBlue.shade100
+      : Colors.pink.shade100,
+    child: /* Node content */,
+  );
+}
+```
+
+## Drag and Drop Operations
+
+The `onDrop` callback provides the dragged item and target item:
+
+```dart
+Genogram<Person>(
+  controller: controller,
+  builder: personBuilder,
+  onDrop: (dragged, target) {
+    // Handle relationship changes, such as:
+    setState(() {
+      if (controller.isMale(dragged) && controller.isFemale(target)) {
+        // Add marriage relationship
+        dragged.spouseIds ??= [];
+        if (!dragged.spouseIds!.contains(target.id)) {
+          dragged.spouseIds!.add(target.id);
+        }
+      } else {
+        // Add as child
+        if (controller.isMale(target)) {
+          dragged.fatherId = target.id;
+        } else {
+          dragged.motherId = target.id;
+        }
+      }
+      controller.calculatePosition();
+    });
+  },
+)
+```
+
+## Family Visualization Patterns
+
+The Genogram layout follows standard family tree conventions:
+
+1. **Couple Relationships**: Spouses are positioned side-by-side
+2. **Parent-Child Relations**: Children are below/right of their parents
+3. **Sibling Groups**: Children of the same parents are grouped together
+4. **Multiple Marriages**: All spouses of an individual are adjacent to them
+5. **Gender Ordering**: In couples, males are typically positioned before females
+
+The layout automatically adapts to complex family structures including:
+- Multiple marriages
+- Half-siblings
+- Adoptive relationships
+- Multi-generational trees
