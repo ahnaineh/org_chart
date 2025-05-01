@@ -1,0 +1,179 @@
+<!-- filepath: c:\Users\ahnai\Projects\org_chart\docs\static\img\org-chart-showcase.svg -->
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="cardGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3f51b5" />
+      <stop offset="100%" stop-color="#5c6bc0" />
+    </linearGradient>
+    <linearGradient id="cardGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff5722" />
+      <stop offset="100%" stop-color="#ff7043" />
+    </linearGradient>
+    <linearGradient id="cardGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4caf50" />
+      <stop offset="100%" stop-color="#66bb6a" />
+    </linearGradient>
+    <linearGradient id="cardGradient4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#03a9f4" />
+      <stop offset="100%" stop-color="#29b6f6" />
+    </linearGradient>
+    <linearGradient id="cardGradient5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9c27b0" />
+      <stop offset="100%" stop-color="#ab47bc" />
+    </linearGradient>
+    
+    <!-- Card shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.2" />
+    </filter>
+    
+    <!-- CEO avatar -->
+    <clipPath id="avatarClip">
+      <circle cx="30" cy="30" r="20" />
+    </clipPath>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f9fafb" rx="8" ry="8" />
+  
+  <!-- Connecting lines -->
+  <!-- CEO to VPs -->
+  <path d="M400 110 L400 150" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M400 150 L200 150" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M400 150 L600 150" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M200 150 L200 180" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M400 150 L400 180" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M600 150 L600 180" stroke="#cbd5e1" stroke-width="2" />
+  
+  <!-- VP to Directors -->
+  <path d="M200 240 L200 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M200 280 L100 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M200 280 L300 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M100 280 L100 310" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M300 280 L300 310" stroke="#cbd5e1" stroke-width="2" />
+  
+  <!-- CTO to Directors -->
+  <path d="M400 240 L400 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M400 280 L400 310" stroke="#cbd5e1" stroke-width="2" />
+  
+  <!-- CFO to Directors -->
+  <path d="M600 240 L600 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M600 280 L500 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M600 280 L700 280" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M500 280 L500 310" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M700 280 L700 310" stroke="#cbd5e1" stroke-width="2" />
+  
+  <!-- Manager to staff -->
+  <path d="M100 370 L100 410" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M100 410 L50 410" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M100 410 L150 410" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M50 410 L50 440" stroke="#cbd5e1" stroke-width="2" />
+  <path d="M150 410 L150 440" stroke="#cbd5e1" stroke-width="2" />
+  
+  <!-- Cards -->
+  <!-- CEO Card -->
+  <g transform="translate(320, 50)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient1)" filter="url(#shadow)" />
+    <!-- Avatar circle -->
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">JD</text>
+    <!-- Text -->
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">John Doe</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Chief Executive Officer</text>
+  </g>
+  
+  <!-- VP Engineering Card -->
+  <g transform="translate(120, 180)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient2)" filter="url(#shadow)" />
+    <!-- Avatar circle -->
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">AS</text>
+    <!-- Text -->
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Alice Smith</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">VP Engineering</text>
+  </g>
+  
+  <!-- CTO Card -->
+  <g transform="translate(320, 180)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient1)" filter="url(#shadow)" />
+    <!-- Avatar circle -->
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">BJ</text>
+    <!-- Text -->
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Bob Johnson</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Chief Technology Officer</text>
+  </g>
+  
+  <!-- CFO Card -->
+  <g transform="translate(520, 180)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient3)" filter="url(#shadow)" />
+    <!-- Avatar circle -->
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">CW</text>
+    <!-- Text -->
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Carol Wilson</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Chief Financial Officer</text>
+  </g>
+  
+  <!-- Director Cards -->
+  <g transform="translate(20, 310)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient4)" filter="url(#shadow)" />
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">DT</text>
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Dave Thomas</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Engineering Manager</text>
+  </g>
+  
+  <g transform="translate(220, 310)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient4)" filter="url(#shadow)" />
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">EM</text>
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Eva Miller</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">QA Director</text>
+  </g>
+  
+  <g transform="translate(320, 310)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient5)" filter="url(#shadow)" />
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">FB</text>
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Frank Brown</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Product Director</text>
+  </g>
+  
+  <g transform="translate(420, 310)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient3)" filter="url(#shadow)" />
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">GK</text>
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Grace Kim</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">Finance Director</text>
+  </g>
+  
+  <g transform="translate(620, 310)">
+    <rect width="160" height="60" rx="8" ry="8" fill="url(#cardGradient2)" filter="url(#shadow)" />
+    <circle cx="30" cy="30" r="22" fill="white" />
+    <circle cx="30" cy="30" r="20" fill="#e0e0e0" />
+    <text x="30" cy="30" text-anchor="middle" dominant-baseline="middle" fill="#757575" font-family="Arial" font-weight="bold" font-size="14">HL</text>
+    <text x="70" y="25" font-family="Arial" font-weight="bold" font-size="14" fill="white">Henry Lee</text>
+    <text x="70" y="45" font-family="Arial" font-size="12" fill="rgba(255, 255, 255, 0.8)">HR Director</text>
+  </g>
+  
+  <!-- Staff level -->
+  <g transform="translate(-30, 440)">
+    <rect width="160" height="50" rx="8" ry="8" fill="#7986cb" filter="url(#shadow)" />
+    <text x="80" y="30" font-family="Arial" font-weight="bold" font-size="14" fill="white" text-anchor="middle">Software Engineer</text>
+  </g>
+  
+  <g transform="translate(70, 440)">
+    <rect width="160" height="50" rx="8" ry="8" fill="#7986cb" filter="url(#shadow)" />
+    <text x="80" y="30" font-family="Arial" font-weight="bold" font-size="14" fill="white" text-anchor="middle">UX Designer</text>
+  </g>
+</svg>
