@@ -1,196 +1,121 @@
-# Org Chart
+<div align="center">
+  
+# 📊 Flutter Org Chart
 
-A Flutter organizational chart package with drag and drop, zoom and pan, collapse/expand, and extremely easy node customization. Built entirely in Flutter, so it works on all platforms supported by Flutter!
+**A powerful, flexible organizational chart package built entirely in Flutter**
 
 [![Version](https://img.shields.io/badge/version-5.0.0--alpha.1-blue.svg)](https://pub.dev/packages/org_chart)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
+[![Stars](https://img.shields.io/github/stars/ahnaineh/org_chart?style=social)](https://github.com/ahnaineh/org_chart)
 
-[Try it out online!](https://ahnaineh.github.io/)
+[📚 Documentation](https://ahnaineh.github.io/org_chart/) | [🚀 Live Demo](https://ahnaineh.github.io/) | [💻 GitHub](https://github.com/ahnaineh/org_chart)
 
-![The example app](https://github.com/ahnaineh/org_chart/blob/c9d1ed3f80b6a8ceb13f12e3255d3511ec68d865/Sequence%2001_5.gif?raw=True)
+<img src="https://github.com/ahnaineh/org_chart/blob/c9d1ed3f80b6a8ceb13f12e3255d3511ec68d865/Sequence%2001_5.gif?raw=True" width="75%" alt="Org Chart Demo">
 
-## Features
+</div>
 
-- 📊 Versatile organizational chart with multiple layout options
-- 🔍 Zoomable and pannable interface
-- 🔄 Dynamic drag and drop functionality
-- 📱 Responsive design that works across all Flutter platforms
-- 🎨 Highly customizable node appearance and behavior
-- ↔️ Multiple orientation support (top-to-bottom, left-to-right)
-- 🎯 Custom arrow styles and appearance
-- 🧩 Collapsible/expandable nodes
-- 👪 Genogram support with full relationship visualization
-- ✨ Customizable edge styling for genogram relationships
-- 💍 Different marriage line styles (married, divorced)
+## ✨ Features
 
-## Installation
+<table>
+  <tr>
+    <td width="50%">
+      <h3>🔄 Dynamic & Interactive</h3>
+      <ul>
+        <li>Drag & drop functionality</li>
+        <li>Zoom & pan interface</li>
+        <li>Collapsible/expandable nodes</li>
+        <li>Multi-platform support</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🎨 Highly Customizable</h3>
+      <ul>
+        <li>Flexible node styling</li>
+        <li>Custom arrow styles</li>
+        <li>Multiple orientation options</li>
+        <li>Responsive design</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>👪 Genogram Support</h3>
+      <ul>
+        <li>Family tree visualization</li>
+        <li>Relationship edge styling</li>
+        <li>Marriage status indicators</li>
+        <li>Adoption & foster relationships</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🛠️ Developer-Friendly</h3>
+      <ul>
+        <li>Simple, intuitive API</li>
+        <li>Extensive documentation</li>
+        <li>Actively maintained</li>
+        <li>Works on all Flutter platforms</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-Add `org_chart` as a dependency in your `pubspec.yaml` file:
+## 📖 Documentation
+
+**[Visit our comprehensive documentation site](https://ahnaineh.github.io/org_chart/)**
+
+Our new documentation includes:
+- Getting started guides
+- Full API reference
+- Code examples
+- Interactive demos
+- Customization tutorials
+
+## 🚀 Quick Start
+
+### Installation
 
 ```yaml
 dependencies:
   org_chart: ^5.0.0-alpha.1
 ```
 
-Then run:
-
-```bash
-flutter pub get
-```
-
-## Basic Usage
-
-Import the package:
+### Import
 
 ```dart
 import 'package:org_chart/org_chart.dart';
 ```
 
-Create a basic organizational chart:
+## 📋 Key Features
 
-```dart
-// Create a controller
-final controller = OrgChartController();
+### Organizational Charts
 
-// Build your chart
-OrgChart(
-  controller: controller,
-  // Define your nodes
-  nodes: [
-    Node(
-      id: '1',
-      parent: null, // Root node
-      builder: (context, details) => YourCustomNodeWidget(),
-    ),
-    Node(
-      id: '2',
-      parent: '1', // Child of node with id '1'
-      builder: (context, details) => YourCustomNodeWidget(),
-    ),
-    // Add more nodes as needed
-  ],
-)
-```
+Visualize hierarchical structures with ease. For orientation options, layouts, and complete examples, see our [documentation](https://ahnaineh.github.io/org_chart/).
 
-## Advanced Usage
+### Genogram Features
 
-### Controlling Node Positions
+The package includes full support for family trees (genograms) with customizable relationship edges. See our [Genogram documentation](https://ahnaineh.github.io/org_chart/docs/genogram/overview) for complete examples and usage guidelines.
 
-Recalculate node positions:
+## 🗺️ Roadmap
 
-```dart
-// Redraw nodes in their original positions
-controller.calculatePosition();
+We maintain a detailed project roadmap on GitHub:
 
-// You can disable centering
-controller.calculatePosition(center: false);
-```
+[**View Full Roadmap**](https://github.com/users/ahnaineh/projects/3)
 
-### Changing Orientation
+#### Completed:
+- ✅ Stable, customizable API
+- ✅ Multiple orientation support
+- ✅ Arrow style customization
+- ✅ Genogram relationship visualization
 
-Switch between different layout orientations:
+#### In Progress:
+- 🚧 Arrow animations
+- 🚧 Enhanced documentation
+- 🚧 Constant support in setter methods
 
-```dart
-// Switch to left-to-right orientation
-controller.switchOrientation(orientation: OrgChartOrientation.leftToRight);
+Visit our [GitHub Project Board](https://github.com/users/ahnaineh/projects/3) to see our complete development plan, vote on features, and track progress.
 
-// Switch to top-to-bottom orientation
-controller.switchOrientation(orientation: OrgChartOrientation.topToBottom);
+## 🤝 Contributing
 
-// Disable centering when switching orientation
-controller.switchOrientation(
-  orientation: OrgChartOrientation.leftToRight,
-  center: false,
-);
-```
-
-## Genogram Features
-
-The package includes full support for family trees (genograms) with customizable relationship edges.
-
-### Basic Genogram Usage
-
-```dart
-// Create a controller
-final controller = GenogramController<Person>(
-  items: people,
-  idProvider: (person) => person.id,
-  fatherProvider: (person) => person.fatherId,
-  motherProvider: (person) => person.motherId,
-  genderProvider: (person) => person.gender,
-  spousesProvider: (person) => person.spouses,
-);
-
-// Create the genogram
-Genogram<Person>(
-  controller: controller,
-  builder: (details) => YourCustomNodeWidget(person: details.item),
-)
-```
-
-### Customizing Genogram Edges
-
-The package offers extensive edge styling for genograms, including:
-
-- Different marriage relationship styles (married, divorced, separated)
-- Adoption and foster child indicators
-- Custom colors, line types, and decorators
-
-```dart
-// Create a custom edge configuration
-final edgeConfig = GenogramEdgeConfig(
-  // Marriage line styles
-  defaultMarriageStyle: MarriageStyle(
-    lineStyle: MarriageLineStyle(
-      color: Colors.blue.shade700,
-      strokeWidth: 1.5,
-    ),
-  ),
-  divorcedMarriageStyle: MarriageStyle(
-    lineStyle: MarriageLineStyle(color: Colors.red),
-    decorator: DivorceDecorator(), // Adds divorce indicator
-  ),
-  // Parent-child connection styles
-  parentChildStyle: ParentChildConnectionStyle(
-    color: Colors.black87,
-    strokeWidth: 1.2,
-  ),
-);
-
-// Apply to genogram
-Genogram<Person>(
-  controller: controller,
-  edgeConfig: edgeConfig,
-  marriageStatusProvider: (person, spouse) => getMarriageStatus(person, spouse),
-  builder: (details) => YourCustomNodeWidget(person: details.item),
-)
-```
-
-## Documentation
-
-For more detailed documentation and examples, please check:
-
-- [API Documentation](https://pub.dev/documentation/org_chart/latest/)
-- [Example Project](https://pub.dev/packages/org_chart/example)
-
-## Roadmap
-
-Completed:
-- ✅ Build a stable, easily customizable API
-- ✅ Add orientation support
-- ✅ Add arrow paint customization
-- ✅ Add arrow styles
-
-In Progress:
-- 🚧 Add arrow animations
-- 🚧 Write detailed documentation
-- 🚧 update toSetter. Allow using consts. 
-
-
-
-## Contributing
-
-If you have ideas for improvements or found a bug:
-
-1. Open an issue or submit a pull request on [GitHub](https://github.com/ahnaineh/org_chart)
-2. Follow the contribution guidelines
+Contributions are welcome! Feel free to:
+- [Open an issue](https://github.com/ahnaineh/org_chart/issues/new)
+- [Submit a pull request](https://github.com/ahnaineh/org_chart/pulls)
