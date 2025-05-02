@@ -44,7 +44,6 @@
         <li>Family tree visualization</li>
         <li>Relationship edge styling</li>
         <li>Marriage status indicators</li>
-        <li>Adoption & foster relationships</li>
       </ul>
     </td>
     <td width="50%">
