@@ -1,0 +1,142 @@
+.features {
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  width: 100%;
+  background-color: #f9fafb;
+}
+
+[data-theme='dark'] .features {
+  background-color: #121a2d;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.sectionHeader h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ifm-color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.sectionHeader p {
+  font-size: 1.2rem;
+  color: var(--ifm-color-emphasis-700);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  margin-bottom: 2rem;
+}
+
+.card {
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .card {
+  background-color: rgba(30, 41, 59, 0.8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow: var(--ifm-glow-effect);
+}
+
+.cardHeader {
+  padding: 2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ifm-color-primary);
+  transition: transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cardHeader::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(to bottom right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+  transform: rotate(30deg);
+  animation: shine 3s infinite;
+}
+
+.card:hover .cardHeader {
+  transform: scale(1.05);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.cardContent {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContent h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.cardContent p {
+  margin-bottom: 0;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+
+  100% {
+    transform: translateX(100%) rotate(30deg);
+  }
+}
+
+@media (max-width: 996px) {
+  .cardHeader {
+    padding: 1.5rem 0;
+  }
+
+  .featureIcon {
+    font-size: 2.5rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sectionHeader h2 {
+    font-size: 1.75rem;
+  }
+}
