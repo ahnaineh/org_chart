@@ -4,15 +4,22 @@ import 'dart:math' as math;
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
-enum ActionOnNodeRemoval { unlink, connectToParent, removeDescendants }
+enum ActionOnNodeRemoval {
+  unlinkDescendants,
+  connectDescendantsToParent,
+  removeDescendants
+}
 
 /// Controller specifically for organizational charts
 class OrgChartController<E> extends BaseGraphController<E> {
   // /// Get the current orientation of the chart
   // OrgChartOrientation get orientation => _orientation;
 
+  /// Get the "to" ID of a node
   String? Function(E data) toProvider;
-  void Function(E data, String? newID)? toSetter;
+
+  /// replace the item with updated to ID
+  E Function(E data, String? newID)? toSetter;
 
   /// Number of columns to arrange leaf nodes in (default: 2)
   int leafColumns;
@@ -92,8 +99,8 @@ class OrgChartController<E> extends BaseGraphController<E> {
 
   /// Remove an item from the chart
   void removeItem(String? id, ActionOnNodeRemoval action) {
-    if (action == ActionOnNodeRemoval.unlink ||
-        action == ActionOnNodeRemoval.connectToParent) {
+    if (action == ActionOnNodeRemoval.unlinkDescendants ||
+        action == ActionOnNodeRemoval.connectDescendantsToParent) {
       assert(toSetter != null,
           "toSetter is not provided, you can't use this function without providing a toSetter");
     }
@@ -102,15 +109,16 @@ class OrgChartController<E> extends BaseGraphController<E> {
         nodes.firstWhere((element) => idProvider(element.data) == id);
 
     final subnodes =
-        roots.where((element) => toProvider(element.data) == id).toList();
+        nodes.where((element) => toProvider(element.data) == id).toList();
 
     for (Node<E> node in subnodes) {
       switch (action) {
-        case ActionOnNodeRemoval.unlink:
-          toSetter!(node.data, null);
+        case ActionOnNodeRemoval.unlinkDescendants:
+          addItem(toSetter!(node.data, null));
+
           break;
-        case ActionOnNodeRemoval.connectToParent:
-          toSetter!(node.data, toProvider(nodeToRemove.data));
+        case ActionOnNodeRemoval.connectDescendantsToParent:
+          addItem(toSetter!(node.data, toProvider(nodeToRemove.data)));
           break;
         case ActionOnNodeRemoval.removeDescendants:
           removeNodeAndDescendants(nodes, node);

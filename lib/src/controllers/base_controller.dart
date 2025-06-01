@@ -69,8 +69,76 @@ abstract class BaseGraphController<E> {
     calculatePosition();
   }
 
+  /// Adds a single item to the chart
+  /// If an item with the same ID already exists, it will be replaced
   void addItem(E item) {
-    nodes.add(Node(data: item));
+    final itemId = idProvider(item);
+    final existingIndex =
+        nodes.indexWhere((node) => idProvider(node.data) == itemId);
+
+    if (existingIndex != -1) {
+      // Replace existing item
+      nodes[existingIndex] = Node(data: item);
+    } else {
+      // Add new item
+      nodes.add(Node(data: item));
+    }
+    calculatePosition();
+  }
+
+  /// Adds multiple items to the chart
+  /// Items with existing IDs will replace the old ones
+  void addItems(List<E> items) {
+    for (final item in items) {
+      final itemId = idProvider(item);
+      final existingIndex =
+          nodes.indexWhere((node) => idProvider(node.data) == itemId);
+
+      if (existingIndex != -1) {
+        // Replace existing item
+        nodes[existingIndex] = Node(data: item);
+      } else {
+        // Add new item
+        nodes.add(Node(data: item));
+      }
+    }
+    calculatePosition();
+  }
+
+  // /// Removes an item by its ID
+  // /// Returns true if the item was found and removed, false otherwise
+  // bool removeItem(String itemId) {
+  //   final index = nodes.indexWhere((node) => idProvider(node.data) == itemId);
+  //   if (index != -1) {
+  //     nodes.removeAt(index);
+  //     calculatePosition();
+  //     return true;
+  //   }
+  //   return false;
+  // }
+
+  // /// Removes multiple items by their IDs
+  // /// Returns the number of items that were successfully removed
+  // int removeItems(List<String> itemIds) {
+  //   int removedCount = 0;
+  //   final itemIdSet = Set<String>.from(itemIds);
+
+  //   nodes.removeWhere((node) {
+  //     final shouldRemove = itemIdSet.contains(idProvider(node.data));
+  //     if (shouldRemove) removedCount++;
+  //     return shouldRemove;
+  //   });
+
+  //   if (removedCount > 0) {
+  //     calculatePosition();
+  //   }
+
+  //   return removedCount;
+  // }
+
+  /// Removes all items from the chart
+  void clearItems() {
+    nodes.clear();
     calculatePosition();
   }
 
@@ -134,7 +202,6 @@ abstract class BaseGraphController<E> {
 
     return overlapping;
   }
-
 
   /// Centers a specific node in the view
   ///
