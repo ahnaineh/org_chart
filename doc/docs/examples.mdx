@@ -1,0 +1,399 @@
+---
+title: Examples
+description: Code examples and usage patterns for org_chart package
+---
+
+# Examples
+
+## Basic Organization Chart
+
+```dart
+import 'package:org_chart/org_chart.dart';
+
+class Employee {
+  final String id;
+  final String name;
+  final String? managerId;
+  
+  Employee({required this.id, required this.name, this.managerId});
+  
+  // Updated for v5.0.0-alpha.3+: toSetter returns new instance
+  Employee copyWith({String? managerId}) {
+    return Employee(
+      id: id,
+      name: name,
+      managerId: managerId ?? this.managerId,
+    );
+  }
+}
+
+class MyOrgChart extends StatefulWidget {
+  @override
+  _MyOrgChartState createState() => _MyOrgChartState();
+}
+
+class _MyOrgChartState extends State<MyOrgChart> {
+  late OrgChartController<Employee> controller;
+  
+  final List<Employee> employees = [
+    Employee(id: '1', name: 'CEO'),
+    Employee(id: '2', name: 'CTO', managerId: '1'),
+    Employee(id: '3', name: 'CFO', managerId: '1'),
+    Employee(id: '4', name: 'Developer', managerId: '2'),
+    Employee(id: '5', name: 'Developer', managerId: '2'),
+    Employee(id: '6', name: 'Accountant', managerId: '3'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    controller = OrgChartController<Employee>(
+      items: employees,
+      idProvider: (emp) => emp.id,
+      toProvider: (emp) => emp.managerId,
+      toSetter: (emp, managerId) => emp.copyWith(managerId: managerId),
+      boxSize: const Size(180, 100),
+      spacing: 25,
+      runSpacing: 50,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Organization Chart')),
+      body: OrgChart<Employee>(
+        controller: controller,
+        nodeBuilder: (context, details) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.blue[100],
+              border: Border.all(color: Colors.blue),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                details.data.name,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addRandomEmployee,
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+  
+  void _addRandomEmployee() {
+    final newEmployee = Employee(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: 'New Employee',
+      managerId: '2', // Assign to CTO
+    );
+    
+    // v5.0.0-alpha.3+: addItem replaces if same ID exists
+    controller.addItem(newEmployee);
+  }
+}
+```
+
+## Batch Operations (v5.0.0-alpha.3+)
+
+```dart
+class BatchOperationsExample extends StatefulWidget {
+  @override
+  _BatchOperationsExampleState createState() => _BatchOperationsExampleState();
+}
+
+class _BatchOperationsExampleState extends State<BatchOperationsExample> {
+  late OrgChartController<Employee> controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = OrgChartController<Employee>(
+      items: [],
+      idProvider: (emp) => emp.id,
+      toProvider: (emp) => emp.managerId,
+      toSetter: (emp, managerId) => emp.copyWith(managerId: managerId),
+    );
+  }
+
+  void _loadInitialData() {
+    final initialEmployees = [
+      Employee(id: '1', name: 'CEO'),
+      Employee(id: '2', name: 'CTO', managerId: '1'),
+      Employee(id: '3', name: 'CFO', managerId: '1'),
+    ];
+    
+    // Use addItems for batch addition
+    controller.addItems(initialEmployees);
+  }
+
+  void _addDepartment() {
+    final newDepartment = [
+      Employee(id: '100', name: 'VP Engineering', managerId: '2'),
+      Employee(id: '101', name: 'Senior Dev', managerId: '100'),
+      Employee(id: '102', name: 'Junior Dev', managerId: '100'),
+      Employee(id: '103', name: 'QA Lead', managerId: '100'),
+    ];
+    
+    controller.addItems(newDepartment);
+  }
+
+  void _clearChart() {
+    controller.clearItems();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Batch Operations')),
+      body: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: _loadInitialData,
+                child: Text('Load Initial Data'),
+              ),
+              ElevatedButton(
+                onPressed: _addDepartment,
+                child: Text('Add Department'),
+              ),
+              ElevatedButton(
+                onPressed: _clearChart,
+                child: Text('Clear All'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: OrgChart<Employee>(
+              controller: controller,
+              nodeBuilder: (context, details) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    border: Border.all(color: Colors.green),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(details.data.name),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+## Node Removal Strategies (v5.0.0-alpha.3+)
+
+```dart
+class RemovalStrategiesExample extends StatefulWidget {
+  @override
+  _RemovalStrategiesExampleState createState() => _RemovalStrategiesExampleState();
+}
+
+class _RemovalStrategiesExampleState extends State<RemovalStrategiesExample> {
+  late OrgChartController<Employee> controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with sample data
+    final employees = [
+      Employee(id: '1', name: 'CEO'),
+      Employee(id: '2', name: 'VP Sales', managerId: '1'),
+      Employee(id: '3', name: 'Sales Manager', managerId: '2'),
+      Employee(id: '4', name: 'Sales Rep 1', managerId: '3'),
+      Employee(id: '5', name: 'Sales Rep 2', managerId: '3'),
+    ];
+
+    controller = OrgChartController<Employee>(
+      items: employees,
+      idProvider: (emp) => emp.id,
+      toProvider: (emp) => emp.managerId,
+      toSetter: (emp, managerId) => emp.copyWith(managerId: managerId),
+    );
+  }
+
+  void _removeWithUnlink() {
+    // Remove Sales Manager, leave reps without manager
+    controller.removeItem('3', ActionOnNodeRemoval.unlinkDescendants);
+  }
+
+  void _removeWithPromotion() {
+    // Remove Sales Manager, promote reps to VP Sales
+    controller.removeItem('3', ActionOnNodeRemoval.connectDescendantsToParent);
+  }
+
+  void _removeWithDescendants() {
+    // Remove VP Sales and entire sales department
+    controller.removeItem('2', ActionOnNodeRemoval.removeDescendants);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Removal Strategies')),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                ElevatedButton(
+                  onPressed: _removeWithUnlink,
+                  child: Text('Remove Manager (Unlink)'),
+                ),
+                ElevatedButton(
+                  onPressed: _removeWithPromotion,
+                  child: Text('Remove Manager (Promote)'),
+                ),
+                ElevatedButton(
+                  onPressed: _removeWithDescendants,
+                  child: Text('Remove Department'),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: OrgChart<Employee>(
+              controller: controller,
+              nodeBuilder: (context, details) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    border: Border.all(color: Colors.orange),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(details.data.name),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+## Export Functionality (v5.0.0-alpha.2+)
+
+```dart
+class ExportExample extends StatefulWidget {
+  @override
+  _ExportExampleState createState() => _ExportExampleState();
+}
+
+class _ExportExampleState extends State<ExportExample> {
+  late OrgChartController<Employee> controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with sample data
+    controller = OrgChartController<Employee>(
+      items: [
+        Employee(id: '1', name: 'CEO'),
+        Employee(id: '2', name: 'CTO', managerId: '1'),
+        Employee(id: '3', name: 'Developer', managerId: '2'),
+      ],
+      idProvider: (emp) => emp.id,
+      toProvider: (emp) => emp.managerId,
+    );
+  }
+
+  Future<void> _exportAsImage() async {
+    try {
+      final imageData = await controller.exportAsImage();
+      if (imageData != null) {
+        // Save or share the image
+        // You can use packages like path_provider and share_plus
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chart exported as image!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _exportAsPdf() async {
+    try {
+      final pdfDoc = await controller.exportAsPdf();
+      if (pdfDoc != null) {
+        // Save the PDF document
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chart exported as PDF!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Export Example')),
+      body: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: _exportAsImage,
+                child: Text('Export as Image'),
+              ),
+              ElevatedButton(
+                onPressed: _exportAsPdf,
+                child: Text('Export as PDF'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: OrgChart<Employee>(
+              controller: controller,
+              nodeBuilder: (context, details) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.purple[100],
+                    border: Border.all(color: Colors.purple),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(details.data.name),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+## Contributing
+
+Want to improve these examples? 
+
+👇👇👇 

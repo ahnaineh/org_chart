@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
-import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 
 import '../models/chart_config.dart';
 import '../utils/chart_utils.dart';

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
-import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:printing/printing.dart';
 import 'dart:math' as math;
 

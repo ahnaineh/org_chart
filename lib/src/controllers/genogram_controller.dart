@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/controllers/base_controller.dart';
 
-
 /// Controller responsible for managing and laying out genogram (family tree) charts
 ///
 /// A genogram is a visual representation of a family tree that displays detailed data on relationships
@@ -270,8 +269,7 @@ class GenogramController<E> extends BaseGraphController<E> {
           y = max(y, levelEdges[level]! + spacing);
         }
       } else {
-        levelEdges[level] =
-            orientation == GraphOrientation.topToBottom ? x : y;
+        levelEdges[level] = orientation == GraphOrientation.topToBottom ? x : y;
       }
 
       // Build the couple group (a husband and his wife/wives, or just a single individual)
@@ -361,33 +359,28 @@ class GenogramController<E> extends BaseGraphController<E> {
       }
 
       // Distance for children from parent
-      final double childDistance =
-          orientation == GraphOrientation.topToBottom
-              ? boxSize.height + runSpacing
-              : boxSize.width + runSpacing;
+      final double childDistance = orientation == GraphOrientation.topToBottom
+          ? boxSize.height + runSpacing
+          : boxSize.width + runSpacing;
 
       // Position coordinates for children based on orientation
-      final double childrenX = orientation == GraphOrientation.topToBottom
-          ? x
-          : x + childDistance;
+      final double childrenX =
+          orientation == GraphOrientation.topToBottom ? x : x + childDistance;
 
-      final double childrenY = orientation == GraphOrientation.topToBottom
-          ? y + childDistance
-          : y;
+      final double childrenY =
+          orientation == GraphOrientation.topToBottom ? y + childDistance : y;
 
       double childrenTotalSize =
           0; // Track total width/height required for all children
-      double childPos = orientation == GraphOrientation.topToBottom
-          ? childrenX
-          : childrenY;
+      double childPos =
+          orientation == GraphOrientation.topToBottom ? childrenX : childrenY;
 
       // Position each child and their descendants recursively
       for (final child in children) {
         // For each child, calculate the size of their entire subtree
-        final double subtreeSize =
-            orientation == GraphOrientation.topToBottom
-                ? layoutFamily(child, childPos, childrenY, level + 1)
-                : layoutFamily(child, childrenX, childPos, level + 1);
+        final double subtreeSize = orientation == GraphOrientation.topToBottom
+            ? layoutFamily(child, childPos, childrenY, level + 1)
+            : layoutFamily(child, childrenX, childPos, level + 1);
 
         // Add this subtree's size to the running total
         childrenTotalSize += subtreeSize;

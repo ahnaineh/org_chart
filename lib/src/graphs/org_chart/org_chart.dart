@@ -104,13 +104,13 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
-          duration:nodeId == draggedID ? Duration.zero : widget.duration,
+          duration: nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
           left: node.position.dx,
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,
-          child: RepaintBoundary  (
+          child: RepaintBoundary(
             child: Visibility(
               visible: !hidden,
               maintainAnimation: true,
@@ -126,12 +126,14 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
                 onPanUpdate: widget.isDraggable
                     ? (details) => updateDragging(node, details)
                     : null,
-                onPanEnd: widget.isDraggable ? (_) => finishDragging(node) : null,
+                onPanEnd:
+                    widget.isDraggable ? (_) => finishDragging(node) : null,
                 child: widget.builder(
                   NodeBuilderDetails(
                     item: node.data,
                     level: level,
-                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    hideNodes: ({hide, center = true}) =>
+                        toggleHideNodes(node, hide, center),
                     nodesHidden: node.hideNodes,
                     isBeingDragged: nodeId == draggedID,
                     isOverlapped: overlappingNodes.isNotEmpty &&

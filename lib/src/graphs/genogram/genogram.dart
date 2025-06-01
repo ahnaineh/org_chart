@@ -138,7 +138,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
                   NodeBuilderDetails(
                     item: node.data,
                     level: level,
-                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    hideNodes: ({hide, center = true}) =>
+                        toggleHideNodes(node, hide, center),
                     nodesHidden: node.hideNodes,
                     isBeingDragged: nodeId == draggedID,
                     isOverlapped: overlappingNodes.isNotEmpty &&
