@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
-import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/controllers/base_controller.dart';
+import 'package:org_chart/src/base/base_controller.dart';
 
 /// Base abstract class for arrow/line styles in graphs
 abstract class GraphArrowStyle {
@@ -32,46 +31,43 @@ enum ConnectionType {
   simpleLeafNode,
 }
 
+// Constants for arrow and path styling
+/// Default corner radius for curved edges
+// const double DEFAULT_CORNER_RADIUS = 10.0;
+
+/// Default arrow head length
+const double defaultArrowHeadLength = 10.0;
+
+/// Default arrow head angle (30 degrees in radians)
+const double defaultArrowHeadAngle = math.pi / 6;
+
+/// Default padding distance for segment extensions
+const double defaultSegmentPadding = 20.0;
+
+/// Default minimum distance for determining if nodes are too close
+const double defaultNodeProximityThreshold = 1.0;
+
+/// Small epsilon value for collinearity check
+const double collinearityEpsilon = 0.0001;
+
+/// Horizontal alignment threshold for centered node detection
+const double horizontalCenterThreshold = 0.7;
+
+/// Vertical alignment threshold for centered node detection
+const double verticalCenterThreshold = 0.7;
+
+/// Horizontal offset multiplier for side approach
+const double horizontalOffsetMultiplier = 0.6;
+
+/// Vertical offset multiplier for top/bottom approach
+const double verticalOffsetMultiplier = 0.8;
+
+/// Fixed distance from child node for routing connection
+const double fixedDistanceMultiplier = 0.4;
+// Multiplier to be used with box size
+
 /// Base edge painter class that should be extended by specific graph types
-abstract class BaseEdgePainter<E> extends CustomPainter {
-  // Constants for arrow and path styling
-  /// Default corner radius for curved edges
-  static const double DEFAULT_CORNER_RADIUS = 10.0;
-
-  /// Default arrow head length
-  static const double DEFAULT_ARROW_HEAD_LENGTH = 10.0;
-
-  /// Default arrow head angle (30 degrees in radians)
-  static const double DEFAULT_ARROW_HEAD_ANGLE = math.pi / 6;
-
-  /// Default padding distance for segment extensions
-  static const double DEFAULT_SEGMENT_PADDING = 20.0;
-
-  /// Default minimum distance for determining if nodes are too close
-  static const double DEFAULT_NODE_PROXIMITY_THRESHOLD = 1.0;
-
-  /// Small epsilon value for collinearity check
-  static const double COLLINEARITY_EPSILON = 0.0001;
-
-  /// Horizontal alignment threshold for centered node detection
-  static const double HORIZONTAL_CENTER_THRESHOLD = 0.7;
-
-  /// Vertical alignment threshold for centered node detection
-  static const double VERTICAL_CENTER_THRESHOLD = 0.7;
-
-  /// Horizontal offset multiplier for side approach
-  static const double HORIZONTAL_OFFSET_MULTIPLIER = 0.6;
-
-  /// Vertical offset multiplier for top/bottom approach
-  static const double VERTICAL_OFFSET_MULTIPLIER = 0.8;
-
-  /// Fixed distance from child node for routing connection
-  static const double FIXED_DISTANCE_MULTIPLIER =
-      0.4; // Multiplier to be used with box size
-
-  /// The controller that manages graph data
-  final BaseGraphController<E> controller;
-
+class EdgePainterUtils {
   /// The paint configuration for drawing lines
   final Paint linePaint;
 
@@ -85,33 +81,17 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
   final double arrowHeadLength;
   final double arrowHeadAngle;
 
-  BaseEdgePainter({
-    required this.controller,
+  EdgePainterUtils({
     required this.linePaint,
-    this.cornerRadius = DEFAULT_CORNER_RADIUS,
+    required this.cornerRadius,
     required this.arrowStyle,
-    this.arrowHeadLength = DEFAULT_ARROW_HEAD_LENGTH,
-    this.arrowHeadAngle = DEFAULT_ARROW_HEAD_ANGLE,
+    this.arrowHeadLength = defaultArrowHeadLength,
+    this.arrowHeadAngle = defaultArrowHeadAngle,
   });
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-
-  /// Draw arrows for all root nodes
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var node in controller.roots) {
-      drawNodeConnections(node, canvas);
-    }
-  }
-
-  /// Implement in subclass to draw connections for a specific node
-  void drawNodeConnections(Node<E> node, Canvas canvas) {
-    throw UnimplementedError('Subclasses must implement drawNodeConnections');
-  }
 
   /// Draw a line between two points
   void drawConnection(Canvas canvas, Offset start, Offset end, Size boxSize,
+      GraphOrientation orientation,
       {ConnectionType type = ConnectionType.adaptive, Paint? paint}) {
     // Use provided paint or default linePaint
     final Paint connectionPaint = paint ?? linePaint;
@@ -120,7 +100,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
     if (type == ConnectionType.adaptive) {
       bool needsSpecialRouting = false;
 
-      if (controller.orientation == GraphOrientation.topToBottom) {
+      if (orientation == GraphOrientation.topToBottom) {
         // Check if end node is above start node (requires special routing)
         needsSpecialRouting = end.dy < start.dy + boxSize.height;
       } else {
@@ -142,15 +122,14 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
         break;
 
       case ConnectionType.twoSegment:
-        final Offset midPoint =
-            controller.orientation == GraphOrientation.topToBottom
-                ? Offset(start.dx, (start.dy + end.dy) / 2)
-                : Offset((start.dx + end.dx) / 2, start.dy);
+        final Offset midPoint = orientation == GraphOrientation.topToBottom
+            ? Offset(start.dx, (start.dy + end.dy) / 2)
+            : Offset((start.dx + end.dx) / 2, start.dy);
         points = [start, midPoint, end];
         break;
 
       case ConnectionType.threeSegment:
-        if (controller.orientation == GraphOrientation.topToBottom) {
+        if (orientation == GraphOrientation.topToBottom) {
           final double midY = (start.dy + end.dy) / 2;
           points = [
             start,
@@ -171,20 +150,20 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
       case ConnectionType.simpleLeafNode:
         // For the simple leaf node connection, we draw a line from parent
         // and then a line to the child, handling special case when child is above parent
-        if (controller.orientation == GraphOrientation.topToBottom) {
+        if (orientation == GraphOrientation.topToBottom) {
           // For vertical layouts (top-to-bottom)
           bool needsSpecialRouting =
-              end.dy < start.dy + boxSize.height / 2 + DEFAULT_SEGMENT_PADDING;
+              end.dy < start.dy + boxSize.height / 2 + defaultSegmentPadding;
 
           if (needsSpecialRouting) {
             // Handle case where child is above parent (similar to adaptive)
             final Offset p1 = start;
             final Offset p2 = Offset(start.dx,
-                start.dy + boxSize.height / 2 + DEFAULT_SEGMENT_PADDING);
+                start.dy + boxSize.height / 2 + defaultSegmentPadding);
             final bool nodesTooClose = (start.dx - end.dx).abs() -
-                    DEFAULT_SEGMENT_PADDING -
+                    defaultSegmentPadding -
                     cornerRadius <
-                boxSize.width * DEFAULT_NODE_PROXIMITY_THRESHOLD;
+                boxSize.width * defaultNodeProximityThreshold;
 
             final double horizontalDir = nodesTooClose
                 ? (end.dx < start.dx ? -1 : 1)
@@ -193,7 +172,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
                 (!nodesTooClose
                     ? 0
                     : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
-                        DEFAULT_SEGMENT_PADDING);
+                        defaultSegmentPadding);
 
             // Calculate points to ensure the arrow ends at the side of the child box
             points = [
@@ -207,7 +186,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
             // Standard case where child is below parent
             // Get the fixed vertical drop distance from parent
             final double verticalDrop =
-                boxSize.height / 2 + DEFAULT_SEGMENT_PADDING;
+                boxSize.height / 2 + defaultSegmentPadding;
 
             // Calculate horizontal direction to approach the child
             // If child is to the left of parent, approach from right side of child
@@ -221,7 +200,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
             final Offset p3 = Offset(
                 end.dx +
                     horizontalDir *
-                        (boxSize.width / 2 + DEFAULT_SEGMENT_PADDING),
+                        (boxSize.width / 2 + defaultSegmentPadding),
                 p2.dy);
 
             // Move vertically to the height of child's center
@@ -244,10 +223,10 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
             // Handle case where child is to the left of parent
             final Offset p1 = start;
             final Offset p2 = Offset(
-                start.dx + boxSize.width / 2 + DEFAULT_SEGMENT_PADDING,
+                start.dx + boxSize.width / 2 + defaultSegmentPadding,
                 start.dy);
             final bool nodesTooClose = (start.dy - end.dy).abs() <
-                boxSize.height * DEFAULT_NODE_PROXIMITY_THRESHOLD;
+                boxSize.height * defaultNodeProximityThreshold;
 
             final double verticalDir = nodesTooClose
                 ? (end.dy < start.dy ? -1 : 1)
@@ -257,16 +236,16 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
                 (!nodesTooClose
                     ? 0
                     : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
-                        DEFAULT_SEGMENT_PADDING);
+                        defaultSegmentPadding);
 
             points = [
               p1,
               p2,
               Offset(p2.dx, start.dy + verticalDir * verticalDist),
-              Offset(end.dx - boxSize.width / 2 - DEFAULT_SEGMENT_PADDING,
+              Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding,
                   start.dy + verticalDir * verticalDist),
               Offset(
-                  end.dx - boxSize.width / 2 - DEFAULT_SEGMENT_PADDING, end.dy),
+                  end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
               end
             ];
           } else {
@@ -274,7 +253,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
             // Check if nodes are closely aligned vertically (centered)
             final bool isVerticallyCentered = (start.dy - end.dy).abs() <
                 boxSize.height *
-                    VERTICAL_CENTER_THRESHOLD; // Use wider threshold to catch near-centered cases
+                    verticalCenterThreshold; // Use wider threshold to catch near-centered cases
 
             if (isVerticallyCentered) {
               // For centered nodes, create a path that goes right, then vertically around,
@@ -285,12 +264,12 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
                   ? -1.0
                   : 1.0; // Calculate horizontal point at a fixed distance from the child node
               final double fixedDistanceFromChild =
-                  boxSize.width * FIXED_DISTANCE_MULTIPLIER +
-                      DEFAULT_SEGMENT_PADDING;
+                  boxSize.width * fixedDistanceMultiplier +
+                      defaultSegmentPadding;
               final double horizontalPoint = end.dx - fixedDistanceFromChild;
               // Calculate vertical offset to ensure we're clear of the node
               final double verticalOffset =
-                  boxSize.height * VERTICAL_OFFSET_MULTIPLIER;
+                  boxSize.height * verticalOffsetMultiplier;
 
               points = [
                 start, // Start from parent
@@ -316,13 +295,13 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
 
       case ConnectionType.adaptive:
         // Generate complex route for special cases
-        if (controller.orientation == GraphOrientation.topToBottom) {
+        if (orientation == GraphOrientation.topToBottom) {
           // For case where end's top is above start's bottom
           final Offset p1 = start;
           final Offset p2 = Offset(start.dx,
-              start.dy + boxSize.height / 2 + DEFAULT_SEGMENT_PADDING);
+              start.dy + boxSize.height / 2 + defaultSegmentPadding);
           final bool nodesTooClose = (start.dx - end.dx).abs() <
-              boxSize.width * DEFAULT_NODE_PROXIMITY_THRESHOLD;
+              boxSize.width * defaultNodeProximityThreshold;
 
           final double horizontalDir = nodesTooClose
               ? (end.dx < start.dx ? -1 : 1)
@@ -332,25 +311,25 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
               (!nodesTooClose
                   ? 0
                   : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
-                      DEFAULT_SEGMENT_PADDING);
+                      defaultSegmentPadding);
 
           points = [
             p1,
             p2,
             Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
             Offset(start.dx + horizontalDir * horizontalDist,
-                end.dy - boxSize.height / 2 - DEFAULT_SEGMENT_PADDING),
+                end.dy - boxSize.height / 2 - defaultSegmentPadding),
             Offset(
-                end.dx, end.dy - boxSize.height / 2 - DEFAULT_SEGMENT_PADDING),
+                end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
             end
           ];
         } else {
           // For case where end's left is to the left of start's left
           final Offset p1 = start;
           final Offset p2 = Offset(
-              start.dx + boxSize.width / 2 + DEFAULT_SEGMENT_PADDING, start.dy);
+              start.dx + boxSize.width / 2 + defaultSegmentPadding, start.dy);
           final bool nodesTooClose = (start.dy - end.dy).abs() <
-              boxSize.height * DEFAULT_NODE_PROXIMITY_THRESHOLD;
+              boxSize.height * defaultNodeProximityThreshold;
 
           final double verticalDir = nodesTooClose
               ? (end.dy < start.dy ? -1 : 1)
@@ -360,16 +339,16 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
               (!nodesTooClose
                   ? 0
                   : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
-                      DEFAULT_SEGMENT_PADDING);
+                      defaultSegmentPadding);
 
           points = [
             p1,
             p2,
             Offset(p2.dx, start.dy + verticalDir * verticalDist),
-            Offset(end.dx - boxSize.width / 2 - DEFAULT_SEGMENT_PADDING,
+            Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding,
                 start.dy + verticalDir * verticalDist),
             Offset(
-                end.dx - boxSize.width / 2 - DEFAULT_SEGMENT_PADDING, end.dy),
+                end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
             end
           ];
         }
@@ -391,9 +370,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
             normalizedDirection.dy.abs() > normalizedDirection.dx.abs();
 
         // Calculate how much to shorten the last segment
-        double shortenBy = isVertical
-            ? controller.boxSize.height / 2
-            : controller.boxSize.width / 2;
+        double shortenBy = isVertical ? boxSize.height / 2 : boxSize.width / 2;
 
         // Ensure we don't shorten more than the segment length
         shortenBy = math.min(shortenBy, lastSegmentLength - 1);
@@ -665,7 +642,7 @@ abstract class BaseEdgePainter<E> extends CustomPainter {
     final double crossProduct =
         (p2.dx - p1.dx) * (p3.dy - p2.dy) - (p2.dy - p1.dy) * (p3.dx - p2.dx);
 
-    return crossProduct.abs() < COLLINEARITY_EPSILON;
+    return crossProduct.abs() < collinearityEpsilon;
   }
 
   /// Determine if the turn is clockwise

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/genogram_enums.dart';
-import 'package:org_chart/src/graphs/genogram/marriage_style.dart';
+import 'package:org_chart/src/genogram/genogram_enums.dart';
+import 'package:org_chart/src/genogram/marriage_style.dart';
 
 /// Configuration for genogram edge painter styling
 class GenogramEdgeConfig {

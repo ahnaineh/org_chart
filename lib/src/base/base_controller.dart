@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/exporting/exporting.dart';
+import 'package:org_chart/src/common/exporting.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 /// The orientation of the organizational chart
@@ -49,29 +49,29 @@ abstract class BaseGraphController<E> {
     this.orientation = GraphOrientation.topToBottom,
     required this.idProvider,
   }) {
-    this.items = items;
+    // this.items = items;
+    _nodes = items.map((e) => Node(data: e)).toList();
+    calculatePosition();
   }
 
   late List<Node<E>> _nodes;
 
   List<Node<E>> get nodes => _nodes;
 
-  @protected
-  set nodes(List<Node<E>> nodes) => _nodes = nodes;
-
   List<Node<E>> get roots;
-
-  // Common getters and setters
   List<E> get items => nodes.map((e) => e.data).toList();
 
-  set items(List<E> items) {
-    nodes = items.map((e) => Node(data: e)).toList();
-    calculatePosition();
-  }
+  // Common getters and setters
+
+  Size getSize();
 
   /// Adds a single item to the chart
   /// If an item with the same ID already exists, it will be replaced
-  void addItem(E item) {
+  /// [recalculatePosition] determines if the position is to be recalculated directly after adding
+  /// you might want to add an item but not recalculate the position immediately
+  /// [centerGraph] wether to center the chart after adding the item - if recalculatePosition is true
+  void addItem(E item,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
     final itemId = idProvider(item);
     final existingIndex =
         nodes.indexWhere((node) => idProvider(node.data) == itemId);
@@ -83,63 +83,29 @@ abstract class BaseGraphController<E> {
       // Add new item
       nodes.add(Node(data: item));
     }
-    calculatePosition();
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
   }
 
   /// Adds multiple items to the chart
   /// Items with existing IDs will replace the old ones
-  void addItems(List<E> items) {
+  void addItems(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
     for (final item in items) {
-      final itemId = idProvider(item);
-      final existingIndex =
-          nodes.indexWhere((node) => idProvider(node.data) == itemId);
-
-      if (existingIndex != -1) {
-        // Replace existing item
-        nodes[existingIndex] = Node(data: item);
-      } else {
-        // Add new item
-        nodes.add(Node(data: item));
-      }
+      addItem(item, recalculatePosition: false, centerGraph: false);
     }
-    calculatePosition();
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
   }
 
-  // /// Removes an item by its ID
-  // /// Returns true if the item was found and removed, false otherwise
-  // bool removeItem(String itemId) {
-  //   final index = nodes.indexWhere((node) => idProvider(node.data) == itemId);
-  //   if (index != -1) {
-  //     nodes.removeAt(index);
-  //     calculatePosition();
-  //     return true;
-  //   }
-  //   return false;
-  // }
-
-  // /// Removes multiple items by their IDs
-  // /// Returns the number of items that were successfully removed
-  // int removeItems(List<String> itemIds) {
-  //   int removedCount = 0;
-  //   final itemIdSet = Set<String>.from(itemIds);
-
-  //   nodes.removeWhere((node) {
-  //     final shouldRemove = itemIdSet.contains(idProvider(node.data));
-  //     if (shouldRemove) removedCount++;
-  //     return shouldRemove;
-  //   });
-
-  //   if (removedCount > 0) {
-  //     calculatePosition();
-  //   }
-
-  //   return removedCount;
-  // }
-
-  /// Removes all items from the chart
-  void clearItems() {
+  // / Removes all items from the chart
+  void clearItems({bool recalculatePosition = true, bool centerGraph = false}) {
     nodes.clear();
-    calculatePosition();
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
   }
 
   /// Switch the orientation of the chart
@@ -166,20 +132,6 @@ abstract class BaseGraphController<E> {
 
   void calculatePosition({bool center = true});
 
-  Size getSize({Size size = const Size(0, 0)}) {
-    for (Node<E> node in nodes) {
-      size = Size(
-        size.width > node.position.dx + boxSize.width
-            ? size.width
-            : node.position.dx + boxSize.width,
-        size.height > node.position.dy + boxSize.height
-            ? size.height
-            : node.position.dy + boxSize.height,
-      );
-    }
-    return size;
-  }
-
   List<Node<E>> getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
     final String nodeId = idProvider(node.data);
@@ -190,6 +142,7 @@ abstract class BaseGraphController<E> {
         Offset offset = node.position - n.position;
         if (offset.dx.abs() < boxSize.width &&
             offset.dy.abs() < boxSize.height) {
+          // Check if the node is hidden
           overlapping.add(n);
         }
       }
@@ -219,15 +172,6 @@ abstract class BaseGraphController<E> {
   }) async {
     if (viewerController == null) return;
     final node = nodes.firstWhere((node) => idProvider(node.data) == nodeId);
-
-    // TODO: implement this!
-    // // Check if the node is hidden
-    // Node<E>? parent = getParent(node);
-    // while (parent != null) {
-    //   if (parent.hideNodes) return;
-    //   parent = getParent(parent);
-    // }
-
     // Create a rectangle representing the node's position and size
     final nodeRect = Rect.fromLTWH(
       node.position.dx,

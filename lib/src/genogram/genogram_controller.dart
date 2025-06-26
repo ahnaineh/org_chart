@@ -3,7 +3,7 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/controllers/base_controller.dart';
+import 'package:org_chart/src/base/base_controller.dart';
 
 /// Controller responsible for managing and laying out genogram (family tree) charts
 ///
@@ -65,10 +65,25 @@ class GenogramController<E> extends BaseGraphController<E> {
   });
 
   /// Clears all caches when items change
+  // @override
+  // set items(List<E> items) {
+  //   _clearCaches();
+  //   super.items = items;
+  // }
+
   @override
-  set items(List<E> items) {
-    _clearCaches();
-    super.items = items;
+  Size getSize({Size size = const Size(0, 0)}) {
+    for (Node<E> node in nodes) {
+      size = Size(
+        size.width > node.position.dx + boxSize.width
+            ? size.width
+            : node.position.dx + boxSize.width,
+        size.height > node.position.dy + boxSize.height
+            ? size.height
+            : node.position.dy + boxSize.height,
+      );
+    }
+    return size;
   }
 
   /// Clears all internal caches
@@ -463,9 +478,9 @@ class GenogramController<E> extends BaseGraphController<E> {
     }
 
     // Notify listeners that positions have been updated
-    setState?.call(() {
-      nodes = nodes;
-    });
+    // setState?.call(() {
+    //   nodes = nodes;
+    // });
 
     // Center the graph if requested
     if (center) {

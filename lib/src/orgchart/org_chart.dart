@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
-import 'package:org_chart/src/controllers/org_chart_controller.dart';
-import 'package:org_chart/src/graphs/base_graph.dart';
-import 'package:org_chart/src/graphs/org_chart/edge_painter.dart';
+import 'package:org_chart/src/orgchart/org_chart_controller.dart';
+import 'package:org_chart/src/base/base_graph.dart';
+import 'package:org_chart/src/orgchart/edge_painter.dart';
 
 /// A widget that displays an organizational chart
 class OrgChart<E> extends BaseGraph<E> {
@@ -58,7 +58,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   void initState() {
     super.initState();
     _edgePainter = OrgChartEdgePainter<E>(
-      chartController: controller,
+      controller: controller,
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,

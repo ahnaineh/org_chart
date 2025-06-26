@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
-import 'package:org_chart/src/common/genogram_enums.dart';
+import 'package:org_chart/src/genogram/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
-import 'package:org_chart/src/controllers/genogram_controller.dart';
-import 'package:org_chart/src/graphs/base_graph.dart';
-import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
-import 'package:org_chart/src/graphs/genogram/genogram_edge_config.dart';
+import 'package:org_chart/src/genogram/genogram_controller.dart';
+import 'package:org_chart/src/base/base_graph.dart';
+import 'package:org_chart/src/genogram/edge_painter.dart';
+import 'package:org_chart/src/genogram/genogram_edge_config.dart';
 
 /// A widget that displays an organizational chart
 class Genogram<E> extends BaseGraph<E> {
@@ -20,7 +20,8 @@ class Genogram<E> extends BaseGraph<E> {
 
   Genogram({
     super.key,
-    required GenogramController<E> super.controller,
+    required super.controller,
+    // required GenogramController<E> super.controller,
     required super.builder,
     super.minScale,
     super.maxScale,
