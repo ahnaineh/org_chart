@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
-import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 
 import '../models/chart_config.dart';
 import '../utils/chart_utils.dart';
@@ -54,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
       items: ChartUtils.nodesToMaps(ChartUtils.getSampleData()),
       idProvider: (item) => item['id'],
       toProvider: (item) => item['parent'],
-      toSetter: (item, newId) => item['parent'] = newId,
+      toSetter: (item, newId) => {...item, 'parent': newId},
       boxSize: const Size(180, 90),
       spacing: config.nodeSpacing,
       runSpacing: config.levelSpacing,

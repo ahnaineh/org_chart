@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
+import 'package:org_chart/src/genogram/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
-import 'package:org_chart/src/controllers/org_chart_controller.dart';
-import 'package:org_chart/src/graphs/base_graph.dart';
-import 'package:org_chart/src/graphs/org_chart/edge_painter.dart';
+import 'package:org_chart/src/genogram/genogram_controller.dart';
+import 'package:org_chart/src/base/base_graph.dart';
+import 'package:org_chart/src/genogram/edge_painter.dart';
+import 'package:org_chart/src/genogram/genogram_edge_config.dart';
 
 /// A widget that displays an organizational chart
-class OrgChart<E> extends BaseGraph<E> {
-  final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
+class Genogram<E> extends BaseGraph<E> {
+  final void Function(E dragged, E target)? onDrop;
 
-  OrgChart({
+  /// Configuration for edge painter styling
+  final GenogramEdgeConfig edgeConfig;
+
+  /// Function to determine marriage status between two people
+  final MarriageStatus Function(E person, E spouse)? marriageStatusProvider;
+
+  Genogram({
     super.key,
-    required OrgChartController<E> super.controller,
+    required super.controller,
+    // required GenogramController<E> super.controller,
     required super.builder,
     super.minScale,
     super.maxScale,
@@ -30,6 +39,8 @@ class OrgChart<E> extends BaseGraph<E> {
     super.constrainBounds,
     super.enableDoubleTapZoom,
     super.doubleTapZoomFactor,
+    this.edgeConfig = const GenogramEdgeConfig(),
+    this.marriageStatusProvider,
     super.enableKeyboardControls,
     super.keyboardPanDistance,
     super.keyboardZoomFactor,
@@ -48,20 +59,21 @@ class OrgChart<E> extends BaseGraph<E> {
   });
 
   @override
-  OrgChartState<E> createState() => OrgChartState<E>();
+  GenogramState<E> createState() => GenogramState<E>();
 }
 
-class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
-  late OrgChartEdgePainter<E> _edgePainter;
-
+class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
+  late GenogramEdgePainter<E> _edgePainter;
   @override
   void initState() {
     super.initState();
-    _edgePainter = OrgChartEdgePainter<E>(
-      chartController: controller,
+    _edgePainter = GenogramEdgePainter<E>(
+      controller: controller,
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
+      config: widget.edgeConfig,
+      marriageStatusProvider: widget.marriageStatusProvider,
     );
   }
 
@@ -75,8 +87,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
 
   void finishDragging(Node<E> node) {
     if (overlapping.isNotEmpty) {
-      widget.onDrop?.call(node.data, overlapping.first.data,
-          controller.isSubNode(node, overlapping.first));
+      widget.onDrop?.call(node.data, overlapping.first.data);
     }
     draggedID = null;
     overlapping = [];
@@ -87,30 +98,28 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   Widget buildEdges() {
     return CustomPaint(
       painter: _edgePainter,
-      child: SizedBox.shrink(),
     );
   }
 
   @override
   List<CustomAnimatedPositioned> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
-    final nodes = nodesToDraw ?? controller.roots;
+    final nodes = nodesToDraw ?? controller.nodes;
     final List<CustomAnimatedPositioned> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
-
       nodeWidgets.add(
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
-          duration:nodeId == draggedID ? Duration.zero : widget.duration,
+          duration: nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
           left: node.position.dx,
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,
-          child: RepaintBoundary  (
+          child: RepaintBoundary(
             child: Visibility(
               visible: !hidden,
               maintainAnimation: true,
@@ -118,20 +127,20 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
               maintainState: true,
               child: GestureDetector(
                 onTapDown: handleTapDown,
-                // TODO: Implement onSecondaryTap
-                // onSecondaryTap: () => showNodeMenu(context, node),
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:
                     widget.isDraggable ? (_) => startDragging(node) : null,
                 onPanUpdate: widget.isDraggable
                     ? (details) => updateDragging(node, details)
                     : null,
-                onPanEnd: widget.isDraggable ? (_) => finishDragging(node) : null,
+                onPanEnd:
+                    widget.isDraggable ? (_) => finishDragging(node) : null,
                 child: widget.builder(
                   NodeBuilderDetails(
                     item: node.data,
                     level: level,
-                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    hideNodes: ({hide, center = true}) =>
+                        toggleHideNodes(node, hide, center),
                     nodesHidden: node.hideNodes,
                     isBeingDragged: nodeId == draggedID,
                     isOverlapped: overlappingNodes.isNotEmpty &&
@@ -143,23 +152,12 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
           ),
         ),
       );
-
-      if (!node.hideNodes) {
-        final subNodes = controller.getSubNodes(node);
-        nodeWidgets.addAll(
-          buildNodes(
-            context,
-            nodesToDraw: subNodes,
-            level: level + 1,
-          ),
-        );
-      }
     }
 
     return nodeWidgets;
   }
 
   @override
-  OrgChartController<E> get controller =>
-      widget.controller as OrgChartController<E>;
+  GenogramController<E> get controller =>
+      widget.controller as GenogramController<E>;
 }

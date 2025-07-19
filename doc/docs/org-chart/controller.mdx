@@ -28,12 +28,28 @@ final controller = OrgChartController<Employee>(
 | `items` | `List<E>` | Data items to display in the chart |
 | `idProvider` | `String Function(E)` | Function to extract unique ID from an item |
 | `toProvider` | `String? Function(E)` | Function to extract parent/manager ID from an item |
-| `toSetter` (optional) | `void Function(E, String?)` | Function to update an item's parent/manager ID |
+| `toSetter` (optional) | `E Function(E, String?)` | Function to update an item's parent/manager ID, returns a new instance (v5.0.0-alpha.3+) |
 | `boxSize` | `Size` | Size of each node box (default: `Size(200, 100)`) |
 | `spacing` | `double` | Horizontal spacing between nodes (default: `20`) |
 | `runSpacing` | `double` | Vertical spacing between rows (default: `50`) |
 | `orientation` | `GraphOrientation` | Layout direction (default: `topToBottom`) |
 | `leafColumns` | `int` | Number of columns to arrange leaf nodes (default: `4`) |
+
+:::note
+Starting from version 5.0.0-alpha.3, the `toSetter` function you are required to return a new instance instead of modifying the existing one in place. This allows the use of final instances with copyWith methods.
+
+```dart
+// Before v5.0.0-alpha.3
+toSetter: (employee, managerId) {
+  employee.managerId = managerId; // Modifies in place
+}
+
+// v5.0.0-alpha.3+
+toSetter: (employee, managerId) {
+  return employee.copyWith(managerId: managerId); // Returns new instance
+}
+```
+:::
 
 ## Key Methods
 
@@ -62,15 +78,21 @@ int level = controller.getLevel(employeeNode); // 1 = root
 // Add a new employee
 controller.addItem(newEmployee);
 
+// Add multiple employees at once (v5.0.0-alpha.3+)
+controller.addItems([employee1, employee2, employee3]);
+
+// Clear all employees from the chart (v5.0.0-alpha.3+)
+controller.clearItems();
+
 // Remove an employee with different strategies
 controller.removeItem(
   '123',
-  ActionOnNodeRemoval.unlink, // Remove links to this node
+  ActionOnNodeRemoval.unlinkDescendants, // Remove links to this node
 );
 
-// Available removal actions:
-// - unlink: Remove employee but leave subordinates without a manager
-// - connectToParent: Connect subordinates to the employee's manager
+// Available removal actions (updated in v5.0.0-alpha.3):
+// - unlinkDescendants: Remove employee but leave subordinates without a manager
+// - connectDescendantsToParent: Connect subordinates to the employee's manager
 // - removeDescendants: Remove the employee and all subordinates
 ```
 
@@ -91,15 +113,22 @@ When removing a node, you can choose how to handle its subordinates:
 
 | Action | Description |
 |--------|-------------|
-| `ActionOnNodeRemoval.unlink` | Removes node and sets its subordinates' manager to `null` |
-| `ActionOnNodeRemoval.connectToParent` | Connects subordinates to the removed node's own manager |
+| `ActionOnNodeRemoval.unlinkDescendants` | Removes node and sets its subordinates' manager to `null` |
+| `ActionOnNodeRemoval.connectDescendantsToParent` | Connects subordinates to the removed node's own manager |
 | `ActionOnNodeRemoval.removeDescendants` | Removes the node and all its subordinates |
+
+:::note
+The enum values were renamed in version 5.0.0-alpha.3 for better clarity:
+- `unlink` → `unlinkDescendants`
+- `connectToParent` → `connectDescendantsToParent`
+- `remove` → `removeDescendants`
+:::
 
 ```dart
 // Example: Promoting subordinates when removing a manager
 controller.removeItem(
   managerId,
-  ActionOnNodeRemoval.connectToParent
+  ActionOnNodeRemoval.connectDescendantsToParent
 );
 
 // Example: Removing an entire department

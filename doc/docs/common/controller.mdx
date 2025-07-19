@@ -66,9 +66,19 @@ final controller = GenogramController<Person>(
 // Add a new item to the graph
 controller.addItem(newPerson);
 
+// Add multiple items at once (v5.0.0-alpha.3+)
+controller.addItems([newPerson1, newPerson2, newPerson3]);
+
+// Clear all items from the graph (v5.0.0-alpha.3+)
+controller.clearItems();
+
 // Update the entire dataset
 controller.items = updatedItems;
 ```
+
+:::note
+As of version 5.0.0-alpha.3, both `addItem` and `addItems` will replace any existing node with the same ID instead of creating duplicates.
+:::
 
 ### Layout & Positioning
 

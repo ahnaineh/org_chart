@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/custom_animated_positioned.dart';
-import 'package:org_chart/src/common/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
-import 'package:org_chart/src/controllers/genogram_controller.dart';
-import 'package:org_chart/src/graphs/base_graph.dart';
-import 'package:org_chart/src/graphs/genogram/edge_painter.dart';
-import 'package:org_chart/src/graphs/genogram/genogram_edge_config.dart';
+import 'package:org_chart/src/orgchart/org_chart_controller.dart';
+import 'package:org_chart/src/base/base_graph.dart';
+import 'package:org_chart/src/orgchart/edge_painter.dart';
 
 /// A widget that displays an organizational chart
-class Genogram<E> extends BaseGraph<E> {
-  final void Function(E dragged, E target)? onDrop;
+class OrgChart<E> extends BaseGraph<E> {
+  final void Function(E dragged, E target, bool isTargetSubnode)? onDrop;
 
-  /// Configuration for edge painter styling
-  final GenogramEdgeConfig edgeConfig;
-
-  /// Function to determine marriage status between two people
-  final MarriageStatus Function(E person, E spouse)? marriageStatusProvider;
-
-  Genogram({
+  OrgChart({
     super.key,
-    required GenogramController<E> super.controller,
+    required OrgChartController<E> super.controller,
     required super.builder,
     super.minScale,
     super.maxScale,
@@ -38,8 +30,6 @@ class Genogram<E> extends BaseGraph<E> {
     super.constrainBounds,
     super.enableDoubleTapZoom,
     super.doubleTapZoomFactor,
-    this.edgeConfig = const GenogramEdgeConfig(),
-    this.marriageStatusProvider,
     super.enableKeyboardControls,
     super.keyboardPanDistance,
     super.keyboardZoomFactor,
@@ -58,21 +48,20 @@ class Genogram<E> extends BaseGraph<E> {
   });
 
   @override
-  GenogramState<E> createState() => GenogramState<E>();
+  OrgChartState<E> createState() => OrgChartState<E>();
 }
 
-class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
-  late GenogramEdgePainter<E> _edgePainter;
+class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
+  late OrgChartEdgePainter<E> _edgePainter;
+
   @override
   void initState() {
     super.initState();
-    _edgePainter = GenogramEdgePainter<E>(
+    _edgePainter = OrgChartEdgePainter<E>(
       controller: controller,
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
-      config: widget.edgeConfig,
-      marriageStatusProvider: widget.marriageStatusProvider,
     );
   }
 
@@ -86,7 +75,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
   void finishDragging(Node<E> node) {
     if (overlapping.isNotEmpty) {
-      widget.onDrop?.call(node.data, overlapping.first.data);
+      widget.onDrop?.call(node.data, overlapping.first.data,
+          controller.isSubNode(node, overlapping.first));
     }
     draggedID = null;
     overlapping = [];
@@ -97,17 +87,19 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   Widget buildEdges() {
     return CustomPaint(
       painter: _edgePainter,
+      child: SizedBox.shrink(),
     );
   }
 
   @override
   List<CustomAnimatedPositioned> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
-    final nodes = nodesToDraw ?? controller.nodes;
+    final nodes = nodesToDraw ?? controller.roots;
     final List<CustomAnimatedPositioned> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
+
       nodeWidgets.add(
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),
@@ -126,6 +118,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
               maintainState: true,
               child: GestureDetector(
                 onTapDown: handleTapDown,
+                // TODO: Implement onSecondaryTap
+                // onSecondaryTap: () => showNodeMenu(context, node),
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:
                     widget.isDraggable ? (_) => startDragging(node) : null,
@@ -138,7 +132,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
                   NodeBuilderDetails(
                     item: node.data,
                     level: level,
-                    hideNodes: ({hide, center=true}) => toggleHideNodes(node, hide, center),
+                    hideNodes: ({hide, center = true}) =>
+                        toggleHideNodes(node, hide, center),
                     nodesHidden: node.hideNodes,
                     isBeingDragged: nodeId == draggedID,
                     isOverlapped: overlappingNodes.isNotEmpty &&
@@ -150,12 +145,23 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
           ),
         ),
       );
+
+      if (!node.hideNodes) {
+        final subNodes = controller.getSubNodes(node);
+        nodeWidgets.addAll(
+          buildNodes(
+            context,
+            nodesToDraw: subNodes,
+            level: level + 1,
+          ),
+        );
+      }
     }
 
     return nodeWidgets;
   }
 
   @override
-  GenogramController<E> get controller =>
-      widget.controller as GenogramController<E>;
+  OrgChartController<E> get controller =>
+      widget.controller as OrgChartController<E>;
 }

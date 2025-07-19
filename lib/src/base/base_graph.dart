@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/edge_painter.dart';
+import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/controllers/base_controller.dart';
+import 'package:org_chart/src/base/base_controller.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 
 /// Base abstract graph widget that provides common functionality for all graph types
@@ -141,7 +141,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     final size = widget.controller.getSize();
     return CustomInteractiveViewer(
       controller: viewerController,
-      contentSize: widget.controller.getSize(),
+      contentSize: size,
       minScale: widget.minScale,
       maxScale: widget.maxScale,
       enableDoubleTapZoom: widget.enableDoubleTapZoom,

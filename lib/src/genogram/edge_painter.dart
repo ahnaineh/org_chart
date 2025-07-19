@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/edge_painter.dart';
-import 'package:org_chart/src/common/genogram_enums.dart';
+import 'package:org_chart/src/base/edge_painter_utils.dart';
+import 'package:org_chart/src/genogram/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/controllers/base_controller.dart';
-import 'package:org_chart/src/controllers/genogram_controller.dart';
-import 'package:org_chart/src/graphs/genogram/genogram_edge_config.dart';
+import 'package:org_chart/src/base/base_controller.dart';
+import 'package:org_chart/src/genogram/genogram_controller.dart';
+import 'package:org_chart/src/genogram/genogram_edge_config.dart';
 
 /// Connection points on a node
 enum ConnectionPoint {
@@ -23,9 +23,10 @@ enum RelationshipType {
 }
 
 /// A highly customizable painter for genogram edges
-class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
-  @override
+class GenogramEdgePainter<E> extends CustomPainter {
   final GenogramController<E> controller;
+
+  final EdgePainterUtils utils;
 
   /// Configuration for edge styling
   final GenogramEdgeConfig config;
@@ -38,12 +39,17 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
 
   GenogramEdgePainter({
     required this.controller,
-    required super.linePaint,
-    super.cornerRadius,
-    required super.arrowStyle,
+    required Paint linePaint,
+    double cornerRadius = 15,
+    required GraphArrowStyle arrowStyle,
     this.config = const GenogramEdgeConfig(),
     this.marriageStatusProvider,
-  }) : super(controller: controller);
+  }) : utils = EdgePainterUtils(
+          linePaint: linePaint,
+          cornerRadius: cornerRadius,
+          arrowStyle: arrowStyle,
+        );
+
   @override
   void paint(Canvas canvas, Size size) {
     // Clear tracking maps for new painting cycle
@@ -218,7 +224,8 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
               ? ConnectionType.twoSegment
               : ConnectionType.threeSegment;
 
-          drawConnection(canvas, marriagePoint, childConn, controller.boxSize,
+          utils.drawConnection(canvas, marriagePoint, childConn,
+              controller.boxSize, controller.orientation,
               type: connectionType, paint: connectionPaint);
         } else {
           // Fall back to connecting from father
@@ -249,7 +256,8 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
     final connectionType =
         isMarriedFemale ? ConnectionType.twoSegment : ConnectionType.direct;
 
-    drawConnection(canvas, parentConn, childConn, controller.boxSize,
+    utils.drawConnection(canvas, parentConn, childConn, controller.boxSize,
+        controller.orientation,
         type: connectionType, paint: parentPaint);
   }
 
@@ -273,15 +281,5 @@ class GenogramEdgePainter<E> extends BaseEdgePainter<E> {
   }
 
   @override
-  void drawNodeConnections(Node<E> node, Canvas canvas) {
-    // Not used in Genogram, we override paint() directly
-  }
-  @override
-  bool shouldRepaint(covariant GenogramEdgePainter<E> oldDelegate) {
-    return controller != oldDelegate.controller ||
-        linePaint != oldDelegate.linePaint ||
-        config != oldDelegate.config ||
-        marriageStatusProvider != oldDelegate.marriageStatusProvider ||
-        arrowStyle != oldDelegate.arrowStyle;
-  }
+  bool shouldRepaint(covariant GenogramEdgePainter<E> oldDelegate) => true;
 }

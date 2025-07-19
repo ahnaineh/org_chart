@@ -1,26 +1,40 @@
 import 'package:flutter/material.dart';
 
-import 'package:org_chart/src/common/edge_painter.dart';
+import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
-import 'package:org_chart/src/controllers/org_chart_controller.dart';
+import 'package:org_chart/src/orgchart/org_chart_controller.dart';
 
 /// Edge painter specific to organizational charts
-class OrgChartEdgePainter<E> extends BaseEdgePainter<E> {
+// extends BaseEdgePainter<E>
+class OrgChartEdgePainter<E> extends CustomPainter {
   /// The org chart controller
-  final OrgChartController<E> chartController;
+  final OrgChartController<E> controller;
+  final EdgePainterUtils utils;
 
   OrgChartEdgePainter({
-    required this.chartController,
-    required super.linePaint,
-    super.cornerRadius,
-    required super.arrowStyle,
-  }) : super(
-          controller: chartController,
+    required this.controller,
+    required Paint linePaint,
+    double cornerRadius = 15,
+    required GraphArrowStyle arrowStyle,
+  }) : utils = EdgePainterUtils(
+          linePaint: linePaint,
+          cornerRadius: cornerRadius,
+          arrowStyle: arrowStyle,
         );
 
   @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+
+  /// Draw arrows for all root nodes
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var node in controller.roots) {
+      drawNodeConnections(node, canvas);
+    }
+  }
+
   void drawNodeConnections(Node<E> node, Canvas canvas) {
-    List<Node<E>> subNodes = chartController.getSubNodes(node);
+    List<Node<E>> subNodes = controller.getSubNodes(node);
 
     if (node.hideNodes == false && subNodes.isNotEmpty) {
       drawNodeSubnodeConnections(node, subNodes, canvas);
@@ -57,7 +71,8 @@ class OrgChartEdgePainter<E> extends BaseEdgePainter<E> {
         connectionType = ConnectionType.adaptive;
       }
 
-      drawConnection(canvas, start, end, controller.boxSize,
+      utils.drawConnection(
+          canvas, start, end, controller.boxSize, controller.orientation,
           type: connectionType);
     }
   }
@@ -65,13 +80,12 @@ class OrgChartEdgePainter<E> extends BaseEdgePainter<E> {
   /// Get the center position of a node
   Offset getNodeCenter(Node<E> node) {
     return node.position +
-        Offset(chartController.boxSize.width / 2,
-            chartController.boxSize.height / 2);
+        Offset(controller.boxSize.width / 2, controller.boxSize.height / 2);
   }
 
   /// Check if a node is a leaf node (no visible children)
   bool isLeafNode(Node<E> node) {
-    return node.hideNodes || chartController.getSubNodes(node).isEmpty;
+    return node.hideNodes || controller.getSubNodes(node).isEmpty;
   }
 
   bool allLeaf(List<Node<E>> nodes) {
