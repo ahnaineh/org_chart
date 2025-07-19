@@ -215,6 +215,7 @@ class _GenogramScreenState extends State<GenogramScreen> {
       constrainBounds: true,
       enableDoubleTapZoom: true,
       doubleTapZoomFactor: 0.8,
+      enablePan: true,
     );
   }
 

@@ -57,29 +57,19 @@ class OrgChartEdgePainter<E> extends CustomPainter {
   /// Draw connections from a node to all its subnodes
   void drawNodeSubnodeConnections(
       Node<E> node, List<Node<E>> subNodes, Canvas canvas) {
-    // Check if all subnodes are leaves
-    bool allLeavesNodes = allLeaf(subNodes);
-
     // For each subnode, draw the appropriate connection
     for (int i = 0; i < subNodes.length; i++) {
       var subNode = subNodes[i];
-      Offset start = getNodeCenter(node);
-      Offset end = getNodeCenter(subNode);
+      Offset start =
+          getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
+      Offset end =
+          getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
 
-      ConnectionType connectionType;
-
-      if (allLeavesNodes) {
-        // For leaf nodes, always use simpleLeafNode connection type
-        // which now implements our four-segment approach
-        connectionType = ConnectionType.simpleLeafNode;
-      } else {
-        // For non-leaf nodes, use adaptive connection type
-        connectionType = ConnectionType.adaptive;
-      }
-
+      // Use automatic connection type selection
+      // The EdgePainterUtils will determine the best path based on node positions
       utils.drawConnection(
           canvas, start, end, controller.boxSize, controller.orientation,
-          type: connectionType);
+          type: ConnectionType.adaptive);
     }
   }
 
@@ -92,9 +82,5 @@ class OrgChartEdgePainter<E> extends CustomPainter {
   /// Check if a node is a leaf node (no visible children)
   bool isLeafNode(Node<E> node) {
     return node.hideNodes || controller.getSubNodes(node).isEmpty;
-  }
-
-  bool allLeaf(List<Node<E>> nodes) {
-    return nodes.every((node) => isLeafNode(node));
   }
 }

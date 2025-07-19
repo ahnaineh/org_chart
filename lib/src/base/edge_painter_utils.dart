@@ -64,7 +64,8 @@ const double horizontalOffsetMultiplier = 0.6;
 const double verticalOffsetMultiplier = 0.8;
 
 /// Fixed distance from child node for routing connection
-const double fixedDistanceMultiplier = BaseGraphConstants.fixedDistanceMultiplier;
+const double fixedDistanceMultiplier =
+    BaseGraphConstants.fixedDistanceMultiplier;
 // Multiplier to be used with box size
 
 /// Base edge painter class that should be extended by specific graph types
@@ -103,10 +104,10 @@ class EdgePainterUtils {
 
       if (orientation == GraphOrientation.topToBottom) {
         // Check if end node is above start node (requires special routing)
-        needsSpecialRouting = end.dy < start.dy + boxSize.height;
+        needsSpecialRouting = end.dy < start.dy + cornerRadius * 4;
       } else {
         // Check if end node is to the left of start node (requires special routing)
-        needsSpecialRouting = end.dx < start.dx + boxSize.width;
+        needsSpecialRouting = end.dx < start.dx + cornerRadius * 4;
       }
 
       // Choose appropriate connection type based on layout
@@ -200,8 +201,7 @@ class EdgePainterUtils {
             // Move horizontally to the column boundary (near child's column)
             final Offset p3 = Offset(
                 end.dx +
-                    horizontalDir *
-                        (boxSize.width / 2 + defaultSegmentPadding),
+                    horizontalDir * (boxSize.width / 2 + defaultSegmentPadding),
                 p2.dy);
 
             // Move vertically to the height of child's center
@@ -224,8 +224,7 @@ class EdgePainterUtils {
             // Handle case where child is to the left of parent
             final Offset p1 = start;
             final Offset p2 = Offset(
-                start.dx + boxSize.width / 2 + defaultSegmentPadding,
-                start.dy);
+                start.dx + boxSize.width / 2 + defaultSegmentPadding, start.dy);
             final bool nodesTooClose = (start.dy - end.dy).abs() <
                 boxSize.height * defaultNodeProximityThreshold;
 
@@ -299,8 +298,8 @@ class EdgePainterUtils {
         if (orientation == GraphOrientation.topToBottom) {
           // For case where end's top is above start's bottom
           final Offset p1 = start;
-          final Offset p2 = Offset(start.dx,
-              start.dy + boxSize.height / 2 + defaultSegmentPadding);
+          final Offset p2 = Offset(
+              start.dx, start.dy + boxSize.height / 2 + defaultSegmentPadding);
           final bool nodesTooClose = (start.dx - end.dx).abs() <
               boxSize.width * defaultNodeProximityThreshold;
 
@@ -320,8 +319,7 @@ class EdgePainterUtils {
             Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
             Offset(start.dx + horizontalDir * horizontalDist,
                 end.dy - boxSize.height / 2 - defaultSegmentPadding),
-            Offset(
-                end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
+            Offset(end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
             end
           ];
         } else {
@@ -348,42 +346,41 @@ class EdgePainterUtils {
             Offset(p2.dx, start.dy + verticalDir * verticalDist),
             Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding,
                 start.dy + verticalDir * verticalDist),
-            Offset(
-                end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
+            Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
             end
           ];
         }
         break;
     } // Adjust the last segment to stop at the edge of the box
-    if (points.length >= 2) {
-      // Get the direction of the last segment
-      Offset lastDirection = points.last - points[points.length - 2];
+    // if (points.length >= 2) {
+    //   // Get the direction of the last segment
+    //   Offset lastDirection = points.last - points[points.length - 2];
 
-      // Normalize the direction vector
-      double lastSegmentLength = lastDirection.distance;
-      if (lastSegmentLength > 0) {
-        Offset normalizedDirection = Offset(
-            lastDirection.dx / lastSegmentLength,
-            lastDirection.dy / lastSegmentLength);
+    //   // Normalize the direction vector
+    //   double lastSegmentLength = lastDirection.distance;
+    //   if (lastSegmentLength > 0) {
+    //     Offset normalizedDirection = Offset(
+    //         lastDirection.dx / lastSegmentLength,
+    //         lastDirection.dy / lastSegmentLength);
 
-        // Check if the last segment is primarily vertical or horizontal
-        bool isVertical =
-            normalizedDirection.dy.abs() > normalizedDirection.dx.abs();
+    //     // Check if the last segment is primarily vertical or horizontal
+    //     bool isVertical =
+    //         normalizedDirection.dy.abs() > normalizedDirection.dx.abs();
 
-        // Calculate how much to shorten the last segment
-        double shortenBy = isVertical ? boxSize.height / 2 : boxSize.width / 2;
+    //     // Calculate how much to shorten the last segment
+    //     double shortenBy = isVertical ? boxSize.height / 2 : boxSize.width / 2;
 
-        // Ensure we don't shorten more than the segment length
-        shortenBy = math.min(shortenBy, lastSegmentLength - 1);
+    //     // Ensure we don't shorten more than the segment length
+    //     shortenBy = math.min(shortenBy, lastSegmentLength - 1);
 
-        // Only shorten if there's enough length
-        if (shortenBy > 0) {
-          // Create the new endpoint
-          Offset newEndpoint = points.last - normalizedDirection * shortenBy;
-          points[points.length - 1] = newEndpoint;
-        }
-      }
-    }
+    //     // Only shorten if there's enough length
+    //     if (shortenBy > 0) {
+    //       // Create the new endpoint
+    //       Offset newEndpoint = points.last - normalizedDirection * shortenBy;
+    //       points[points.length - 1] = newEndpoint;
+    //     }
+    //   }
+    // }
 
     // Draw the path with appropriate style
     drawPath(canvas, points, connectionPaint);

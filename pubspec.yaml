@@ -18,6 +18,7 @@ dependencies:
   
   custom_interactive_viewer:
     path: ../custom_interactive_viewer
+
   pdf: ^3.11.3
 
 dev_dependencies:

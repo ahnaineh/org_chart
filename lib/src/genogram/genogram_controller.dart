@@ -63,7 +63,10 @@ class GenogramController<E> extends BaseGraphController<E> {
     required this.motherProvider,
     required this.spousesProvider,
     required this.genderProvider,
-  });
+  }) {
+    // Calculate initial positions after construction
+    calculatePosition();
+  }
 
   /// Clears all caches when items change
   // @override

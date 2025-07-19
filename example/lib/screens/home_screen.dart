@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Configuration for the chart
   late ChartConfig config;
-  final FocusNode focusNode = FocusNode();
+  late final FocusNode focusNode;
 
   // Available colors for nodes
   final List<Color> colorOptions = [
@@ -44,9 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    focusNode.addListener(() {
-      setState(() {});
-    });
+    focusNode = FocusNode()
+      ..addListener(() {
+        setState(() {});
+      });
     // Initialize with default configuration
     config = ChartConfig(); // Initialize the controller with sample data
     controller = OrgChartController<Map<String, dynamic>>(

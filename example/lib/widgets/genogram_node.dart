@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/node_builder_details.dart';
+import 'package:org_chart/org_chart.dart';
 import 'package:org_chart_example/models/family_member.dart';
 
 class GenogramNode extends StatelessWidget {
