@@ -568,7 +568,7 @@ class EdgePainterUtils {
     required Offset end,
     required Size boxSize,
   }) {
-    final double verticalDrop = boxSize.height / 2 + defaultSegmentPadding;
+    final double verticalDrop = defaultSegmentPadding;
     final double horizontalDir = end.dx < start.dx ? 1.0 : -1.0;
 
     final Offset p2 = Offset(start.dx, start.dy + verticalDrop);
