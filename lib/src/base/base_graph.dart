@@ -130,9 +130,9 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     widget.controller.centerGraph = viewerController.center;
     widget.controller.setViewerController(viewerController);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewerController.center();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   viewerController.center();
+    // });
   }
 
   @override
@@ -198,8 +198,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
   // Common node interaction methods
   void handleTapDown(TapDownDetails details) {
-    final RenderBox referenceBox = context.findRenderObject() as RenderBox;
-    panDownPosition = referenceBox.globalToLocal(details.globalPosition);
+    panDownPosition = details.globalPosition;
   }
 
   void toggleHideNodes(Node<E> node, bool? hide, bool center) {
@@ -245,7 +244,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     final result = await showMenu(
       context: context,
       position: RelativeRect.fromRect(
-          Rect.fromLTWH(panDownPosition!.dx, panDownPosition!.dy, 30, 30),
+          Rect.fromLTWH(panDownPosition!.dx, panDownPosition!.dy, 0, 0),
           Rect.fromLTWH(0, 0, overlay.paintBounds.size.width,
               overlay.paintBounds.size.height)),
       items: options,

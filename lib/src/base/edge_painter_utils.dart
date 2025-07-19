@@ -98,290 +98,22 @@ class EdgePainterUtils {
     // Use provided paint or default linePaint
     final Paint connectionPaint = paint ?? linePaint;
 
-    // If using adaptive connection type, determine the best connection strategy
-    if (type == ConnectionType.adaptive) {
-      bool needsSpecialRouting = false;
-
-      if (orientation == GraphOrientation.topToBottom) {
-        // Check if end node is above start node (requires special routing)
-        needsSpecialRouting = end.dy < start.dy + cornerRadius * 4;
-      } else {
-        // Check if end node is to the left of start node (requires special routing)
-        needsSpecialRouting = end.dx < start.dx + cornerRadius * 4;
-      }
-
-      // Choose appropriate connection type based on layout
-      type = needsSpecialRouting
-          ? ConnectionType.adaptive
-          : ConnectionType.threeSegment;
-    }
+    // Determine the actual connection type to use
+    final ConnectionType actualType = _determineConnectionType(
+      type: type,
+      start: start,
+      end: end,
+      orientation: orientation,
+    );
 
     // Generate connection points based on connection type
-    List<Offset> points = [];
-    switch (type) {
-      case ConnectionType.direct:
-        points = [start, end];
-        break;
-
-      case ConnectionType.twoSegment:
-        final Offset midPoint = orientation == GraphOrientation.topToBottom
-            ? Offset(start.dx, (start.dy + end.dy) / 2)
-            : Offset((start.dx + end.dx) / 2, start.dy);
-        points = [start, midPoint, end];
-        break;
-
-      case ConnectionType.threeSegment:
-        if (orientation == GraphOrientation.topToBottom) {
-          final double midY = (start.dy + end.dy) / 2;
-          points = [
-            start,
-            Offset(start.dx, midY),
-            Offset(end.dx, midY),
-            end,
-          ];
-        } else {
-          final double midX = (start.dx + end.dx) / 2;
-          points = [
-            start,
-            Offset(midX, start.dy),
-            Offset(midX, end.dy),
-            end,
-          ];
-        }
-        break;
-      case ConnectionType.simpleLeafNode:
-        // For the simple leaf node connection, we draw a line from parent
-        // and then a line to the child, handling special case when child is above parent
-        if (orientation == GraphOrientation.topToBottom) {
-          // For vertical layouts (top-to-bottom)
-          bool needsSpecialRouting =
-              end.dy < start.dy + boxSize.height / 2 + defaultSegmentPadding;
-
-          if (needsSpecialRouting) {
-            // Handle case where child is above parent (similar to adaptive)
-            final Offset p1 = start;
-            final Offset p2 = Offset(start.dx,
-                start.dy + boxSize.height / 2 + defaultSegmentPadding);
-            final bool nodesTooClose = (start.dx - end.dx).abs() -
-                    defaultSegmentPadding -
-                    cornerRadius <
-                boxSize.width * defaultNodeProximityThreshold;
-
-            final double horizontalDir = nodesTooClose
-                ? (end.dx < start.dx ? -1 : 1)
-                : (end.dx > start.dx ? 1 : -1);
-            final double horizontalDist = (start.dx - end.dx).abs() / 2 +
-                (!nodesTooClose
-                    ? 0
-                    : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
-                        defaultSegmentPadding);
-
-            // Calculate points to ensure the arrow ends at the side of the child box
-            points = [
-              p1,
-              p2,
-              Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
-              Offset(start.dx + horizontalDir * horizontalDist, end.dy),
-              Offset(end.dx, end.dy)
-            ];
-          } else {
-            // Standard case where child is below parent
-            // Get the fixed vertical drop distance from parent
-            final double verticalDrop =
-                boxSize.height / 2 + defaultSegmentPadding;
-
-            // Calculate horizontal direction to approach the child
-            // If child is to the left of parent, approach from right side of child
-            // If child is to the right of parent, approach from left side of child
-            final double horizontalDir = end.dx < start.dx ? 1.0 : -1.0;
-
-            // Start by moving down from parent center
-            final Offset p2 = Offset(start.dx, start.dy + verticalDrop);
-
-            // Move horizontally to the column boundary (near child's column)
-            final Offset p3 = Offset(
-                end.dx +
-                    horizontalDir * (boxSize.width / 2 + defaultSegmentPadding),
-                p2.dy);
-
-            // Move vertically to the height of child's center
-            final Offset p4 = Offset(p3.dx, end.dy);
-
-            // Connect to child's side
-            points = [
-              start, // Parent center
-              p2, // Vertical drop from parent
-              p3, // Horizontal run to column boundary
-              p4, // Vertical to child height
-              end // Child center
-            ];
-          }
-        } else {
-          // For horizontal layouts (left-to-right)
-          bool needsSpecialRouting = end.dx < start.dx;
-
-          if (needsSpecialRouting) {
-            // Handle case where child is to the left of parent
-            final Offset p1 = start;
-            final Offset p2 = Offset(
-                start.dx + boxSize.width / 2 + defaultSegmentPadding, start.dy);
-            final bool nodesTooClose = (start.dy - end.dy).abs() <
-                boxSize.height * defaultNodeProximityThreshold;
-
-            final double verticalDir = nodesTooClose
-                ? (end.dy < start.dy ? -1 : 1)
-                : (end.dy > start.dy ? 1 : -1);
-
-            final double verticalDist = (start.dy - end.dy).abs() / 2 +
-                (!nodesTooClose
-                    ? 0
-                    : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
-                        defaultSegmentPadding);
-
-            points = [
-              p1,
-              p2,
-              Offset(p2.dx, start.dy + verticalDir * verticalDist),
-              Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding,
-                  start.dy + verticalDir * verticalDist),
-              Offset(
-                  end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
-              end
-            ];
-          } else {
-            // Standard case where child is to the right of parent
-            // Check if nodes are closely aligned vertically (centered)
-            final bool isVerticallyCentered = (start.dy - end.dy).abs() <
-                boxSize.height *
-                    verticalCenterThreshold; // Use wider threshold to catch near-centered cases
-
-            if (isVerticallyCentered) {
-              // For centered nodes, create a path that goes right, then vertically around,
-              // and finally approaches from top/bottom
-
-              // Determine which side to approach from (top/bottom)
-              final double verticalDir = end.dy <= start.dy
-                  ? -1.0
-                  : 1.0; // Calculate horizontal point at a fixed distance from the child node
-              final double fixedDistanceFromChild =
-                  boxSize.width * fixedDistanceMultiplier +
-                      defaultSegmentPadding;
-              final double horizontalPoint = end.dx - fixedDistanceFromChild;
-              // Calculate vertical offset to ensure we're clear of the node
-              final double verticalOffset =
-                  boxSize.height * verticalOffsetMultiplier;
-
-              points = [
-                start, // Start from parent
-                Offset(horizontalPoint,
-                    start.dy), // Go right to the fixed distance point
-                Offset(horizontalPoint,
-                    end.dy + verticalDir * verticalOffset), // Turn vertically
-                Offset(
-                    end.dx,
-                    end.dy +
-                        verticalDir *
-                            verticalOffset), // Approach the side of the child
-                end // Connect to child
-              ];
-            } else {
-              // Standard straight-across routing for non-centered nodes
-              final Offset horizontalEndPoint = Offset(end.dx, start.dy);
-              points = [start, horizontalEndPoint, end];
-            }
-          }
-        }
-        break;
-
-      case ConnectionType.adaptive:
-        // Generate complex route for special cases
-        if (orientation == GraphOrientation.topToBottom) {
-          // For case where end's top is above start's bottom
-          final Offset p1 = start;
-          final Offset p2 = Offset(
-              start.dx, start.dy + boxSize.height / 2 + defaultSegmentPadding);
-          final bool nodesTooClose = (start.dx - end.dx).abs() <
-              boxSize.width * defaultNodeProximityThreshold;
-
-          final double horizontalDir = nodesTooClose
-              ? (end.dx < start.dx ? -1 : 1)
-              : (end.dx > start.dx ? 1 : -1);
-
-          final double horizontalDist = (start.dx - end.dx).abs() / 2 +
-              (!nodesTooClose
-                  ? 0
-                  : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
-                      defaultSegmentPadding);
-
-          points = [
-            p1,
-            p2,
-            Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
-            Offset(start.dx + horizontalDir * horizontalDist,
-                end.dy - boxSize.height / 2 - defaultSegmentPadding),
-            Offset(end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
-            end
-          ];
-        } else {
-          // For case where end's left is to the left of start's left
-          final Offset p1 = start;
-          final Offset p2 = Offset(
-              start.dx + boxSize.width / 2 + defaultSegmentPadding, start.dy);
-          final bool nodesTooClose = (start.dy - end.dy).abs() <
-              boxSize.height * defaultNodeProximityThreshold;
-
-          final double verticalDir = nodesTooClose
-              ? (end.dy < start.dy ? -1 : 1)
-              : (end.dy > start.dy ? 1 : -1);
-
-          final double verticalDist = (start.dy - end.dy).abs() / 2 +
-              (!nodesTooClose
-                  ? 0
-                  : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
-                      defaultSegmentPadding);
-
-          points = [
-            p1,
-            p2,
-            Offset(p2.dx, start.dy + verticalDir * verticalDist),
-            Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding,
-                start.dy + verticalDir * verticalDist),
-            Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
-            end
-          ];
-        }
-        break;
-    } // Adjust the last segment to stop at the edge of the box
-    // if (points.length >= 2) {
-    //   // Get the direction of the last segment
-    //   Offset lastDirection = points.last - points[points.length - 2];
-
-    //   // Normalize the direction vector
-    //   double lastSegmentLength = lastDirection.distance;
-    //   if (lastSegmentLength > 0) {
-    //     Offset normalizedDirection = Offset(
-    //         lastDirection.dx / lastSegmentLength,
-    //         lastDirection.dy / lastSegmentLength);
-
-    //     // Check if the last segment is primarily vertical or horizontal
-    //     bool isVertical =
-    //         normalizedDirection.dy.abs() > normalizedDirection.dx.abs();
-
-    //     // Calculate how much to shorten the last segment
-    //     double shortenBy = isVertical ? boxSize.height / 2 : boxSize.width / 2;
-
-    //     // Ensure we don't shorten more than the segment length
-    //     shortenBy = math.min(shortenBy, lastSegmentLength - 1);
-
-    //     // Only shorten if there's enough length
-    //     if (shortenBy > 0) {
-    //       // Create the new endpoint
-    //       Offset newEndpoint = points.last - normalizedDirection * shortenBy;
-    //       points[points.length - 1] = newEndpoint;
-    //     }
-    //   }
-    // }
-
+    final List<Offset> points = _generateConnectionPoints(
+      type: actualType,
+      start: start,
+      end: end,
+      boxSize: boxSize,
+      orientation: orientation,
+    );
     // Draw the path with appropriate style
     drawPath(canvas, points, connectionPaint);
 
@@ -648,5 +380,405 @@ class EdgePainterUtils {
     double crossProduct =
         (p2.dx - p1.dx) * (p3.dy - p2.dy) - (p2.dy - p1.dy) * (p3.dx - p2.dx);
     return crossProduct > 0;
+  }
+
+  /// Determine the actual connection type based on layout and positions
+  ConnectionType _determineConnectionType({
+    required ConnectionType type,
+    required Offset start,
+    required Offset end,
+    required GraphOrientation orientation,
+  }) {
+    if (type != ConnectionType.adaptive) {
+      return type;
+    }
+
+    // Check if special routing is needed
+    final bool needsSpecialRouting = orientation == GraphOrientation.topToBottom
+        ? end.dy < start.dy + cornerRadius * 4
+        : end.dx < start.dx + cornerRadius * 4;
+
+    return needsSpecialRouting
+        ? ConnectionType.adaptive
+        : ConnectionType.threeSegment;
+  }
+
+  /// Generate connection points based on the connection type
+  List<Offset> _generateConnectionPoints({
+    required ConnectionType type,
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+    required GraphOrientation orientation,
+  }) {
+    switch (type) {
+      case ConnectionType.direct:
+        return _generateDirectPoints(start, end);
+
+      case ConnectionType.twoSegment:
+        return _generateTwoSegmentPoints(start, end, orientation);
+
+      case ConnectionType.threeSegment:
+        return _generateThreeSegmentPoints(start, end, orientation);
+
+      case ConnectionType.simpleLeafNode:
+        return _generateSimpleLeafNodePoints(
+          start: start,
+          end: end,
+          boxSize: boxSize,
+          orientation: orientation,
+        );
+
+      case ConnectionType.adaptive:
+        return _generateAdaptivePoints(
+          start: start,
+          end: end,
+          boxSize: boxSize,
+          orientation: orientation,
+        );
+    }
+  }
+
+  /// Generate points for direct connection
+  List<Offset> _generateDirectPoints(Offset start, Offset end) {
+    return [start, end];
+  }
+
+  /// Generate points for two-segment connection
+  List<Offset> _generateTwoSegmentPoints(
+    Offset start,
+    Offset end,
+    GraphOrientation orientation,
+  ) {
+    final Offset midPoint = orientation == GraphOrientation.topToBottom
+        ? Offset(start.dx, (start.dy + end.dy) / 2)
+        : Offset((start.dx + end.dx) / 2, start.dy);
+    return [start, midPoint, end];
+  }
+
+  /// Generate points for three-segment connection
+  List<Offset> _generateThreeSegmentPoints(
+    Offset start,
+    Offset end,
+    GraphOrientation orientation,
+  ) {
+    if (orientation == GraphOrientation.topToBottom) {
+      final double midY = (start.dy + end.dy) / 2;
+      return [
+        start,
+        Offset(start.dx, midY),
+        Offset(end.dx, midY),
+        end,
+      ];
+    } else {
+      final double midX = (start.dx + end.dx) / 2;
+      return [
+        start,
+        Offset(midX, start.dy),
+        Offset(midX, end.dy),
+        end,
+      ];
+    }
+  }
+
+  /// Generate points for simple leaf node connection
+  List<Offset> _generateSimpleLeafNodePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+    required GraphOrientation orientation,
+  }) {
+    if (orientation == GraphOrientation.topToBottom) {
+      return _generateVerticalSimpleLeafNodePoints(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    } else {
+      return _generateHorizontalSimpleLeafNodePoints(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    }
+  }
+
+  /// Generate points for vertical simple leaf node connection
+  List<Offset> _generateVerticalSimpleLeafNodePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final bool needsSpecialRouting =
+        end.dy < start.dy + boxSize.height / 2 + defaultSegmentPadding;
+
+    if (needsSpecialRouting) {
+      return _generateVerticalSimpleLeafNodeSpecialRouting(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    } else {
+      return _generateVerticalSimpleLeafNodeStandardRouting(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    }
+  }
+
+  /// Generate points for vertical simple leaf node with special routing
+  List<Offset> _generateVerticalSimpleLeafNodeSpecialRouting({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final Offset p1 = start;
+    final Offset p2 = Offset(
+      start.dx,
+      start.dy + boxSize.height / 2 + defaultSegmentPadding,
+    );
+
+    final bool nodesTooClose =
+        (start.dx - end.dx).abs() - defaultSegmentPadding - cornerRadius <
+            boxSize.width * defaultNodeProximityThreshold;
+
+    final double horizontalDir = nodesTooClose
+        ? (end.dx < start.dx ? -1 : 1)
+        : (end.dx > start.dx ? 1 : -1);
+
+    final double horizontalDist = (start.dx - end.dx).abs() / 2 +
+        (!nodesTooClose
+            ? 0
+            : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
+                defaultSegmentPadding);
+
+    return [
+      p1,
+      p2,
+      Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
+      Offset(start.dx + horizontalDir * horizontalDist, end.dy),
+      end,
+    ];
+  }
+
+  /// Generate points for vertical simple leaf node with standard routing
+  List<Offset> _generateVerticalSimpleLeafNodeStandardRouting({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final double verticalDrop = boxSize.height / 2 + defaultSegmentPadding;
+    final double horizontalDir = end.dx < start.dx ? 1.0 : -1.0;
+
+    final Offset p2 = Offset(start.dx, start.dy + verticalDrop);
+    final Offset p3 = Offset(
+      end.dx + horizontalDir * (boxSize.width / 2 + defaultSegmentPadding),
+      p2.dy,
+    );
+    final Offset p4 = Offset(p3.dx, end.dy);
+
+    return [start, p2, p3, p4, end];
+  }
+
+  /// Generate points for horizontal simple leaf node connection
+  List<Offset> _generateHorizontalSimpleLeafNodePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final bool needsSpecialRouting = end.dx < start.dx;
+
+    if (needsSpecialRouting) {
+      return _generateHorizontalSimpleLeafNodeSpecialRouting(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    } else {
+      return _generateHorizontalSimpleLeafNodeStandardRouting(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    }
+  }
+
+  /// Generate points for horizontal simple leaf node with special routing
+  List<Offset> _generateHorizontalSimpleLeafNodeSpecialRouting({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final Offset p1 = start;
+    final Offset p2 = Offset(
+      start.dx + boxSize.width / 2 + defaultSegmentPadding,
+      start.dy,
+    );
+
+    final bool nodesTooClose = (start.dy - end.dy).abs() <
+        boxSize.height * defaultNodeProximityThreshold;
+
+    final double verticalDir = nodesTooClose
+        ? (end.dy < start.dy ? -1 : 1)
+        : (end.dy > start.dy ? 1 : -1);
+
+    final double verticalDist = (start.dy - end.dy).abs() / 2 +
+        (!nodesTooClose
+            ? 0
+            : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
+                defaultSegmentPadding);
+
+    return [
+      p1,
+      p2,
+      Offset(p2.dx, start.dy + verticalDir * verticalDist),
+      Offset(
+        end.dx - boxSize.width / 2 - defaultSegmentPadding,
+        start.dy + verticalDir * verticalDist,
+      ),
+      Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
+      end,
+    ];
+  }
+
+  /// Generate points for horizontal simple leaf node with standard routing
+  List<Offset> _generateHorizontalSimpleLeafNodeStandardRouting({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final bool isVerticallyCentered =
+        (start.dy - end.dy).abs() < boxSize.height * verticalCenterThreshold;
+
+    if (isVerticallyCentered) {
+      return _generateHorizontalCenteredNodeRouting(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    } else {
+      final Offset horizontalEndPoint = Offset(end.dx, start.dy);
+      return [start, horizontalEndPoint, end];
+    }
+  }
+
+  /// Generate points for horizontally centered node routing
+  List<Offset> _generateHorizontalCenteredNodeRouting({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final double verticalDir = end.dy <= start.dy ? -1.0 : 1.0;
+    final double fixedDistanceFromChild =
+        boxSize.width * fixedDistanceMultiplier + defaultSegmentPadding;
+    final double horizontalPoint = end.dx - fixedDistanceFromChild;
+    final double verticalOffset = boxSize.height * verticalOffsetMultiplier;
+
+    return [
+      start,
+      Offset(horizontalPoint, start.dy),
+      Offset(horizontalPoint, end.dy + verticalDir * verticalOffset),
+      Offset(end.dx, end.dy + verticalDir * verticalOffset),
+      end,
+    ];
+  }
+
+  /// Generate points for adaptive connection
+  List<Offset> _generateAdaptivePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+    required GraphOrientation orientation,
+  }) {
+    if (orientation == GraphOrientation.topToBottom) {
+      return _generateVerticalAdaptivePoints(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    } else {
+      return _generateHorizontalAdaptivePoints(
+        start: start,
+        end: end,
+        boxSize: boxSize,
+      );
+    }
+  }
+
+  /// Generate points for vertical adaptive connection
+  List<Offset> _generateVerticalAdaptivePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final Offset p1 = start;
+    final Offset p2 = Offset(
+      start.dx,
+      start.dy + boxSize.height / 2 + defaultSegmentPadding,
+    );
+
+    final bool nodesTooClose = (start.dx - end.dx).abs() <
+        boxSize.width * defaultNodeProximityThreshold;
+
+    final double horizontalDir = nodesTooClose
+        ? (end.dx < start.dx ? -1 : 1)
+        : (end.dx > start.dx ? 1 : -1);
+
+    final double horizontalDist = (start.dx - end.dx).abs() / 2 +
+        (!nodesTooClose
+            ? 0
+            : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
+                defaultSegmentPadding);
+
+    return [
+      p1,
+      p2,
+      Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
+      Offset(
+        start.dx + horizontalDir * horizontalDist,
+        end.dy - boxSize.height / 2 - defaultSegmentPadding,
+      ),
+      Offset(end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
+      end,
+    ];
+  }
+
+  /// Generate points for horizontal adaptive connection
+  List<Offset> _generateHorizontalAdaptivePoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+  }) {
+    final Offset p1 = start;
+    final Offset p2 = Offset(
+      start.dx + boxSize.width / 2 + defaultSegmentPadding,
+      start.dy,
+    );
+
+    final bool nodesTooClose = (start.dy - end.dy).abs() <
+        boxSize.height * defaultNodeProximityThreshold;
+
+    final double verticalDir = nodesTooClose
+        ? (end.dy < start.dy ? -1 : 1)
+        : (end.dy > start.dy ? 1 : -1);
+
+    final double verticalDist = (start.dy - end.dy).abs() / 2 +
+        (!nodesTooClose
+            ? 0
+            : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
+                defaultSegmentPadding);
+
+    return [
+      p1,
+      p2,
+      Offset(p2.dx, start.dy + verticalDir * verticalDist),
+      Offset(
+        end.dx - boxSize.width / 2 - defaultSegmentPadding,
+        start.dy + verticalDir * verticalDist,
+      ),
+      Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
+      end,
+    ];
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:org_chart/src/base/base_controller.dart';
 
 import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
@@ -60,10 +61,19 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     // For each subnode, draw the appropriate connection
     for (int i = 0; i < subNodes.length; i++) {
       var subNode = subNodes[i];
-      Offset start =
-          getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
-      Offset end =
-          getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
+      Offset start;
+      Offset end;
+
+      // Calculate start and end offsets based on orientation
+      if (controller.orientation == GraphOrientation.leftToRight) {
+        // For left-to-right: start from right side of parent, end at left side of child
+        start = getNodeCenter(node) + Offset(controller.boxSize.width / 2, 0);
+        end = getNodeCenter(subNode) - Offset(controller.boxSize.width / 2, 0);
+      } else {
+        // For top-to-bottom: start from bottom of parent, end at top of child
+        start = getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
+        end = getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
+      }
 
       // Use automatic connection type selection
       // The EdgePainterUtils will determine the best path based on node positions

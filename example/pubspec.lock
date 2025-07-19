@@ -79,7 +79,7 @@ packages:
       path: "../../custom_interactive_viewer"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.0.7"
   fake_async:
     dependency: transitive
     description:
