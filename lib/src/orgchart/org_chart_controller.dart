@@ -43,7 +43,7 @@ class OrgChartController<E> extends BaseGraphController<E>
     // Build initial indexes
     rebuildChildrenIndex();
     rebuildQuadTree();
-    
+
     // Calculate positions now that all initialization is complete
     calculatePosition();
   }
@@ -67,6 +67,14 @@ class OrgChartController<E> extends BaseGraphController<E>
   @override
   void clearItems({bool recalculatePosition = true, bool centerGraph = false}) {
     super.clearItems(
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+    clearCachesAndRebuildIndexes();
+  }
+
+  @override
+  void replaceAll(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    super.replaceAll(items,
         recalculatePosition: recalculatePosition, centerGraph: centerGraph);
     clearCachesAndRebuildIndexes();
   }

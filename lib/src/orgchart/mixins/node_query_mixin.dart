@@ -78,11 +78,13 @@ mixin NodeQueryMixin<E> {
   }
 
   /// Clears the level cache - should be called when nodes are added/removed/modified
+  @protected
   void clearLevelCache() {
     _levelCache.clear();
   }
   
   /// Rebuilds the QuadTree spatial index
+  @protected
   void rebuildQuadTree() {
     if (nodes.isEmpty) {
       _quadTree = null;
@@ -107,7 +109,8 @@ mixin NodeQueryMixin<E> {
       _quadTree!.insert(node, boxSize);
     }
   }
-  
+
+  @protected
   /// Clears all caches and rebuilds indexes
   void clearCachesAndRebuildIndexes() {
     clearLevelCache();
@@ -253,17 +256,7 @@ mixin NodeQueryMixin<E> {
     
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
-  
-  /// Gets QuadTree statistics for debugging and monitoring
-  String getQuadTreeStats() {
-    if (_quadTree == null) {
-      return 'QuadTree: Not initialized';
-    }
-    
-    final stats = _quadTree!.getStats();
-    return 'QuadTree: ${stats.toString()}';
-  }
-  
+
   /// Returns whether QuadTree is currently being used for spatial queries
   bool get isUsingQuadTree => 
       _quadTree != null && nodes.length > QuadTreeConstants.linearSearchThreshold;

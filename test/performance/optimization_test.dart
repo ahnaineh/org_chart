@@ -230,10 +230,6 @@ void main() {
       final overlapping2 = controller.getOverlapping(testNode);
       expect(overlapping2.isNotEmpty, isTrue);
       
-      // Verify QuadTree statistics
-      final stats = controller.getQuadTreeStats();
-      expect(stats, contains('QuadTree:'));
-      expect(stats, contains('nodes:')); // Just verify it has nodes, count may vary due to bounds
     });
   });
 }

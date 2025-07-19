@@ -17,10 +17,12 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     required Paint linePaint,
     double cornerRadius = 15,
     required GraphArrowStyle arrowStyle,
+    LineEndingType lineEndingType = LineEndingType.arrow,
   }) : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
+          lineEndingType: lineEndingType,
         );
 
   @override
@@ -29,7 +31,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     return oldDelegate.controller != controller ||
         oldDelegate.utils.linePaint != utils.linePaint ||
         oldDelegate.utils.cornerRadius != utils.cornerRadius ||
-        oldDelegate.utils.arrowStyle != utils.arrowStyle;
+        oldDelegate.utils.arrowStyle != utils.arrowStyle ||
+        oldDelegate.utils.lineEndingType != utils.lineEndingType;
   }
 
   /// Draw arrows for all root nodes

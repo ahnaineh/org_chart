@@ -107,9 +107,19 @@ abstract class BaseGraphController<E> {
     }
   }
 
-  // / Removes all items from the chart
+  /// Removes all items from the chart
   void clearItems({bool recalculatePosition = true, bool centerGraph = false}) {
     nodes.clear();
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
+  }
+
+  /// Replaces all items in the chart with new items
+  /// This is more efficient than clearing and adding items separately
+  void replaceAll(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    _nodes = items.map((e) => Node(data: e)).toList();
     if (recalculatePosition) {
       calculatePosition(center: centerGraph);
     }

@@ -96,6 +96,14 @@ class GenogramController<E> extends BaseGraphController<E> {
     _spousesCache.clear();
   }
 
+  @override
+  void replaceAll(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    _clearCaches();
+    super.replaceAll(items,
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+  }
+
   /// Identifies the root nodes of the genogram
   ///
   /// Root nodes are those without any parent (father or mother),

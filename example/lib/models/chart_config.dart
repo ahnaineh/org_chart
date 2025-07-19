@@ -15,6 +15,7 @@ class ChartConfig {
 
   // Arrow style
   GraphArrowStyle arrowStyle;
+  LineEndingType lineEndingType;
   List<double> dashPattern;
   double dashThickness;
 
@@ -61,6 +62,7 @@ class ChartConfig {
     this.cornerRadius = 8.0,
     this.leafColumnCount = 4,
     GraphArrowStyle? arrowStyle,
+    this.lineEndingType = LineEndingType.arrow,
     List<double>? dashPattern,
     this.dashThickness = 2.0,
     this.isDraggable = true,

@@ -32,6 +32,13 @@ enum ConnectionType {
   simpleLeafNode,
 }
 
+/// Line ending types for edge connections
+enum LineEndingType {
+  arrow,
+  circle,
+  none,
+}
+
 // Constants for arrow and path styling
 /// Default corner radius for curved edges
 // const double DEFAULT_CORNER_RADIUS = 10.0;
@@ -79,6 +86,9 @@ class EdgePainterUtils {
   /// Arrow/line style configuration
   final GraphArrowStyle arrowStyle;
 
+  /// Line ending type configuration
+  final LineEndingType lineEndingType;
+
   /// Constants for arrow head
   final double arrowHeadLength;
   final double arrowHeadAngle;
@@ -87,6 +97,7 @@ class EdgePainterUtils {
     required this.linePaint,
     required this.cornerRadius,
     required this.arrowStyle,
+    this.lineEndingType = LineEndingType.arrow,
     this.arrowHeadLength = defaultArrowHeadLength,
     this.arrowHeadAngle = defaultArrowHeadAngle,
   });
@@ -117,13 +128,21 @@ class EdgePainterUtils {
     // Draw the path with appropriate style
     drawPath(canvas, points, connectionPaint);
 
-    // Draw arrow head
-    if (points.length >= 2) {
-      drawArrowHead(
-          canvas,
-          points.last,
-          vectorAngle(points.last - points[points.length - 2]),
-          connectionPaint);
+    // Draw line ending based on type
+    if (points.length >= 2 && lineEndingType != LineEndingType.none) {
+      final double angle = vectorAngle(points.last - points[points.length - 2]);
+      
+      switch (lineEndingType) {
+        case LineEndingType.arrow:
+          drawArrowHead(canvas, points.last, angle, connectionPaint);
+          break;
+        case LineEndingType.circle:
+          drawCircleEnd(canvas, points.last, connectionPaint);
+          break;
+        case LineEndingType.none:
+          // No ending decoration
+          break;
+      }
     }
   }
 
@@ -361,6 +380,19 @@ class EdgePainterUtils {
       ..lineTo(p2.dx, p2.dy);
 
     canvas.drawPath(arrowPath, paint);
+  }
+
+  /// Draw a circle at the end of the line
+  void drawCircleEnd(Canvas canvas, Offset center, Paint paint) {
+    // Draw filled circle
+    canvas.drawCircle(center, arrowHeadLength / 2, paint);
+    
+    // Draw circle outline for better visibility
+    final Paint outlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = paint.strokeWidth
+      ..color = paint.color;
+    canvas.drawCircle(center, arrowHeadLength / 2, outlinePaint);
   }
 
   /// Calculate the angle of a vector

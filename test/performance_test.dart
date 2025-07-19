@@ -178,11 +178,6 @@ void main() {
       
       // Verify QuadTree is being used
       expect(controller.isUsingQuadTree, isTrue);
-      
-      // Print QuadTree statistics for verification
-      final stats = controller.getQuadTreeStats();
-      expect(stats, contains('QuadTree:'));
-      expect(stats, isNot(contains('Not initialized')));
     });
   });
 }

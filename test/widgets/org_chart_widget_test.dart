@@ -188,9 +188,9 @@ void main() {
             body: OrgChart<WidgetTestItem>(
               controller: controller,
               viewerController: viewerController,
-              enableZoom: true,
-              minScale: 0.5,
-              maxScale: 2.0,
+              // enableZoom: true,
+              // minScale: 0.5,
+              // maxScale: 2.0,
               builder: (details) => Container(
                 width: 100,
                 height: 50,

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/base/base_controller.dart';
-import 'package:org_chart/src/base/base_graph_constants.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 
 /// Base abstract graph widget that provides common functionality for all graph types
@@ -18,14 +17,13 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final Widget Function(NodeBuilderDetails<E> details) builder;
 
   // Graph configurations
-  final double minScale;
-  final double maxScale;
   final bool isDraggable;
   final Curve curve;
   final Duration duration;
   final Paint linePaint;
   final double cornerRadius;
   final GraphArrowStyle arrowStyle;
+  final LineEndingType lineEndingType;
 
   // Callback functions
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
@@ -35,32 +33,15 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final CustomInteractiveViewerController? viewerController;
 
   // Interactive viewer configurations
-  final bool enableZoom;
-  final bool enableRotation;
-  final bool constrainBounds;
-  final bool enableDoubleTapZoom;
-  final double doubleTapZoomFactor;
-  final bool enableKeyboardControls;
-  final double keyboardPanDistance;
-  final double keyboardZoomFactor;
-  final bool enableKeyRepeat;
-  final Duration keyRepeatInitialDelay;
-  final Duration keyRepeatInterval;
-  final bool enableCtrlScrollToScale;
-  final bool enableFling;
-  final bool enablePan;
+  final InteractionConfig? interactionConfig;
+  final KeyboardConfig? keyboardConfig;
+  final ZoomConfig? zoomConfig;
   final FocusNode? focusNode;
-  final bool animateKeyboardTransitions;
-  final Curve keyboardAnimationCurve;
-  final Duration keyboardAnimationDuration;
-  final bool invertArrowKeyDirection;
 
   BaseGraph({
     super.key,
     required this.controller,
     required this.builder,
-    this.minScale = 0.001,
-    this.maxScale = 5.6,
     this.isDraggable = true,
     this.curve = Curves.elasticOut,
     this.duration = const Duration(milliseconds: 700),
@@ -69,27 +50,12 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.onOptionSelect,
     this.arrowStyle = const SolidGraphArrow(),
     this.cornerRadius = 10.0,
+    this.lineEndingType = LineEndingType.arrow,
     this.viewerController,
-    this.enableZoom = true,
-    this.enableRotation = false,
-    this.constrainBounds = false,
-    this.enableDoubleTapZoom = true,
-    this.doubleTapZoomFactor = 2.0,
-    this.enableKeyboardControls = true,
-    this.keyboardPanDistance = 20.0,
-    this.keyboardZoomFactor = 1.1,
-    this.enableKeyRepeat = true,
-    this.keyRepeatInitialDelay =
-        BaseGraphConstants.defaultKeyRepeatInitialDelay,
-    this.keyRepeatInterval = BaseGraphConstants.defaultKeyRepeatInterval,
-    this.enableCtrlScrollToScale = true,
-    this.enableFling = true,
-    this.enablePan = true,
+    this.interactionConfig,
+    this.keyboardConfig,
+    this.zoomConfig,
     this.focusNode,
-    this.animateKeyboardTransitions = true,
-    this.keyboardAnimationCurve = Curves.easeInOut,
-    this.keyboardAnimationDuration = const Duration(milliseconds: 300),
-    this.invertArrowKeyDirection = false,
   }) : linePaint = linePaint ??
             (Paint()
               ..color = Colors.black
@@ -149,26 +115,10 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     return CustomInteractiveViewer(
       controller: viewerController,
       contentSize: size,
-      minScale: widget.minScale,
-      maxScale: widget.maxScale,
-      enableDoubleTapZoom: widget.enableDoubleTapZoom,
-      doubleTapZoomFactor: widget.doubleTapZoomFactor,
-      enableRotation: widget.enableRotation,
-      constrainBounds: widget.constrainBounds,
-      enableKeyboardControls: widget.enableKeyboardControls,
-      keyboardPanDistance: widget.keyboardPanDistance,
-      keyboardZoomFactor: widget.keyboardZoomFactor,
-      enableKeyRepeat: widget.enableKeyRepeat,
-      keyRepeatInitialDelay: widget.keyRepeatInitialDelay,
-      keyRepeatInterval: widget.keyRepeatInterval,
-      enableCtrlScrollToScale: widget.enableCtrlScrollToScale,
-      enableFling: widget.enableFling,
+      interactionConfig: widget.interactionConfig ?? const InteractionConfig(),
+      keyboardConfig: widget.keyboardConfig ?? const KeyboardConfig(),
+      zoomConfig: widget.zoomConfig ?? const ZoomConfig(),
       focusNode: widget.focusNode,
-      enableZoom: widget.enableZoom,
-      animateKeyboardTransitions: widget.animateKeyboardTransitions,
-      keyboardAnimationCurve: widget.keyboardAnimationCurve,
-      keyboardAnimationDuration: widget.keyboardAnimationDuration,
-      invertArrowKeyDirection: widget.invertArrowKeyDirection,
       child: RepaintBoundary(
         key: widget.controller.repaintBoundaryKey,
         child: Padding(
