@@ -395,8 +395,8 @@ class EdgePainterUtils {
 
     // Check if special routing is needed
     final bool needsSpecialRouting = orientation == GraphOrientation.topToBottom
-        ? end.dy < start.dy + cornerRadius * 4
-        : end.dx < start.dx + cornerRadius * 4;
+        ? end.dy < start.dy + defaultSegmentPadding
+        : end.dx < start.dx + defaultSegmentPadding;
 
     return needsSpecialRouting
         ? ConnectionType.adaptive
@@ -597,7 +597,8 @@ class EdgePainterUtils {
     required Offset end,
     required Size boxSize,
   }) {
-    final bool needsSpecialRouting = end.dx < start.dx;
+    final bool needsSpecialRouting =
+        end.dx < start.dx + defaultSegmentPadding;
 
     if (needsSpecialRouting) {
       return _generateHorizontalSimpleLeafNodeSpecialRouting(
@@ -626,8 +627,9 @@ class EdgePainterUtils {
       start.dy,
     );
 
-    final bool nodesTooClose = (start.dy - end.dy).abs() <
-        boxSize.height * defaultNodeProximityThreshold;
+    final bool nodesTooClose =
+        (start.dy - end.dy).abs() - defaultSegmentPadding - cornerRadius <
+            boxSize.height * defaultNodeProximityThreshold;
 
     final double verticalDir = nodesTooClose
         ? (end.dy < start.dy ? -1 : 1)
@@ -638,16 +640,17 @@ class EdgePainterUtils {
             ? 0
             : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
                 defaultSegmentPadding);
+    end = end +
+        Offset(
+          0,
+          (nodesTooClose ? 1 : -1) * verticalDir * (boxSize.height / 2),
+        );
 
     return [
       p1,
       p2,
       Offset(p2.dx, start.dy + verticalDir * verticalDist),
-      Offset(
-        end.dx - boxSize.width / 2 - defaultSegmentPadding,
-        start.dy + verticalDir * verticalDist,
-      ),
-      Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
+      Offset(end.dx, start.dy + verticalDir * verticalDist),
       end,
     ];
   }
@@ -658,41 +661,24 @@ class EdgePainterUtils {
     required Offset end,
     required Size boxSize,
   }) {
-    final bool isVerticallyCentered =
-        (start.dy - end.dy).abs() < boxSize.height * verticalCenterThreshold;
+    final double horizontalDrop = defaultSegmentPadding;
+    final double verticalDir = end.dy < start.dy ? 1.0 : -1.0;
 
-    if (isVerticallyCentered) {
-      return _generateHorizontalCenteredNodeRouting(
-        start: start,
-        end: end,
-        boxSize: boxSize,
-      );
-    } else {
-      final Offset horizontalEndPoint = Offset(end.dx, start.dy);
-      return [start, horizontalEndPoint, end];
-    }
+    final Offset p2 = Offset(start.dx + horizontalDrop, start.dy);
+    final Offset p3 = Offset(
+      p2.dx,
+      end.dy + verticalDir * (boxSize.height / 2 + defaultSegmentPadding),
+    );
+    end = end +
+        Offset(
+          0,
+          verticalDir * (boxSize.height / 2),
+        );
+    final Offset p4 = Offset(end.dx, p3.dy);
+
+    return [start, p2, p3, p4, end];
   }
 
-  /// Generate points for horizontally centered node routing
-  List<Offset> _generateHorizontalCenteredNodeRouting({
-    required Offset start,
-    required Offset end,
-    required Size boxSize,
-  }) {
-    final double verticalDir = end.dy <= start.dy ? -1.0 : 1.0;
-    final double fixedDistanceFromChild =
-        boxSize.width * fixedDistanceMultiplier + defaultSegmentPadding;
-    final double horizontalPoint = end.dx - fixedDistanceFromChild;
-    final double verticalOffset = boxSize.height * verticalOffsetMultiplier;
-
-    return [
-      start,
-      Offset(horizontalPoint, start.dy),
-      Offset(horizontalPoint, end.dy + verticalDir * verticalOffset),
-      Offset(end.dx, end.dy + verticalDir * verticalOffset),
-      end,
-    ];
-  }
 
   /// Generate points for adaptive connection
   List<Offset> _generateAdaptivePoints({
