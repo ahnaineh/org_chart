@@ -510,7 +510,7 @@ class EdgePainterUtils {
     required Size boxSize,
   }) {
     final bool needsSpecialRouting =
-        end.dy < start.dy + boxSize.height / 2 + defaultSegmentPadding;
+        end.dy < start.dy + defaultSegmentPadding;
 
     if (needsSpecialRouting) {
       return _generateVerticalSimpleLeafNodeSpecialRouting(
@@ -552,6 +552,11 @@ class EdgePainterUtils {
             ? 0
             : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
                 defaultSegmentPadding);
+    end = end +
+        Offset(
+          (nodesTooClose ? 1 : -1) * horizontalDir * (boxSize.width / 2),
+          0,
+        );
 
     return [
       p1,
@@ -576,6 +581,11 @@ class EdgePainterUtils {
       end.dx + horizontalDir * (boxSize.width / 2 + defaultSegmentPadding),
       p2.dy,
     );
+    end = end +
+        Offset(
+          horizontalDir * (boxSize.width / 2),
+          0,
+        );
     final Offset p4 = Offset(p3.dx, end.dy);
 
     return [start, p2, p3, p4, end];
