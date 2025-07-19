@@ -23,7 +23,13 @@ class OrgChartEdgePainter<E> extends CustomPainter {
         );
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant OrgChartEdgePainter<E> oldDelegate) {
+    // Only repaint if the controller or paint properties have changed
+    return oldDelegate.controller != controller ||
+        oldDelegate.utils.linePaint != utils.linePaint ||
+        oldDelegate.utils.cornerRadius != utils.cornerRadius ||
+        oldDelegate.utils.arrowStyle != utils.arrowStyle;
+  }
 
   /// Draw arrows for all root nodes
   @override

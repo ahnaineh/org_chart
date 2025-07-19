@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import '../../base/base_controller.dart';
 import '../org_chart_controller.dart';
+import '../org_chart_constants.dart';
 
 /// Mixin for node positioning utilities for OrgChartController
 mixin NodePositioningMixin<E> {
@@ -100,7 +101,7 @@ mixin NodePositioningMixin<E> {
           );
       return boxSize.width + spacing;
     }
-    int leafColumns = 4;
+    int leafColumns = OrgChartConstants.defaultLeafColumns;
     if (this is OrgChartController<E>) {
       leafColumns = (this as OrgChartController<E>).leafColumns;
     }
@@ -177,7 +178,7 @@ mixin NodePositioningMixin<E> {
           );
       return boxSize.height + spacing;
     }
-    int leafColumns = 4;
+    int leafColumns = OrgChartConstants.defaultLeafColumns;
     if (this is OrgChartController<E>) {
       leafColumns = (this as OrgChartController<E>).leafColumns;
     }

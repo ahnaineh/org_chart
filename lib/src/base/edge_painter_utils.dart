@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:org_chart/src/base/base_controller.dart';
+import 'package:org_chart/src/base/base_graph_constants.dart';
 
 /// Base abstract class for arrow/line styles in graphs
 abstract class GraphArrowStyle {
@@ -63,7 +64,7 @@ const double horizontalOffsetMultiplier = 0.6;
 const double verticalOffsetMultiplier = 0.8;
 
 /// Fixed distance from child node for routing connection
-const double fixedDistanceMultiplier = 0.4;
+const double fixedDistanceMultiplier = BaseGraphConstants.fixedDistanceMultiplier;
 // Multiplier to be used with box size
 
 /// Base edge painter class that should be extended by specific graph types

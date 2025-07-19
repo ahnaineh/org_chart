@@ -190,8 +190,9 @@ class _HomeScreenState extends State<HomeScreen> {
             }
 
             setState(() {
-              dragged['parent'] = target['id'];
-              controller.calculatePosition();
+              // Create updated item with new parent and use updateItem for proper state management
+              final updatedItem = {...dragged, "parent": target['id']};
+              controller.updateItem(updatedItem);
             });
           },
         ),

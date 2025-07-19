@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/base/base_controller.dart';
+import 'package:org_chart/src/genogram/genogram_constants.dart';
 
 /// Controller responsible for managing and laying out genogram (family tree) charts
 ///
@@ -53,9 +54,9 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// [orientation]: Initial layout orientation (default: topToBottom)
   GenogramController({
     required super.items,
-    super.boxSize = const Size(150, 150),
-    super.spacing = 30,
-    super.runSpacing = 60,
+    super.boxSize = GenogramConstants.defaultBoxSize,
+    super.spacing = GenogramConstants.defaultSpacing,
+    super.runSpacing = GenogramConstants.defaultRunSpacing,
     super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
     required this.fatherProvider,

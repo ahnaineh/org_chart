@@ -281,5 +281,13 @@ class GenogramEdgePainter<E> extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant GenogramEdgePainter<E> oldDelegate) => true;
+  bool shouldRepaint(covariant GenogramEdgePainter<E> oldDelegate) {
+    // Only repaint if the controller, configs, or paint properties have changed
+    return oldDelegate.controller != controller ||
+        oldDelegate.config != config ||
+        oldDelegate.marriageStatusProvider != marriageStatusProvider ||
+        oldDelegate.utils.linePaint != utils.linePaint ||
+        oldDelegate.utils.cornerRadius != utils.cornerRadius ||
+        oldDelegate.utils.arrowStyle != utils.arrowStyle;
+  }
 }

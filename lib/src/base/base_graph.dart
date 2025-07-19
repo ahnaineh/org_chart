@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/base/base_controller.dart';
+import 'package:org_chart/src/base/base_graph_constants.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 
 /// Base abstract graph widget that provides common functionality for all graph types
@@ -77,8 +79,8 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.keyboardPanDistance = 20.0,
     this.keyboardZoomFactor = 1.1,
     this.enableKeyRepeat = true,
-    this.keyRepeatInitialDelay = const Duration(milliseconds: 500),
-    this.keyRepeatInterval = const Duration(milliseconds: 50),
+    this.keyRepeatInitialDelay = BaseGraphConstants.defaultKeyRepeatInitialDelay,
+    this.keyRepeatInterval = BaseGraphConstants.defaultKeyRepeatInterval,
     this.enableCtrlScrollToScale = true,
     this.enableFling = true,
     this.enablePan = true,
@@ -105,6 +107,11 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   Offset? panDownPosition;
   @protected
   late final CustomInteractiveViewerController viewerController;
+  
+  // Drag operations state
+  @protected
+  Node<E>? lastDraggedNode;
+  
 
   // Protected getters for subclasses
   @protected
@@ -126,7 +133,9 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewerController.center();
     });
+    
   }
+  
 
   @override
   void dispose() {
@@ -211,14 +220,20 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   }
 
   void updateDragging(Node<E> node, DragUpdateDetails details) {
-    setState(() {
-      node.position = Offset(
-        max(0, node.position.dx + details.delta.dx),
-        max(0, node.position.dy + details.delta.dy),
-      );
-
-      overlapping = widget.controller.getOverlapping(node);
-    });
+    // Update position immediately for smooth visual feedback
+    node.position = Offset(
+      max(0, node.position.dx + details.delta.dx),
+      max(0, node.position.dy + details.delta.dy),
+    );
+    
+    // Calculate overlapping immediately for real-time visual feedback
+    overlapping = widget.controller.getOverlapping(node);
+    
+    // Store the node for any additional operations
+    lastDraggedNode = node;
+    
+    // Trigger UI update with immediate overlap calculation
+    setState(() {});
   }
 
   Future<void> showNodeMenu(BuildContext context, Node<E> node) async {
@@ -240,6 +255,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
     widget.onOptionSelect?.call(node.data, result);
   }
+  
 
   // Getter for accessing the controller with the correct type
   BaseGraphController<E> get controller => widget.controller;
