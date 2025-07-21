@@ -63,7 +63,7 @@ class OrgChartEdgePainter<E> extends CustomPainter {
       Node<E> node, List<Node<E>> subNodes, Canvas canvas) {
     // Check if ALL children are leaf nodes
     bool allChildrenAreLeaves = subNodes.every((child) => isLeafNode(child));
-    
+
     // For each subnode, draw the appropriate connection
     for (int i = 0; i < subNodes.length; i++) {
       var subNode = subNodes[i];
@@ -74,32 +74,34 @@ class OrgChartEdgePainter<E> extends CustomPainter {
       if (controller.orientation == GraphOrientation.leftToRight) {
         // For left-to-right: start from right side of parent
         start = getNodeCenter(node) + Offset(controller.boxSize.width / 2, 0);
-        
+
         if (allChildrenAreLeaves) {
           // For leaf nodes: end at the center of the child (side approach will be handled by simpleLeafNode)
           end = getNodeCenter(subNode);
         } else {
           // For non-leaf nodes: end at left side of child
-          end = getNodeCenter(subNode) - Offset(controller.boxSize.width / 2, 0);
+          end =
+              getNodeCenter(subNode) - Offset(controller.boxSize.width / 2, 0);
         }
       } else {
         // For top-to-bottom: start from bottom of parent
         start = getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
-        
+
         if (allChildrenAreLeaves) {
           // For leaf nodes: end at the center of the child (side approach will be handled by simpleLeafNode)
           end = getNodeCenter(subNode);
         } else {
           // For non-leaf nodes: end at top of child
-          end = getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
+          end =
+              getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
         }
       }
 
       // Use simpleLeafNode connection type if all children are leaves
-      ConnectionType connectionType = allChildrenAreLeaves 
-          ? ConnectionType.simpleLeafNode 
+      ConnectionType connectionType = allChildrenAreLeaves
+          ? ConnectionType.simpleLeafNode
           : ConnectionType.adaptive;
-      
+
       // Use appropriate connection type for leaf vs non-leaf nodes
       utils.drawConnection(
           canvas, start, end, controller.boxSize, controller.orientation,

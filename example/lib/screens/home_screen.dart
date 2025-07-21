@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
-                        .withOpacity(0.5),
+                        .withValues(alpha: 0.5),
                     Theme.of(context).colorScheme.surface,
                   ],
                 ),
@@ -216,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           blurRadius: 12,
                           spreadRadius: 4,
                           blurStyle: BlurStyle.outer,
@@ -226,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Theme.of(context)
                             .colorScheme
                             .primary
-                            .withOpacity(0.6),
+                            .withValues(alpha: 0.6),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

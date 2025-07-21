@@ -73,7 +73,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   void finishDragging(Node<E> node) {
     // Do a final overlap check
     overlapping = widget.controller.getOverlapping(node);
-    
+
     if (overlapping.isNotEmpty) {
       widget.onDrop?.call(node.data, overlapping.first.data);
     }
@@ -98,8 +98,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
-      
-      
+
       nodeWidgets.add(
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),

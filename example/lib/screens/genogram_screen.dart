@@ -144,7 +144,7 @@ class _GenogramScreenState extends State<GenogramScreen> {
                     Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
-                        .withOpacity(0.5),
+                        .withValues(alpha: 0.5),
                     Theme.of(context).colorScheme.surface,
                   ],
                 ),

@@ -131,7 +131,7 @@ class EdgePainterUtils {
     // Draw line ending based on type
     if (points.length >= 2 && lineEndingType != LineEndingType.none) {
       final double angle = vectorAngle(points.last - points[points.length - 2]);
-      
+
       switch (lineEndingType) {
         case LineEndingType.arrow:
           drawArrowHead(canvas, points.last, angle, connectionPaint);
@@ -386,7 +386,7 @@ class EdgePainterUtils {
   void drawCircleEnd(Canvas canvas, Offset center, Paint paint) {
     // Draw filled circle
     canvas.drawCircle(center, arrowHeadLength / 2, paint);
-    
+
     // Draw circle outline for better visibility
     final Paint outlinePaint = Paint()
       ..style = PaintingStyle.stroke
@@ -541,8 +541,7 @@ class EdgePainterUtils {
     required Offset end,
     required Size boxSize,
   }) {
-    final bool needsSpecialRouting =
-        end.dy < start.dy + defaultSegmentPadding;
+    final bool needsSpecialRouting = end.dy < start.dy + defaultSegmentPadding;
 
     if (needsSpecialRouting) {
       return _generateVerticalSimpleLeafNodeSpecialRouting(
@@ -629,8 +628,7 @@ class EdgePainterUtils {
     required Offset end,
     required Size boxSize,
   }) {
-    final bool needsSpecialRouting =
-        end.dx < start.dx + defaultSegmentPadding;
+    final bool needsSpecialRouting = end.dx < start.dx + defaultSegmentPadding;
 
     if (needsSpecialRouting) {
       return _generateHorizontalSimpleLeafNodeSpecialRouting(
@@ -710,7 +708,6 @@ class EdgePainterUtils {
 
     return [start, p2, p3, p4, end];
   }
-
 
   /// Generate points for adaptive connection
   List<Offset> _generateAdaptivePoints({

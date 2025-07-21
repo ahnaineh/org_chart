@@ -50,7 +50,8 @@ abstract class BaseGraphController<E> {
 
   BaseGraphController({
     required List<E> items,
-    this.boxSize = const Size(200, 100), // Will be overridden by specific controllers
+    this.boxSize =
+        const Size(200, 100), // Will be overridden by specific controllers
     this.spacing = 20,
     this.runSpacing = 50,
     this.orientation = GraphOrientation.topToBottom,

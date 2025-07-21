@@ -107,8 +107,8 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
               maintainState: true,
               child: GestureDetector(
                 onTapDown: handleTapDown,
-                // TODO: Implement onSecondaryTap
-                // onSecondaryTap: () => showNodeMenu(context, node),
+                // TODO Implement onSecondaryTap
+                onSecondaryTap: () => showNodeMenu(context, node),
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:
                     widget.isDraggable ? (_) => startDragging(node) : null,

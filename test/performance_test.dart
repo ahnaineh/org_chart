@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:org_chart/org_chart.dart';
 
@@ -14,7 +15,7 @@ void main() {
     test('getLevel() performance with caching', () {
       // Create a deep hierarchy
       final employees = <Employee>[];
-      
+
       // Create 5 levels with 20 nodes per level = 100 nodes
       for (int level = 0; level < 5; level++) {
         for (int i = 0; i < 20; i++) {
@@ -41,17 +42,18 @@ void main() {
 
       // Measure performance
       final stopwatch = Stopwatch()..start();
-      
+
       // Call getLevel 1000 times
       for (int i = 0; i < 1000; i++) {
         for (final node in controller.nodes) {
           controller.getLevel(node);
         }
       }
-      
+
       stopwatch.stop();
-      print('Time for 100,000 getLevel calls: ${stopwatch.elapsedMilliseconds}ms');
-      
+      debugPrint(
+          'Time for 100,000 getLevel calls: ${stopwatch.elapsedMilliseconds}ms');
+
       // Should be under 100ms with caching (without caching it would be 5000+ms)
       expect(stopwatch.elapsedMilliseconds, lessThan(100));
     });
@@ -75,7 +77,8 @@ void main() {
       );
 
       // Get initial levels
-      final node3 = controller.nodes.firstWhere((n) => controller.idProvider(n.data) == '3');
+      final node3 = controller.nodes
+          .firstWhere((n) => controller.idProvider(n.data) == '3');
       expect(controller.getLevel(node3), equals(3));
 
       // Change hierarchy - move employee directly under CEO
@@ -85,7 +88,8 @@ void main() {
       );
 
       // Level should be recalculated
-      final updatedNode3 = controller.nodes.firstWhere((n) => controller.idProvider(n.data) == '3');
+      final updatedNode3 = controller.nodes
+          .firstWhere((n) => controller.idProvider(n.data) == '3');
       expect(controller.getLevel(updatedNode3), equals(2));
     });
 
@@ -94,7 +98,7 @@ void main() {
       final employees = <Employee>[
         Employee(id: 'root', name: 'CEO'),
       ];
-      
+
       for (int i = 0; i < 1000; i++) {
         employees.add(Employee(
           id: 'child_$i',
@@ -109,20 +113,22 @@ void main() {
         toProvider: (emp) => emp.managerId,
       );
 
-      final rootNode = controller.nodes.firstWhere((n) => controller.idProvider(n.data) == 'root');
-      
+      final rootNode = controller.nodes
+          .firstWhere((n) => controller.idProvider(n.data) == 'root');
+
       // Measure performance
       final stopwatch = Stopwatch()..start();
-      
+
       // Call getSubNodes 10000 times
       for (int i = 0; i < 10000; i++) {
         final children = controller.getSubNodes(rootNode);
         expect(children.length, equals(1000));
       }
-      
+
       stopwatch.stop();
-      print('Time for 10,000 getSubNodes calls with 1000 children: ${stopwatch.elapsedMilliseconds}ms');
-      
+      debugPrint(
+          'Time for 10,000 getSubNodes calls with 1000 children: ${stopwatch.elapsedMilliseconds}ms');
+
       // Should be under 50ms with indexing (without indexing it would be 1000+ms)
       expect(stopwatch.elapsedMilliseconds, lessThan(50));
     });
@@ -130,12 +136,12 @@ void main() {
     test('getOverlapping() performance with QuadTree', () {
       // Create a grid of nodes
       final employees = <Employee>[];
-      
+
       // Create a 50x50 grid = 2500 nodes
       for (int x = 0; x < 50; x++) {
         for (int y = 0; y < 50; y++) {
           employees.add(Employee(
-            id: 'node_${x}_${y}',
+            id: 'node_${x}_$y',
             name: 'Employee ($x,$y)',
           ));
         }
@@ -155,27 +161,26 @@ void main() {
           index++;
         }
       }
-      
-      
+
       // Test node in the middle of the grid
       final testNode = controller.nodes[1250]; // Middle of grid
-      
+
       // Measure performance
       final stopwatch = Stopwatch()..start();
-      
+
       // Call getOverlapping 1000 times
       for (int i = 0; i < 1000; i++) {
         final overlapping = controller.getOverlapping(testNode);
         // Should find some overlapping nodes in dense grid
         expect(overlapping.length, greaterThanOrEqualTo(0));
       }
-      
+
       stopwatch.stop();
       // Measuring time for 1,000 getOverlapping calls in 2,500 node grid
-      
+
       // Should be under 100ms with QuadTree (vs 1000+ms with linear search)
       expect(stopwatch.elapsedMilliseconds, lessThan(100));
-      
+
       // Verify QuadTree is being used
       expect(controller.isUsingQuadTree, isTrue);
     });

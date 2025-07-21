@@ -56,7 +56,7 @@ void main() {
       final items = <PerfTestItem>[
         PerfTestItem(id: 'root', name: 'Root'),
       ];
-      
+
       // Add 1000 children to root
       for (int i = 0; i < 1000; i++) {
         items.add(PerfTestItem(
@@ -124,21 +124,20 @@ void main() {
       expect(controller.getLevel(updatedNode), equals(2));
     });
 
-
     test('Multiple performance features work together', () {
       // Create a complex hierarchy
       final items = <PerfTestItem>[];
       items.add(PerfTestItem(id: '0', name: 'CEO'));
-      
+
       int nodeId = 1;
       // Create 4 levels with increasing width
       for (int level = 1; level <= 4; level++) {
         final nodesInLevel = level * 10;
         final parentOffset = nodeId - nodesInLevel;
-        
+
         for (int i = 0; i < nodesInLevel; i++) {
-          final parentId = level == 1 
-              ? '0' 
+          final parentId = level == 1
+              ? '0'
               : ((parentOffset + (i % (nodesInLevel ~/ level))).toString());
           items.add(PerfTestItem(
             id: nodeId.toString(),
@@ -157,24 +156,24 @@ void main() {
 
       // Test all optimizations are working
       final stopwatch = Stopwatch()..start();
-      
+
       // Test level caching
       for (final node in controller.nodes) {
         controller.getLevel(node);
       }
-      
+
       // Test parent-child lookups
       for (final node in controller.nodes.take(10)) {
         controller.getSubNodes(node);
       }
-      
+
       // Test overlap detection
       for (final node in controller.nodes.take(10)) {
         controller.getOverlapping(node);
       }
-      
+
       stopwatch.stop();
-      
+
       // All operations should complete quickly
       expect(stopwatch.elapsedMilliseconds, lessThan(100));
     });
@@ -208,7 +207,7 @@ void main() {
 
       // Force QuadTree rebuild
       controller.rebuildQuadTree();
-      
+
       // Verify QuadTree is being used
       expect(controller.isUsingQuadTree, isTrue);
 
@@ -221,15 +220,14 @@ void main() {
 
       // Should be very fast with QuadTree (under 5ms for 625 nodes)
       expect(stopwatch.elapsedMilliseconds, lessThan(5));
-      
+
       // Should find no overlapping nodes in this grid layout
       expect(overlapping.isEmpty, isTrue);
-      
+
       // Test with overlapping position
       testNode.position = testNode.position + const Offset(80, 45);
       final overlapping2 = controller.getOverlapping(testNode);
       expect(overlapping2.isNotEmpty, isTrue);
-      
     });
   });
 }

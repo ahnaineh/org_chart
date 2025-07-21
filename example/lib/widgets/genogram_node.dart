@@ -57,7 +57,8 @@ class GenogramNode extends StatelessWidget {
                     children: [
                       Icon(Icons.cake,
                           size: 14,
-                          color: _getTextColor(member.gender).withOpacity(0.7)),
+                          color: _getTextColor(member.gender)
+                              .withValues(alpha: 0.7)),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(member.dateOfBirth!),
@@ -129,7 +130,7 @@ class GenogramNode extends StatelessWidget {
         Text(
           '${member.spouses.length}',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: _getTextColor(member.gender).withOpacity(0.8),
+            color: _getTextColor(member.gender).withValues(alpha: 0.8),
           ),
         ),
       ],

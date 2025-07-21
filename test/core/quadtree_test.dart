@@ -88,7 +88,8 @@ void main() {
 
       expect(quadTree.isSubdivided, isTrue);
       expect(quadTree.isLeaf, isFalse);
-      expect(quadTree.nodeCount, equals(QuadTreeConstants.maxNodesPerQuadrant + 1));
+      expect(quadTree.nodeCount,
+          equals(QuadTreeConstants.maxNodesPerQuadrant + 1));
     });
 
     test('should remove nodes correctly', () {
@@ -141,7 +142,7 @@ void main() {
 
     setUp(() {
       quadTree = QuadTree<TestItem>(level: 0, bounds: bounds);
-      
+
       // Create a grid of nodes for testing
       for (int x = 0; x < 10; x++) {
         for (int y = 0; y < 8; y++) {
@@ -161,7 +162,7 @@ void main() {
       final results = quadTree.getNodesInRange(center, radius, nodeSize);
 
       expect(results.isNotEmpty, isTrue);
-      
+
       // Verify all results are within range
       for (final node in results) {
         final nodeCenter = node.position + const Offset(25, 15); // nodeSize/2
@@ -176,7 +177,7 @@ void main() {
       final results = quadTree.getNodesInBounds(queryBounds, nodeSize);
 
       expect(results.isNotEmpty, isTrue);
-      
+
       // Verify all results intersect with query bounds
       for (final node in results) {
         final nodeRect = Rect.fromLTWH(
@@ -198,7 +199,7 @@ void main() {
       final overlapping = quadTree.getOverlappingNodes(targetNode, nodeSize);
 
       expect(overlapping.isNotEmpty, isTrue);
-      
+
       // Should find nearby nodes
       expect(overlapping.any((n) => n.data.id == '2_1'), isTrue);
     });
@@ -215,7 +216,7 @@ void main() {
     test('should limit results to prevent memory issues', () {
       // Create a dense QuadTree
       final denseQuadTree = QuadTree<TestItem>(level: 0, bounds: bounds);
-      
+
       // Insert many nodes in a small area
       for (int i = 0; i < QuadTreeConstants.maxQueryResults + 50; i++) {
         final node = Node<TestItem>(
@@ -228,9 +229,11 @@ void main() {
       const center = Offset(525, 425);
       const radius = 200.0;
 
-      final results = denseQuadTree.getNodesInRange(center, radius, const Size(10, 10));
+      final results =
+          denseQuadTree.getNodesInRange(center, radius, const Size(10, 10));
 
-      expect(results.length, lessThanOrEqualTo(QuadTreeConstants.maxQueryResults));
+      expect(
+          results.length, lessThanOrEqualTo(QuadTreeConstants.maxQueryResults));
     });
   });
 
@@ -255,7 +258,7 @@ void main() {
       // Update position
       const oldPosition = Offset(100, 100);
       node.position = const Offset(300, 300);
-      
+
       final updated = quadTree.updateNode(node, nodeSize, oldPosition);
       expect(updated, isTrue);
       expect(quadTree.nodeCount, equals(1));
@@ -278,7 +281,7 @@ void main() {
       // Try to update without inserting first
       const oldPosition = Offset(50, 50);
       final updated = quadTree.updateNode(node, nodeSize, oldPosition);
-      
+
       // Should still insert the node at new position
       expect(updated, isTrue);
       expect(quadTree.nodeCount, equals(1));
@@ -301,7 +304,8 @@ void main() {
         for (int y = 0; y < gridSize; y++) {
           final node = Node<TestItem>(
             data: TestItem(id: '${x}_$y', name: 'Node $x,$y'),
-            position: Offset(x * 150.0 + 50, y * 120.0 + 50), // Safe positions within bounds
+            position: Offset(
+                x * 150.0 + 50, y * 120.0 + 50), // Safe positions within bounds
           );
           final inserted = quadTree.insert(node, nodeSize);
           expect(inserted, isTrue, reason: 'Node at $x,$y should be inserted');
@@ -322,7 +326,8 @@ void main() {
 
       expect(stats.totalNodes, equals(0));
       expect(stats.maxDepth, equals(0));
-      expect(stats.leafQuadrants, greaterThan(0)); // Root is always a leaf when empty
+      expect(stats.leafQuadrants,
+          greaterThan(0)); // Root is always a leaf when empty
       expect(stats.averageNodesPerLeaf, equals(0));
     });
 
@@ -355,9 +360,11 @@ void main() {
       stopwatch.stop();
 
       // Performance assertions (generous to account for test environment variability)
-      expect(insertTime, lessThan(1000)); // Should insert 1000 nodes in under 1 second
-      expect(queryTime, lessThan(500));   // Should perform 100 queries in under 0.5 seconds
-      
+      expect(insertTime,
+          lessThan(1000)); // Should insert 1000 nodes in under 1 second
+      expect(queryTime,
+          lessThan(500)); // Should perform 100 queries in under 0.5 seconds
+
       expect(quadTree.nodeCount, equals(nodeCount));
     });
   });
@@ -365,19 +372,22 @@ void main() {
   group('QuadTree Edge Cases and Error Handling', () {
     test('should reject invalid bounds', () {
       expect(
-        () => QuadTree<TestItem>(level: 0, bounds: const Rect.fromLTWH(0, 0, 0, 100)),
+        () => QuadTree<TestItem>(
+            level: 0, bounds: const Rect.fromLTWH(0, 0, 0, 100)),
         throwsAssertionError,
       );
-      
+
       expect(
-        () => QuadTree<TestItem>(level: 0, bounds: const Rect.fromLTWH(0, 0, 100, 0)),
+        () => QuadTree<TestItem>(
+            level: 0, bounds: const Rect.fromLTWH(0, 0, 100, 0)),
         throwsAssertionError,
       );
     });
 
     test('should reject negative level', () {
       expect(
-        () => QuadTree<TestItem>(level: -1, bounds: const Rect.fromLTWH(0, 0, 100, 100)),
+        () => QuadTree<TestItem>(
+            level: -1, bounds: const Rect.fromLTWH(0, 0, 100, 100)),
         throwsAssertionError,
       );
     });
@@ -405,7 +415,8 @@ void main() {
     test('should respect minimum quadrant size', () {
       final quadTree = QuadTree<TestItem>(
         level: 0,
-        bounds: const Rect.fromLTWH(0, 0, 30, 30), // Smaller than minQuadrantSize
+        bounds:
+            const Rect.fromLTWH(0, 0, 30, 30), // Smaller than minQuadrantSize
       );
 
       // Try to insert more nodes than capacity

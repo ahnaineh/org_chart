@@ -1,12 +1,12 @@
 name: org_chart
 description: A flutter orgranizational chart with drag and drop, zoom and pan, search, collapse, expand, and easy customizations!
-version: 5.0.0-alpha.4
+version: 5.0.0-alpha.5
 repository: https://github.com/ahnaineh/org_chart
 issue_tracker: https://github.com/ahnaineh/org_chart/issues
 homepage: https://ahnaineh.github.io
 
 
-publish_to: none
+# publish_to: none
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -16,8 +16,8 @@ dependencies:
   flutter:
     sdk: flutter
   
-  custom_interactive_viewer:
-    path: ../custom_interactive_viewer
+  custom_interactive_viewer: 0.0.8
+    # path: ../custom_interactive_viewer
 
   pdf: ^3.11.3
 

@@ -5,7 +5,12 @@ export 'src/orgchart/org_chart_controller.dart'
     show OrgChartController, ActionOnNodeRemoval;
 
 export 'src/base/edge_painter_utils.dart'
-    show SolidGraphArrow, DashedGraphArrow, GraphArrowStyle, ConnectionType, LineEndingType;
+    show
+        SolidGraphArrow,
+        DashedGraphArrow,
+        GraphArrowStyle,
+        ConnectionType,
+        LineEndingType;
 export 'src/common/node_builder_details.dart' show NodeBuilderDetails;
 
 export 'src/genogram/genogram.dart' show Genogram;

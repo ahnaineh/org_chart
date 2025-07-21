@@ -130,7 +130,7 @@ class ChartOptionsSidebar extends StatelessWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .outlineVariant
-                        .withOpacity(0.5),
+                        .withValues(alpha: 0.5),
                   ),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -702,7 +702,7 @@ class ChartOptionsSidebar extends StatelessWidget {
             }
 
             final image = await controller.exportAsImage();
-            if (image != null) {
+            if (image != null && context.mounted) {
               await showDialog(
                   context: context,
                   builder: (c) {
@@ -711,7 +711,7 @@ class ChartOptionsSidebar extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            Navigator.of(c).pop();
                           },
                           child: const Text('Close'),
                         ),
@@ -1111,8 +1111,10 @@ class ChartOptionsSidebar extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color:
-                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+            color: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -1159,8 +1161,8 @@ class ChartOptionsSidebar extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 ],
               ),
             ),

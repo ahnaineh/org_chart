@@ -56,7 +56,8 @@ void main() {
       expect(find.text('Employee'), findsOneWidget);
     });
 
-    testWidgets('Node builder receives correct details', (WidgetTester tester) async {
+    testWidgets('Node builder receives correct details',
+        (WidgetTester tester) async {
       NodeBuilderDetails<WidgetTestItem>? capturedDetails;
 
       await tester.pumpWidget(
@@ -68,7 +69,7 @@ void main() {
                 if (details.item.id == '2') {
                   capturedDetails = details;
                 }
-                return Container(
+                return SizedBox(
                   width: 100,
                   height: 50,
                   child: Text(details.item.name),
@@ -150,7 +151,8 @@ void main() {
       expect(controller.orientation, equals(GraphOrientation.leftToRight));
     });
 
-    testWidgets('Empty chart renders without error', (WidgetTester tester) async {
+    testWidgets('Empty chart renders without error',
+        (WidgetTester tester) async {
       final emptyController = OrgChartController<WidgetTestItem>(
         items: [],
         idProvider: (item) => item.id,

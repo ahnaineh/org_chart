@@ -48,17 +48,16 @@ void main() {
         (n) => controller.idProvider(n.data) == '1',
       );
       final subnodes = controller.getSubNodes(ceoNode);
-      
+
       expect(subnodes.length, equals(2));
-      final subnodeIds = subnodes
-          .map((n) => controller.idProvider(n.data))
-          .toSet();
+      final subnodeIds =
+          subnodes.map((n) => controller.idProvider(n.data)).toSet();
       expect(subnodeIds, equals({'2', '3'}));
     });
 
     test('Get level', () {
       final nodes = controller.nodes;
-      
+
       final ceoNode = nodes.firstWhere(
         (n) => controller.idProvider(n.data) == '1',
       );
@@ -68,7 +67,7 @@ void main() {
       final devLeadNode = nodes.firstWhere(
         (n) => controller.idProvider(n.data) == '4',
       );
-      
+
       expect(controller.getLevel(ceoNode), equals(1));
       expect(controller.getLevel(ctoNode), equals(2));
       expect(controller.getLevel(devLeadNode), equals(3));
@@ -80,9 +79,9 @@ void main() {
         name: 'New Dev',
         managerId: '4',
       );
-      
+
       controller.addItem(newEmployee, recalculatePosition: false);
-      
+
       expect(controller.nodes.length, equals(6));
       final newNode = controller.nodes.firstWhere(
         (n) => controller.idProvider(n.data) == '6',
@@ -96,9 +95,9 @@ void main() {
         name: 'Updated CFO',
         managerId: '1',
       );
-      
+
       controller.addItem(updatedEmployee, recalculatePosition: false);
-      
+
       expect(controller.nodes.length, equals(5));
       final updatedNode = controller.nodes.firstWhere(
         (n) => controller.idProvider(n.data) == '3',
@@ -112,9 +111,9 @@ void main() {
         TestEmployee(id: '7', name: 'Dev 2', managerId: '4'),
         TestEmployee(id: '8', name: 'Dev 3', managerId: '4'),
       ];
-      
+
       controller.addItems(newEmployees, recalculatePosition: false);
-      
+
       expect(controller.nodes.length, equals(8));
     });
 
@@ -129,13 +128,13 @@ void main() {
           managerId: newManagerId,
         ),
       );
-      
+
       controller.removeItem(
         '2',
         ActionOnNodeRemoval.unlinkDescendants,
         recalculatePosition: false,
       );
-      
+
       // CTO removed, Dev Lead should now have no manager
       expect(controller.nodes.length, equals(4));
       final devLeadNode = controller.nodes.firstWhere(
@@ -155,13 +154,13 @@ void main() {
           managerId: newManagerId,
         ),
       );
-      
+
       controller.removeItem(
         '2',
         ActionOnNodeRemoval.connectDescendantsToParent,
         recalculatePosition: false,
       );
-      
+
       // CTO removed, Dev Lead should now report to CEO
       expect(controller.nodes.length, equals(4));
       final devLeadNode = controller.nodes.firstWhere(
@@ -176,12 +175,11 @@ void main() {
         ActionOnNodeRemoval.removeDescendants,
         recalculatePosition: false,
       );
-      
+
       // CTO and Dev Lead should both be removed
       expect(controller.nodes.length, equals(3));
-      final remainingIds = controller.nodes
-          .map((n) => controller.idProvider(n.data))
-          .toSet();
+      final remainingIds =
+          controller.nodes.map((n) => controller.idProvider(n.data)).toSet();
       expect(remainingIds, equals({'1', '3', '5'}));
     });
 
@@ -197,7 +195,7 @@ void main() {
       final devLeadNode = controller.nodes.firstWhere(
         (n) => controller.idProvider(n.data) == '4',
       );
-      
+
       expect(controller.isSubNode(ceoNode, devLeadNode), isTrue);
       expect(controller.isSubNode(devLeadNode, ceoNode), isFalse);
     });
@@ -212,7 +210,7 @@ void main() {
         (n) => controller.idProvider(n.data) == '4',
       );
       final parent = controller.getParent(devLeadNode);
-      
+
       expect(parent, isNotNull);
       expect(controller.idProvider(parent!.data), equals('2'));
     });
@@ -222,12 +220,12 @@ void main() {
         final id = controller.idProvider(n.data);
         return id == '4' || id == '5';
       }).toList();
-      
+
       final nonLeafNodes = controller.nodes.where((n) {
         final id = controller.idProvider(n.data);
         return id == '1' || id == '2';
       }).toList();
-      
+
       expect(controller.allLeaf(leafNodes), isTrue);
       expect(controller.allLeaf(nonLeafNodes), isFalse);
     });
