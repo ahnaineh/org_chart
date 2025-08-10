@@ -1,3 +1,7 @@
+## [5.0.0]
+1. Stable
+
+
 ## [5.0.0-alpha.5]
 
 ### Performance Improvements
@@ -32,11 +36,6 @@
    - Maintains smooth visual feedback while improving performance
    - Configurable debounce delay (default: 16ms for 60fps)
 
-6. **Added basic viewport culling**
-   - Only renders nodes that are visible in the current viewport
-   - Significantly improves performance for large graphs
-   - Automatic updates when panning/zooming
-   - Note: Full implementation pending CustomInteractiveViewerController API updates
 
 ### Testing
 - Added comprehensive test suite covering:
