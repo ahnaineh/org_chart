@@ -141,14 +141,14 @@ class Main extends StatelessWidget {
                       .textTheme
                       .bodyMedium
                       ?.color
-                      ?.withOpacity(0.8),
+                      ?.withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 12),
               Icon(
                 Icons.touch_app,
                 size: 20,
-                color: color.withOpacity(0.7),
+                color: color.withValues(alpha: 0.7),
               ),
             ],
           ),

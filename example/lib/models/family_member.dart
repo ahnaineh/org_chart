@@ -39,7 +39,7 @@ class FamilyMember {
       'gender': gender.toString(),
       'relationships': spouses,
       'extraData': extraData,
-      'color': color.value,
+      'color': color,
       'isDeceased': isDeceased,
     };
   }
@@ -59,7 +59,7 @@ class FamilyMember {
       gender: map['gender'],
       spouses: List<String>.from(map['spouses'] ?? []),
       extraData: Map<String, dynamic>.from(map['extraData'] ?? {}),
-      color: Color(map['color'] ?? Colors.blue.value),
+      color: map['color'] ?? Colors.blue,
       isDeceased: map['isDeceased'] ?? false,
     );
   }

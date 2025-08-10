@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:org_chart/src/base/base_controller.dart';
 
 import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
@@ -16,14 +17,23 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     required Paint linePaint,
     double cornerRadius = 15,
     required GraphArrowStyle arrowStyle,
+    LineEndingType lineEndingType = LineEndingType.arrow,
   }) : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
+          lineEndingType: lineEndingType,
         );
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant OrgChartEdgePainter<E> oldDelegate) {
+    // Only repaint if the controller or paint properties have changed
+    return oldDelegate.controller != controller ||
+        oldDelegate.utils.linePaint != utils.linePaint ||
+        oldDelegate.utils.cornerRadius != utils.cornerRadius ||
+        oldDelegate.utils.arrowStyle != utils.arrowStyle ||
+        oldDelegate.utils.lineEndingType != utils.lineEndingType;
+  }
 
   /// Draw arrows for all root nodes
   @override
@@ -51,26 +61,48 @@ class OrgChartEdgePainter<E> extends CustomPainter {
   /// Draw connections from a node to all its subnodes
   void drawNodeSubnodeConnections(
       Node<E> node, List<Node<E>> subNodes, Canvas canvas) {
-    // Check if all subnodes are leaves
-    bool allLeavesNodes = allLeaf(subNodes);
+    // Check if ALL children are leaf nodes
+    bool allChildrenAreLeaves = subNodes.every((child) => isLeafNode(child));
 
     // For each subnode, draw the appropriate connection
     for (int i = 0; i < subNodes.length; i++) {
       var subNode = subNodes[i];
-      Offset start = getNodeCenter(node);
-      Offset end = getNodeCenter(subNode);
+      Offset start;
+      Offset end;
 
-      ConnectionType connectionType;
+      // Calculate start and end offsets based on orientation and whether children are leaves
+      if (controller.orientation == GraphOrientation.leftToRight) {
+        // For left-to-right: start from right side of parent
+        start = getNodeCenter(node) + Offset(controller.boxSize.width / 2, 0);
 
-      if (allLeavesNodes) {
-        // For leaf nodes, always use simpleLeafNode connection type
-        // which now implements our four-segment approach
-        connectionType = ConnectionType.simpleLeafNode;
+        if (allChildrenAreLeaves) {
+          // For leaf nodes: end at the center of the child (side approach will be handled by simpleLeafNode)
+          end = getNodeCenter(subNode);
+        } else {
+          // For non-leaf nodes: end at left side of child
+          end =
+              getNodeCenter(subNode) - Offset(controller.boxSize.width / 2, 0);
+        }
       } else {
-        // For non-leaf nodes, use adaptive connection type
-        connectionType = ConnectionType.adaptive;
+        // For top-to-bottom: start from bottom of parent
+        start = getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
+
+        if (allChildrenAreLeaves) {
+          // For leaf nodes: end at the center of the child (side approach will be handled by simpleLeafNode)
+          end = getNodeCenter(subNode);
+        } else {
+          // For non-leaf nodes: end at top of child
+          end =
+              getNodeCenter(subNode) - Offset(0, controller.boxSize.height / 2);
+        }
       }
 
+      // Use simpleLeafNode connection type if all children are leaves
+      ConnectionType connectionType = allChildrenAreLeaves
+          ? ConnectionType.simpleLeafNode
+          : ConnectionType.adaptive;
+
+      // Use appropriate connection type for leaf vs non-leaf nodes
       utils.drawConnection(
           canvas, start, end, controller.boxSize, controller.orientation,
           type: connectionType);
@@ -86,9 +118,5 @@ class OrgChartEdgePainter<E> extends CustomPainter {
   /// Check if a node is a leaf node (no visible children)
   bool isLeafNode(Node<E> node) {
     return node.hideNodes || controller.getSubNodes(node).isEmpty;
-  }
-
-  bool allLeaf(List<Node<E>> nodes) {
-    return nodes.every((node) => isLeafNode(node));
   }
 }

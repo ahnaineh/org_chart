@@ -5,7 +5,12 @@ export 'src/orgchart/org_chart_controller.dart'
     show OrgChartController, ActionOnNodeRemoval;
 
 export 'src/base/edge_painter_utils.dart'
-    show SolidGraphArrow, DashedGraphArrow, GraphArrowStyle, ConnectionType;
+    show
+        SolidGraphArrow,
+        DashedGraphArrow,
+        GraphArrowStyle,
+        ConnectionType,
+        LineEndingType;
 export 'src/common/node_builder_details.dart' show NodeBuilderDetails;
 
 export 'src/genogram/genogram.dart' show Genogram;
@@ -20,4 +25,9 @@ export 'src/genogram/genogram_enums.dart' show Gender, MarriageStatus;
 export 'src/base/base_controller.dart'
     show BaseGraphController, GraphOrientation;
 export 'package:custom_interactive_viewer/custom_interactive_viewer.dart'
-    show CustomInteractiveViewerController;
+    show
+        CustomInteractiveViewerController,
+        InteractionConfig,
+        KeyboardConfig,
+        ScrollMode,
+        ZoomConfig;

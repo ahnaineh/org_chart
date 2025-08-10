@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:org_chart/src/common/node.dart';
 import '../org_chart_controller.dart';
 
@@ -9,6 +10,8 @@ mixin NodeModificationMixin<E> {
   E Function(E data, String? newID)? get toSetter;
   void addItem(E item, {bool recalculatePosition, bool centerGraph});
   void calculatePosition({bool center});
+  @protected
+  void clearCachesAndRebuildIndexes();
 
   /// Remove an item from the chart
   void removeItem(String? id, ActionOnNodeRemoval action,
@@ -22,6 +25,9 @@ mixin NodeModificationMixin<E> {
     final nodeToRemove =
         nodes.where((element) => idProvider(element.data) == id).firstOrNull;
     if (nodeToRemove == null) return;
+
+    // Clear caches when removing nodes
+    clearCachesAndRebuildIndexes();
 
     final subnodes =
         nodes.where((element) => toProvider(element.data) == id).toList();
@@ -59,6 +65,42 @@ mixin NodeModificationMixin<E> {
     for (final id in ids) {
       removeItem(id, action, recalculatePosition: false, centerGraph: false);
     }
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
+  }
+
+  /// Updates an existing item in the chart
+  /// If the item with the given ID doesn't exist, it will be added
+  void updateItem(E item,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    final itemId = idProvider(item);
+    final existingIndex =
+        nodes.indexWhere((node) => idProvider(node.data) == itemId);
+
+    if (existingIndex != -1) {
+      // Replace existing item
+      nodes[existingIndex] = Node(data: item);
+    } else {
+      // Add new item if it doesn't exist
+      nodes.add(Node(data: item));
+    }
+
+    // Clear caches and rebuild indexes when updating
+    clearCachesAndRebuildIndexes();
+
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
+  }
+
+  /// Updates multiple items in the chart
+  void updateItems(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    for (final item in items) {
+      updateItem(item, recalculatePosition: false, centerGraph: false);
+    }
+
     if (recalculatePosition) {
       calculatePosition(center: centerGraph);
     }

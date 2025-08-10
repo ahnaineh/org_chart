@@ -4,7 +4,7 @@
 
 **A powerful, flexible organizational chart package built entirely in Flutter**
 
-[![Version](https://img.shields.io/badge/version-5.0.0--alpha.1-blue.svg)](https://pub.dev/packages/org_chart)
+[![Version](https://img.shields.io/badge/version-5.0.0-blue.svg)](https://pub.dev/packages/org_chart)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
 [![Stars](https://img.shields.io/github/stars/ahnaineh/org_chart?style=social)](https://github.com/ahnaineh/org_chart)
 
@@ -75,7 +75,7 @@ Our new documentation includes:
 
 ```yaml
 dependencies:
-  org_chart: ^5.0.0-alpha.1
+  org_chart: ^5.0.0
 ```
 
 ### Import

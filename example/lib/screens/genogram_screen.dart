@@ -144,7 +144,7 @@ class _GenogramScreenState extends State<GenogramScreen> {
                     Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
-                        .withOpacity(0.5),
+                        .withValues(alpha: 0.5),
                     Theme.of(context).colorScheme.surface,
                   ],
                 ),
@@ -207,14 +207,20 @@ class _GenogramScreenState extends State<GenogramScreen> {
             decorator: const DivorceDecorator(),
           )),
       isDraggable: true,
-      enableZoom: true,
-      minScale: 0.4,
-      maxScale: 2.0,
+      interactionConfig: const InteractionConfig(
+        enableRotation: false,
+        constrainBounds: true,
+        // enablePan: true,
+        // scrollMode: ScrollMode.drag,
+      ),
+      zoomConfig: const ZoomConfig(
+        enableZoom: true,
+        minScale: 0.4,
+        maxScale: 2.0,
+        enableDoubleTapZoom: true,
+        doubleTapZoomFactor: 0.8,
+      ),
       focusNode: focusNode,
-      enableRotation: false,
-      constrainBounds: true,
-      enableDoubleTapZoom: true,
-      doubleTapZoomFactor: 0.8,
     );
   }
 

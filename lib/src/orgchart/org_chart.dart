@@ -14,36 +14,20 @@ class OrgChart<E> extends BaseGraph<E> {
     super.key,
     required OrgChartController<E> super.controller,
     required super.builder,
-    super.minScale,
-    super.maxScale,
     super.isDraggable,
     super.curve,
     super.duration,
     super.linePaint,
     super.cornerRadius,
     super.arrowStyle,
+    super.lineEndingType,
     super.optionsBuilder,
     super.onOptionSelect,
     super.viewerController,
-    super.enableZoom,
-    super.enableRotation,
-    super.constrainBounds,
-    super.enableDoubleTapZoom,
-    super.doubleTapZoomFactor,
-    super.enableKeyboardControls,
-    super.keyboardPanDistance,
-    super.keyboardZoomFactor,
-    super.enableKeyRepeat,
-    super.keyRepeatInitialDelay,
-    super.keyRepeatInterval,
-    super.enableCtrlScrollToScale,
-    super.enableFling,
-    super.enablePan,
+    super.interactionConfig,
+    super.keyboardConfig,
+    super.zoomConfig,
     super.focusNode,
-    super.animateKeyboardTransitions,
-    super.keyboardAnimationCurve,
-    super.keyboardAnimationDuration,
-    super.invertArrowKeyDirection,
     this.onDrop,
   });
 
@@ -62,6 +46,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
+      lineEndingType: widget.lineEndingType,
     );
   }
 
@@ -74,12 +59,16 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   }
 
   void finishDragging(Node<E> node) {
+    // Do a final overlap check
+    overlapping = widget.controller.getOverlapping(node);
+
     if (overlapping.isNotEmpty) {
       widget.onDrop?.call(node.data, overlapping.first.data,
           controller.isSubNode(node, overlapping.first));
     }
     draggedID = null;
     overlapping = [];
+    lastDraggedNode = null;
     setState(() {});
   }
 
@@ -118,8 +107,8 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
               maintainState: true,
               child: GestureDetector(
                 onTapDown: handleTapDown,
-                // TODO: Implement onSecondaryTap
-                // onSecondaryTap: () => showNodeMenu(context, node),
+                // TODO Implement onSecondaryTap
+                onSecondaryTap: () => showNodeMenu(context, node),
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:
                     widget.isDraggable ? (_) => startDragging(node) : null,

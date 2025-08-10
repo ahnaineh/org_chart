@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Configuration for the chart
   late ChartConfig config;
-  final FocusNode focusNode = FocusNode();
+  late final FocusNode focusNode;
 
   // Available colors for nodes
   final List<Color> colorOptions = [
@@ -44,9 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    focusNode.addListener(() {
-      setState(() {});
-    });
+    focusNode = FocusNode()
+      ..addListener(() {
+        setState(() {});
+      });
     // Initialize with default configuration
     config = ChartConfig(); // Initialize the controller with sample data
     controller = OrgChartController<Map<String, dynamic>>(
@@ -121,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
-                        .withOpacity(0.5),
+                        .withValues(alpha: 0.5),
                     Theme.of(context).colorScheme.surface,
                   ],
                 ),
@@ -148,30 +149,37 @@ class _HomeScreenState extends State<HomeScreen> {
           optionsBuilder: (item) => _buildOptionsMenu(item),
           onOptionSelect: _handleOptionSelect,
           isDraggable: config.isDraggable,
-          enableZoom: config.enableZoom,
           cornerRadius: config.cornerRadius,
           arrowStyle: config.arrowStyle,
           duration: config.animationDuration,
           curve: config.animationCurve,
-          minScale: config.minScale,
-          maxScale: config.maxScale,
-          // Custom interactive viewer parameters
-          enableRotation: config.enableRotation,
-          constrainBounds: config.constrainBounds,
-          enableDoubleTapZoom: config.enableDoubleTapZoom,
-          doubleTapZoomFactor: config.doubleTapZoomFactor,
-          enableKeyRepeat: config.enableKeyRepeat,
-          keyRepeatInitialDelay: config.keyRepeatInitialDelay,
-          keyRepeatInterval: config.keyRepeatInterval,
-          enableCtrlScrollToScale: config.enableCtrlScrollToScale,
-          enableFling: config.enableFling, enablePan: config.enablePan,
-          enableKeyboardControls: config.enableKeyboardControls,
-          keyboardPanDistance: config.keyboardPanDistance,
-          keyboardZoomFactor: config.keyboardZoomFactor,
-          animateKeyboardTransitions: config.animateKeyboardTransitions,
-          keyboardAnimationCurve: config.keyboardAnimationCurve,
-          keyboardAnimationDuration: config.keyboardAnimationDuration,
-          invertArrowKeyDirection: config.invertArrowKeyDirection,
+          lineEndingType: config.lineEndingType,
+          interactionConfig: InteractionConfig(
+            enableRotation: config.enableRotation,
+            constrainBounds: config.constrainBounds,
+            enableFling: config.enableFling,
+            scrollMode: config.enablePan ? ScrollMode.both : ScrollMode.none,
+          ),
+          keyboardConfig: KeyboardConfig(
+            enableKeyboardControls: config.enableKeyboardControls,
+            keyboardPanDistance: config.keyboardPanDistance,
+            keyboardZoomFactor: config.keyboardZoomFactor,
+            animateKeyboardTransitions: config.animateKeyboardTransitions,
+            keyboardAnimationCurve: config.keyboardAnimationCurve,
+            keyboardAnimationDuration: config.keyboardAnimationDuration,
+            invertArrowKeyDirection: config.invertArrowKeyDirection,
+            enableKeyRepeat: config.enableKeyRepeat,
+            keyRepeatInitialDelay: config.keyRepeatInitialDelay,
+            keyRepeatInterval: config.keyRepeatInterval,
+          ),
+          zoomConfig: ZoomConfig(
+            minScale: config.minScale,
+            maxScale: config.maxScale,
+            enableZoom: config.enableZoom,
+            enableDoubleTapZoom: config.enableDoubleTapZoom,
+            doubleTapZoomFactor: config.doubleTapZoomFactor,
+            enableCtrlScrollToScale: config.enableCtrlScrollToScale,
+          ),
           focusNode: focusNode,
           linePaint: config.getLinePaint(context),
           onDrop: (dragged, target, isTargetSubnode) {
@@ -190,8 +198,9 @@ class _HomeScreenState extends State<HomeScreen> {
             }
 
             setState(() {
-              dragged['parent'] = target['id'];
-              controller.calculatePosition();
+              // Create updated item with new parent and use updateItem for proper state management
+              final updatedItem = {...dragged, "parent": target['id']};
+              controller.updateItem(updatedItem);
             });
           },
         ),
@@ -207,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           blurRadius: 12,
                           spreadRadius: 4,
                           blurStyle: BlurStyle.outer,
@@ -217,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Theme.of(context)
                             .colorScheme
                             .primary
-                            .withOpacity(0.6),
+                            .withValues(alpha: 0.6),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -235,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

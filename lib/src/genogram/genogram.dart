@@ -23,38 +23,22 @@ class Genogram<E> extends BaseGraph<E> {
     required super.controller,
     // required GenogramController<E> super.controller,
     required super.builder,
-    super.minScale,
-    super.maxScale,
     super.isDraggable,
     super.curve,
     super.duration,
     super.linePaint,
     super.cornerRadius,
     super.arrowStyle,
+    super.lineEndingType,
     super.optionsBuilder,
     super.onOptionSelect,
     super.viewerController,
-    super.enableZoom,
-    super.enableRotation,
-    super.constrainBounds,
-    super.enableDoubleTapZoom,
-    super.doubleTapZoomFactor,
+    super.interactionConfig,
+    super.keyboardConfig,
+    super.zoomConfig,
+    super.focusNode,
     this.edgeConfig = const GenogramEdgeConfig(),
     this.marriageStatusProvider,
-    super.enableKeyboardControls,
-    super.keyboardPanDistance,
-    super.keyboardZoomFactor,
-    super.enableKeyRepeat,
-    super.keyRepeatInitialDelay,
-    super.keyRepeatInterval,
-    super.enableCtrlScrollToScale,
-    super.enableFling,
-    super.enablePan,
-    super.focusNode,
-    super.animateKeyboardTransitions,
-    super.keyboardAnimationCurve,
-    super.keyboardAnimationDuration,
-    super.invertArrowKeyDirection,
     this.onDrop,
   });
 
@@ -72,6 +56,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
+      lineEndingType: widget.lineEndingType,
       config: widget.edgeConfig,
       marriageStatusProvider: widget.marriageStatusProvider,
     );
@@ -86,11 +71,15 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   }
 
   void finishDragging(Node<E> node) {
+    // Do a final overlap check
+    overlapping = widget.controller.getOverlapping(node);
+
     if (overlapping.isNotEmpty) {
       widget.onDrop?.call(node.data, overlapping.first.data);
     }
     draggedID = null;
     overlapping = [];
+    lastDraggedNode = null;
     setState(() {});
   }
 
@@ -109,6 +98,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
+
       nodeWidgets.add(
         CustomAnimatedPositioned(
           key: ValueKey(nodeId),

@@ -4,6 +4,7 @@ import 'package:custom_interactive_viewer/custom_interactive_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/exporting.dart';
+import 'package:org_chart/src/base/base_graph_constants.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 /// The orientation of the organizational chart
@@ -16,11 +17,17 @@ abstract class BaseGraphController<E> {
   GlobalKey repaintBoundaryKey = GlobalKey();
 
   Future<Uint8List?> exportAsImage() async {
-    return await exportChartAsImage(repaintBoundaryKey);
+    return await exportChartAsImage(
+      repaintBoundaryKey,
+      pixelRatio: BaseGraphConstants.defaultExportPixelRatio,
+    );
   }
 
   Future<pw.Document?> exportAsPdf() async {
-    return await exportChartAsPdf(repaintBoundaryKey);
+    return await exportChartAsPdf(
+      repaintBoundaryKey,
+      pixelRatio: BaseGraphConstants.defaultExportPixelRatio,
+    );
   }
 
   // Common graph controller properties
@@ -43,7 +50,8 @@ abstract class BaseGraphController<E> {
 
   BaseGraphController({
     required List<E> items,
-    this.boxSize = const Size(200, 100),
+    this.boxSize =
+        const Size(200, 100), // Will be overridden by specific controllers
     this.spacing = 20,
     this.runSpacing = 50,
     this.orientation = GraphOrientation.topToBottom,
@@ -51,7 +59,7 @@ abstract class BaseGraphController<E> {
   }) {
     // this.items = items;
     _nodes = items.map((e) => Node(data: e)).toList();
-    calculatePosition();
+    // Note: calculatePosition() should be called by subclasses after their initialization
   }
 
   late List<Node<E>> _nodes;
@@ -100,9 +108,19 @@ abstract class BaseGraphController<E> {
     }
   }
 
-  // / Removes all items from the chart
+  /// Removes all items from the chart
   void clearItems({bool recalculatePosition = true, bool centerGraph = false}) {
     nodes.clear();
+    if (recalculatePosition) {
+      calculatePosition(center: centerGraph);
+    }
+  }
+
+  /// Replaces all items in the chart with new items
+  /// This is more efficient than clearing and adding items separately
+  void replaceAll(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    _nodes = items.map((e) => Node(data: e)).toList();
     if (recalculatePosition) {
       calculatePosition(center: centerGraph);
     }

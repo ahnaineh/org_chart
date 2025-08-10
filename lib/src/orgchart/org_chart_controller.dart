@@ -1,6 +1,7 @@
 import 'package:flutter/animation.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/base/base_controller.dart';
+import 'package:org_chart/src/orgchart/org_chart_constants.dart';
 import 'mixins/node_query_mixin.dart';
 import 'mixins/node_modification_mixin.dart';
 import 'mixins/node_positioning_mixin.dart';
@@ -30,15 +31,53 @@ class OrgChartController<E> extends BaseGraphController<E>
 
   OrgChartController({
     required super.items,
-    super.boxSize,
-    super.spacing,
-    super.runSpacing,
+    super.boxSize = OrgChartConstants.defaultBoxSize,
+    super.spacing = OrgChartConstants.defaultSpacing,
+    super.runSpacing = OrgChartConstants.defaultRunSpacing,
     super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
     required this.toProvider,
     this.toSetter,
-    this.leafColumns = 4,
-  });
+    this.leafColumns = OrgChartConstants.defaultLeafColumns,
+  }) {
+    // Build initial indexes
+    rebuildChildrenIndex();
+    rebuildQuadTree();
+
+    // Calculate positions now that all initialization is complete
+    calculatePosition();
+  }
+
+  @override
+  void addItem(E item,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    super.addItem(item,
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+    clearCachesAndRebuildIndexes();
+  }
+
+  @override
+  void addItems(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    super.addItems(items,
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+    clearCachesAndRebuildIndexes();
+  }
+
+  @override
+  void clearItems({bool recalculatePosition = true, bool centerGraph = false}) {
+    super.clearItems(
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+    clearCachesAndRebuildIndexes();
+  }
+
+  @override
+  void replaceAll(List<E> items,
+      {bool recalculatePosition = true, bool centerGraph = false}) {
+    super.replaceAll(items,
+        recalculatePosition: recalculatePosition, centerGraph: centerGraph);
+    clearCachesAndRebuildIndexes();
+  }
 
   // Node-related methods
   @override

@@ -29,6 +29,12 @@ class ChartNodeWidget extends StatelessWidget {
       child: InkWell(
         onTap: () => details.hideNodes(center: false),
         child: Container(
+          color: details.isBeingDragged
+              ? Colors.green.withAlpha(80)
+              : details.isOverlapped
+                  ? Colors.red.withAlpha(80)
+                  : null,
+
           // width: controller.boxSize.width,
           // height: controller.boxSize.height,
           padding: const EdgeInsets.all(8),
