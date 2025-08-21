@@ -1,3 +1,6 @@
+## [5.0.1]
+1. fix: missing setState in genogram calculatePosition method
+
 ## [5.0.0]
 1. Stable
 

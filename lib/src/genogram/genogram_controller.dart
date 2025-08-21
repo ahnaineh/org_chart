@@ -489,11 +489,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       currentPos += subtreeSize + spacing * 3;
     }
 
-    // Notify listeners that positions have been updated
-    // setState?.call(() {
-    //   nodes = nodes;
-    // });
-
+    setState?.call(() {});
     // Center the graph if requested
     if (center) {
       centerGraph?.call();
