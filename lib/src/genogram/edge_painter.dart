@@ -230,8 +230,9 @@ class GenogramEdgePainter<E> extends CustomPainter {
               controller.boxSize, controller.orientation,
               type: connectionType, paint: connectionPaint);
         } else {
-          // Fall back to connecting from father
+          // Parents aren't married - draw connections from both parents
           _drawSingleParentConnection(canvas, father, child, isMarriedFemale);
+          _drawSingleParentConnection(canvas, mother, child, isMarriedFemale);
         }
       } else if (father != null) {
         // Father only
