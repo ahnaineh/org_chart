@@ -30,6 +30,7 @@ enum ConnectionType {
   threeSegment,
   adaptive,
   simpleLeafNode,
+  genogramParentChild,
 }
 
 /// Line ending types for edge connections
@@ -468,6 +469,14 @@ class EdgePainterUtils {
           boxSize: boxSize,
           orientation: orientation,
         );
+        
+      case ConnectionType.genogramParentChild:
+        return _generateGenogramParentChildPoints(
+          start: start,
+          end: end,
+          boxSize: boxSize,
+          orientation: orientation,
+        );
     }
   }
 
@@ -504,6 +513,37 @@ class EdgePainterUtils {
       ];
     } else {
       final double midX = (start.dx + end.dx) / 2;
+      return [
+        start,
+        Offset(midX, start.dy),
+        Offset(midX, end.dy),
+        end,
+      ];
+    }
+  }
+
+  /// Generate points for genogram parent-child connection
+  /// This adds extra vertical drop (half boxSize height) from the marriage line
+  List<Offset> _generateGenogramParentChildPoints({
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+    required GraphOrientation orientation,
+  }) {
+    if (orientation == GraphOrientation.topToBottom) {
+      // Add half boxSize height to the first segment for extra vertical drop
+      final double firstDropY = start.dy + (boxSize.height / 2);
+      final double midY = (firstDropY + end.dy) / 2;
+      return [
+        start,
+        Offset(start.dx, midY),
+        Offset(end.dx, midY),
+        end,
+      ];
+    } else {
+      // Add half boxSize width to the first segment for horizontal orientation
+      final double firstDropX = start.dx + (boxSize.width / 2);
+      final double midX = (firstDropX + end.dx) / 2;
       return [
         start,
         Offset(midX, start.dy),

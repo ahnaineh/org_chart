@@ -221,10 +221,10 @@ class GenogramEdgePainter<E> extends CustomPainter {
             ..strokeWidth = config.childStrokeWidth
             ..style = PaintingStyle.stroke;
 
-          // Use two-segment connection for married females
+          // Use two-segment connection for married females, genogramParentChild for others
           final connectionType = isMarriedFemale
               ? ConnectionType.twoSegment
-              : ConnectionType.threeSegment;
+              : ConnectionType.genogramParentChild;
 
           utils.drawConnection(canvas, marriagePoint, childConn,
               controller.boxSize, controller.orientation,
