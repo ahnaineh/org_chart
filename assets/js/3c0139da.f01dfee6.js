@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[213],{66:t=>{t.exports=JSON.parse('{"tags":[{"label":"flutter","permalink":"/org_chart/docs/tags/flutter","count":1},{"label":"org_chart","permalink":"/org_chart/docs/tags/org-chart","count":1},{"label":"getting started","permalink":"/org_chart/docs/tags/getting-started","count":1}]}')}}]);
