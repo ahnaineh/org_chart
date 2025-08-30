@@ -1,0 +1,50 @@
+---
+id: 01-overview
+title: OrgChart Overview
+sidebar_label: Overview
+sidebar_position: 1
+---
+
+# OrgChart Overview
+
+Visualize hierarchical organizational structures with automatic layout and interactions.
+
+## Core Concepts
+
+- **Single Parent**: Each node has at most one parent
+- **Multiple Children**: Unlimited children per node
+- **Tree Layout**: Automatic positioning
+- **Interactions**: Drag & drop, zoom, pan, collapse
+
+## Architecture
+
+- **Controller**: Manages data and layout
+- **Widget**: Renders the visualization
+- **Model**: Your custom data structures
+
+## Basic Usage
+
+```dart
+OrgChart<T>(
+  controller: controller,
+  builder: (details) => YourNodeWidget(),
+  isDraggable: true,
+  linePaint: Paint(),
+  arrowStyle: SolidGraphArrow(),
+)
+```
+
+## Use Cases
+
+- Company organizational structures
+- Team hierarchies
+- Project breakdown structures
+- Decision trees
+- File system browsers
+- Menu systems
+
+## Next Steps
+
+- [Configure Controller](/docs/3.0.0-orgchart/02-controller)
+- [Customize Widget](/docs/3.0.0-orgchart/03-widget)
+- [View Examples](/docs/6.0.0-examples/01-live-playground)

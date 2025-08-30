@@ -1,0 +1,149 @@
+---
+id: 01-installation
+title: Installation
+sidebar_label: Installation
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Installation
+
+## Prerequisites
+
+- Flutter SDK 3.0.0+
+- Dart SDK 2.17.0+
+
+## Add Package
+
+<Tabs>
+  <TabItem value="pubspec" label="pubspec.yaml" default>
+
+```yaml
+dependencies:
+  org_chart: ^5.0.2
+```
+
+Then run:
+```bash
+flutter pub get
+```
+
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+
+```bash
+flutter pub add org_chart
+```
+
+  </TabItem>
+  <TabItem value="git" label="From Git">
+
+```yaml
+dependencies:
+  org_chart:
+    git:
+      url: https://github.com/ahnaineh/org_chart.git
+      ref: main
+```
+
+  </TabItem>
+</Tabs>
+
+
+## Verify Installation
+
+<Tabs>
+  <TabItem value="orgchart" label="OrgChart" default>
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:org_chart/org_chart.dart';
+
+void main() {
+  runApp(MaterialApp(home: TestChart()));
+}
+
+class TestChart extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final controller = OrgChartController<Map<String, dynamic>>(
+      items: [
+        {'id': '1', 'name': 'CEO', 'parentId': null},
+        {'id': '2', 'name': 'CTO', 'parentId': '1'},
+        {'id': '3', 'name': 'CFO', 'parentId': '1'},
+      ],
+      idProvider: (item) => item['id'],
+      toProvider: (item) => item['parentId'],
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Org Chart Test')),
+      body: OrgChart<Map<String, dynamic>>(
+        controller: controller,
+        builder: (details) => Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(details.item['name']),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+  </TabItem>
+  <TabItem value="genogram" label="Genogram">
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:org_chart/org_chart.dart';
+
+void main() {
+  runApp(MaterialApp(home: TestGenogram()));
+}
+
+class TestGenogram extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final controller = GenogramController<Map<String, dynamic>>(
+      items: [
+        {'id': '1', 'name': 'John', 'fatherId': null, 'motherId': null, 'spouseIds': ['2'], 'gender': 0},
+        {'id': '2', 'name': 'Jane', 'fatherId': null, 'motherId': null, 'spouseIds': ['1'], 'gender': 1},
+        {'id': '3', 'name': 'Tom', 'fatherId': '1', 'motherId': '2', 'spouseIds': [], 'gender': 0},
+        {'id': '4', 'name': 'Sarah', 'fatherId': '1', 'motherId': '2', 'spouseIds': [], 'gender': 1},
+      ],
+      idProvider: (item) => item['id'],
+      fatherProvider: (item) => item['fatherId'],
+      motherProvider: (item) => item['motherId'],
+      spousesProvider: (item) => item['spouseIds'],
+      genderProvider: (item) => item['gender'],
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Genogram Test')),
+      body: Genogram<Map<String, dynamic>>(
+        controller: controller,
+        builder: (details) => Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: details.item['gender'] == 0 
+              ? Colors.blue.shade100 
+              : Colors.pink.shade100,
+          ),
+          child: Center(
+            child: Text(details.item['name']),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+  </TabItem>
+</Tabs>

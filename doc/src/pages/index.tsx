@@ -19,8 +19,8 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/getting-started/Installation">
-            Get into some cool stuff!
+            to="/docs/">
+            Get Started with Org Chart
           </Link>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/img/org_chart_hierarchy.svg"
+                    src="img/icon.png"
                     alt="Organization Hierarchy"
                   />
                 </div>
@@ -56,7 +56,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/img/org_chart_data.svg"
+                    src="img/icon.png"
                     alt="Data Integration"
                   />
                 </div>
@@ -69,7 +69,7 @@ export default function Home(): ReactNode {
                 <div className="text--center">
                   <img
                     className={styles.featureImg}
-                    src="/img/org_chart_responsive.svg"
+                    src="img/icon.png"
                     alt="Responsive Design"
                   />
                 </div>
@@ -83,7 +83,7 @@ export default function Home(): ReactNode {
             <div className="text--center margin-top--xl">
               <img
                 className={styles.demoImage}
-                src="/img/org_chart_demo.png"
+                src="img/icon.png"
                 alt="Organization Chart Demo"
               />
               <Heading as="h2" className="margin-top--md">

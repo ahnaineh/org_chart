@@ -1,0 +1,598 @@
+---
+id: 02-controller
+title: GenogramController
+sidebar_label: Controller
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# GenogramController
+
+The `GenogramController` is the heart of your family tree visualization. It manages family relationships, handles genealogical data, and provides methods for navigating and modifying the family structure.
+
+## 📋 Constructor
+
+```dart
+GenogramController<T>({
+  required List<T> items,
+  required String Function(T) idProvider,
+  required String? Function(T) fatherProvider,
+  required String? Function(T) motherProvider,
+  required List<String>? Function(T) spousesProvider,
+  required int Function(T) genderProvider,
+  Size boxSize = const Size(150, 150),
+  double spacing = 30,
+  double runSpacing = 60,
+  GraphOrientation orientation = GraphOrientation.topToBottom,
+})
+```
+
+### Constructor Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | `List<T>` | ✅ | - | The list of family members to display |
+| `idProvider` | `String Function(T)` | ✅ | - | Function that returns a unique ID for each person |
+| `fatherProvider` | `String? Function(T)` | ✅ | - | Function that returns the father's ID |
+| `motherProvider` | `String? Function(T)` | ✅ | - | Function that returns the mother's ID |
+| `spousesProvider` | `List<String>? Function(T)` | ✅ | - | Function that returns spouse IDs |
+| `genderProvider` | `int Function(T)` | ✅ | - | Function that returns gender (0=male, 1=female) |
+| `boxSize` | `Size` | ❌ | `Size(150, 150)` | Size of each person node |
+| `spacing` | `double` | ❌ | 30 | Horizontal spacing between siblings |
+| `runSpacing` | `double` | ❌ | 60 | Vertical spacing between generations |
+| `orientation` | `GraphOrientation` | ❌ | `topToBottom` | Layout orientation |
+
+## 🔧 Properties
+
+### Read-Only Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nodes` | `List<Node<T>>` | All nodes in the genogram |
+| `roots` | `List<Node<T>>` | Root nodes (oldest generation without parents) |
+| `items` | `List<T>` | All family member data items |
+| `uniqueNodeId` | `String` | Generates a unique node ID |
+| `repaintBoundaryKey` | `GlobalKey` | Key for export functionality |
+
+### Configurable Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `orientation` | `GraphOrientation` | Chart orientation (vertical/horizontal) |
+| `boxSize` | `Size` | Size of person nodes |
+| `spacing` | `double` | Horizontal spacing between siblings |
+| `runSpacing` | `double` | Vertical spacing between generations |
+| `viewerController` | `CustomInteractiveViewerController?` | Controller for zoom/pan |
+
+## 📚 Methods
+
+### Data Management
+
+#### `addItem`
+Adds a single family member to the genogram.
+
+```dart
+void addItem(
+  T item, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+**Example:**
+```dart
+controller.addItem(
+  FamilyMember(
+    id: 'child-001',
+    name: 'John Smith Jr.',
+    fatherId: 'father-001',
+    motherId: 'mother-001',
+    gender: 0, // male
+  ),
+  centerGraph: true,
+);
+```
+
+#### `addItems`
+Adds multiple family members to the genogram.
+
+```dart
+void addItems(
+  List<T> items, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `removeItem`
+Removes a family member and handles their descendants.
+
+```dart
+void removeItem(
+  String? id,
+  ActionOnNodeRemoval action, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+**ActionOnNodeRemoval Options:**
+
+| Action | Description |
+|--------|-------------|
+| `unlinkDescendants` | Makes descendants root nodes |
+| `connectDescendantsToParent` | Connects descendants to removed person's parents |
+| `removeDescendants` | Removes person and all descendants |
+
+**Example:**
+```dart
+// Remove person but keep their children
+controller.removeItem(
+  'person-005',
+  ActionOnNodeRemoval.unlinkDescendants,
+);
+
+// Remove entire family branch
+controller.removeItem(
+  'person-003',
+  ActionOnNodeRemoval.removeDescendants,
+);
+```
+
+#### `updateItem`
+Updates an existing family member's information.
+
+```dart
+void updateItem(
+  T item, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `replaceAll`
+Replaces all family members in the genogram.
+
+```dart
+void replaceAll(
+  List<T> items, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `clearItems`
+Removes all family members from the genogram.
+
+```dart
+void clearItems({
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+### Relationship Queries
+
+#### `getParents`
+Gets the parents of a specific person.
+
+```dart
+List<Node<T>> getParents(Node<T> node)
+```
+
+**Example:**
+```dart
+final childNode = controller.nodes.firstWhere(
+  (n) => controller.idProvider(n.data) == 'child-001'
+);
+final parents = controller.getParents(childNode);
+// Returns list containing father and/or mother nodes
+```
+
+#### `getSpouseList`
+Gets all spouses of a specific person.
+
+```dart
+List<Node<T>> getSpouseList(Node<T> node)
+```
+
+**Example:**
+```dart
+final personNode = controller.nodes.firstWhere(
+  (n) => controller.idProvider(n.data) == 'person-001'
+);
+final spouses = controller.getSpouseList(personNode);
+```
+
+#### `getChildren`
+Gets all children of a specific person.
+
+```dart
+List<Node<T>> getChildren(Node<T> node)
+```
+
+**Example:**
+```dart
+final parentNode = controller.nodes.firstWhere(
+  (n) => controller.idProvider(n.data) == 'parent-001'
+);
+final children = controller.getChildren(parentNode);
+```
+
+#### `getSiblings`
+Gets all siblings of a specific person.
+
+```dart
+List<Node<T>> getSiblings(Node<T> node)
+```
+
+#### `isSubNode`
+Checks if one person is a descendant of another.
+
+```dart
+bool isSubNode(Node<T> child, Node<T> parent)
+```
+
+#### `getLevel`
+Gets the generation level of a person (1 = oldest generation).
+
+```dart
+int getLevel(Node<T> node)
+```
+
+**Example:**
+```dart
+final node = controller.nodes.first;
+final generation = controller.getLevel(node); // 1 for grandparents, 2 for parents, etc.
+```
+
+### Layout and Positioning
+
+#### `calculatePosition`
+Recalculates node positions using the genogram layout algorithm.
+
+```dart
+void calculatePosition({bool center = true})
+```
+
+#### `switchOrientation`
+Switches between vertical and horizontal layouts.
+
+```dart
+void switchOrientation({
+  GraphOrientation? orientation,
+  bool center = true,
+})
+```
+
+**Example:**
+```dart
+// Toggle orientation
+controller.switchOrientation();
+
+// Set specific orientation
+controller.switchOrientation(
+  orientation: GraphOrientation.leftToRight,
+);
+```
+
+#### `centerNode`
+Centers the view on a specific family member.
+
+```dart
+Future<void> centerNode(
+  String nodeId, {
+  double? scale,
+  bool animate = true,
+  Duration duration = const Duration(milliseconds: 300),
+  Curve curve = Curves.easeInOut,
+})
+```
+
+**Example:**
+```dart
+// Focus on a specific family member
+await controller.centerNode(
+  'person-001',
+  scale: 1.5,
+  animate: true,
+);
+```
+
+### Export Functions
+
+#### `exportAsImage`
+Exports the genogram as a PNG image.
+
+```dart
+Future<Uint8List?> exportAsImage()
+```
+
+**Example:**
+```dart
+final imageBytes = await controller.exportAsImage();
+if (imageBytes != null) {
+  // Save to file or share
+  await saveImageToGallery(imageBytes);
+}
+```
+
+#### `exportAsPdf`
+Exports the genogram as a PDF document.
+
+```dart
+Future<pw.Document?> exportAsPdf()
+```
+
+## 🎯 Complete Example
+
+Here's a comprehensive example showing the controller in action:
+
+```dart
+class FamilyTreeManager extends StatefulWidget {
+  @override
+  _FamilyTreeManagerState createState() => _FamilyTreeManagerState();
+}
+
+class _FamilyTreeManagerState extends State<FamilyTreeManager> {
+  late GenogramController<FamilyMember> controller;
+  final viewerController = CustomInteractiveViewerController();
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize controller
+    controller = GenogramController<FamilyMember>(
+      items: loadFamilyMembers(),
+      idProvider: (member) => member.id,
+      fatherProvider: (member) => member.fatherId,
+      motherProvider: (member) => member.motherId,
+      spousesProvider: (member) => member.spouseIds,
+      genderProvider: (member) => member.gender, // 0 = male, 1 = female
+      boxSize: Size(180, 120),
+      spacing: 40,
+      runSpacing: 100,
+      orientation: GraphOrientation.topToBottom,
+    );
+    
+    // Set viewer controller for zoom/pan
+    controller.setViewerController(viewerController);
+  }
+  
+  // Add new family member
+  void addFamilyMember(FamilyMember newMember) {
+    setState(() {
+      controller.addItem(newMember, centerGraph: true);
+    });
+  }
+  
+  // Remove family member with options
+  void removeFamilyMember(String memberId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Family Member'),
+        content: Text('What should happen to their descendants?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              controller.removeItem(
+                memberId,
+                ActionOnNodeRemoval.unlinkDescendants,
+              );
+              Navigator.pop(context);
+            },
+            child: Text('Keep Descendants'),
+          ),
+          TextButton(
+            onPressed: () {
+              controller.removeItem(
+                memberId,
+                ActionOnNodeRemoval.removeDescendants,
+              );
+              Navigator.pop(context);
+            },
+            child: Text('Remove All Descendants'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Update family relationships
+  void updateRelationships(FamilyMember member) {
+    controller.updateItem(member);
+  }
+  
+  // Search and focus on family member
+  void searchFamilyMember(String query) async {
+    final member = controller.items.firstWhere(
+      (m) => m.name.toLowerCase().contains(query.toLowerCase()),
+    );
+    
+    if (member != null) {
+      await controller.centerNode(
+        member.id,
+        scale: 2.0,
+        animate: true,
+      );
+    }
+  }
+  
+  // Get family statistics
+  Map<String, dynamic> getFamilyStats() {
+    final stats = <String, dynamic>{};
+    
+    // Count generations
+    int maxGeneration = 0;
+    for (final node in controller.nodes) {
+      final level = controller.getLevel(node);
+      if (level > maxGeneration) maxGeneration = level;
+    }
+    stats['generations'] = maxGeneration;
+    
+    // Count family members by gender
+    int males = 0, females = 0;
+    for (final member in controller.items) {
+      if (controller.genderProvider(member) == 0) {
+        males++;
+      } else {
+        females++;
+      }
+    }
+    stats['males'] = males;
+    stats['females'] = females;
+    
+    // Count marriages
+    int marriages = 0;
+    final counted = <String>{};
+    for (final member in controller.items) {
+      final spouses = controller.spousesProvider(member) ?? [];
+      for (final spouseId in spouses) {
+        final pairKey = [member.id, spouseId].sorted().join('-');
+        if (!counted.contains(pairKey)) {
+          counted.add(pairKey);
+          marriages++;
+        }
+      }
+    }
+    stats['marriages'] = marriages;
+    
+    return stats;
+  }
+  
+  // Export family tree
+  void exportFamilyTree() async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Export Family Tree'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'image'),
+            child: Text('Export as Image'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'pdf'),
+            child: Text('Export as PDF'),
+          ),
+        ],
+      ),
+    );
+    
+    if (action == 'image') {
+      final bytes = await controller.exportAsImage();
+      // Handle image bytes
+    } else if (action == 'pdf') {
+      final pdf = await controller.exportAsPdf();
+      // Handle PDF document
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final stats = getFamilyStats();
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Family Tree'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.rotate_90_degrees_ccw),
+            onPressed: () => controller.switchOrientation(),
+          ),
+          IconButton(
+            icon: Icon(Icons.download),
+            onPressed: exportFamilyTree,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Statistics bar
+          Container(
+            padding: EdgeInsets.all(8),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text('Generations: ${stats['generations']}'),
+                Text('Members: ${controller.items.length}'),
+                Text('Males: ${stats['males']}'),
+                Text('Females: ${stats['females']}'),
+                Text('Marriages: ${stats['marriages']}'),
+              ],
+            ),
+          ),
+          // Genogram widget
+          Expanded(
+            child: Genogram<FamilyMember>(
+              controller: controller,
+              viewerController: viewerController,
+              // ... rest of configuration
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+## 💡 Best Practices
+
+### 1. **Efficient Family Updates**
+```dart
+// Bad: Multiple individual updates
+familyMembers.forEach((member) => controller.addItem(member));
+
+// Good: Batch update
+controller.addItems(familyMembers);
+```
+
+### 2. **Relationship Validation**
+```dart
+// Validate relationships before adding
+bool validateFamilyMember(FamilyMember member) {
+  // Check if parents exist
+  if (member.fatherId != null) {
+    final fatherExists = controller.items.any((m) => m.id == member.fatherId);
+    if (!fatherExists) return false;
+  }
+  
+  if (member.motherId != null) {
+    final motherExists = controller.items.any((m) => m.id == member.motherId);
+    if (!motherExists) return false;
+  }
+  
+  return true;
+}
+```
+
+### 3. **Performance Optimization**
+```dart
+// Disable recalculation for batch operations
+controller.addItem(member1, recalculatePosition: false);
+controller.addItem(member2, recalculatePosition: false);
+controller.addItem(member3, recalculatePosition: false);
+controller.calculatePosition(); // Calculate once at the end
+```
+
+### 4. **Lazy Loading for Large Family Trees**
+```dart
+class LazyGenogramController<T> extends GenogramController<T> {
+  final Future<List<T>> Function(String parentId) loadDescendants;
+  
+  Future<void> expandBranch(String nodeId) async {
+    final descendants = await loadDescendants(nodeId);
+    addItems(descendants);
+  }
+}
+```
+
+---
+
+Next: Learn about the [Genogram Widget →](/docs/4.0.0-genogram/03-widget)

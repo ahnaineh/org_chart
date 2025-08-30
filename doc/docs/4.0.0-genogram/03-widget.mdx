@@ -1,0 +1,711 @@
+---
+id: 03-widget
+title: Genogram Widget
+sidebar_label: Genogram Widget
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Genogram Widget
+
+The `Genogram` widget is the visual component that renders your family tree. It provides extensive customization options for relationship visualization, node appearance, and family interactions.
+
+## Widget Constructor
+
+```dart
+Genogram<T>({
+  Key? key,
+  required GenogramController<T> controller,
+  required Widget Function(NodeBuilderDetails<T>) builder,
+  bool isDraggable = false,
+  Curve curve = Curves.linear,
+  Duration duration = const Duration(milliseconds: 300),
+  Paint? linePaint,
+  double cornerRadius = 0,
+  GraphArrowStyle arrowStyle = const SolidGraphArrow(),
+  LineEndingType lineEndingType = LineEndingType.arrow,
+  GenogramEdgeConfig edgeConfig = const GenogramEdgeConfig(),
+  MarriageStatus Function(T, T)? marriageStatusProvider,
+  void Function(T dragged, T target)? onDrop,
+  Widget Function(BuildContext, T)? optionsBuilder,
+  void Function(T)? onOptionSelect,
+  CustomInteractiveViewerController? viewerController,
+  InteractionConfig? interactionConfig,
+  KeyboardConfig? keyboardConfig,
+  ZoomConfig? zoomConfig,
+  FocusNode? focusNode,
+})
+```
+
+## Widget Parameters
+
+### Required Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `controller` | `GenogramController<T>` | Controls family data and layout |
+| `builder` | `Widget Function(NodeBuilderDetails<T>)` | Builds each person node widget |
+
+### Optional Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `isDraggable` | `bool` | `false` | Enable drag and drop |
+| `curve` | `Curve` | `Curves.linear` | Animation curve |
+| `duration` | `Duration` | `300ms` | Animation duration |
+| `linePaint` | `Paint?` | null | Parent-child line styling |
+| `cornerRadius` | `double` | 0 | Corner radius for edges |
+| `arrowStyle` | `GraphArrowStyle` | `SolidGraphArrow()` | Arrow/line style |
+| `lineEndingType` | `LineEndingType` | `.arrow` | Line ending decoration |
+| `edgeConfig` | `GenogramEdgeConfig` | default | Marriage/relationship styling |
+| `marriageStatusProvider` | `Function?` | null | Returns marriage status between two people |
+| `onDrop` | `Function?` | null | Drag and drop handler |
+| `optionsBuilder` | `Function?` | null | Context menu builder |
+| `onOptionSelect` | `Function?` | null | Context menu handler |
+| `viewerController` | `Controller?` | null | Zoom/pan controller |
+| `interactionConfig` | `Config?` | null | Interaction settings |
+| `keyboardConfig` | `Config?` | null | Keyboard shortcuts |
+| `zoomConfig` | `Config?` | null | Zoom settings |
+| `focusNode` | `FocusNode?` | null | Keyboard focus node |
+
+## Node Builder
+
+The `builder` function receives a `NodeBuilderDetails<T>` object with context about each family member:
+
+```dart
+class NodeBuilderDetails<T> {
+  final T item;                    // Your family member data
+  final int level;                 // Generation level (1 = oldest)
+  final Function hideNodes;        // Toggle descendants visibility
+  final bool nodesHidden;         // Are descendants hidden?
+  final bool isBeingDragged;      // Is node being dragged?
+  final bool isOverlapped;        // Is another node over this?
+}
+```
+
+### Basic Node Builder
+
+```dart
+Genogram<FamilyMember>(
+  controller: controller,
+  builder: (NodeBuilderDetails<FamilyMember> details) {
+    final member = details.item;
+    final isMale = controller.genderProvider(member) == 0;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isMale ? Colors.blue.shade100 : Colors.pink.shade100,
+        border: Border.all(
+          color: isMale ? Colors.blue : Colors.pink,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(member.name),
+      ),
+    );
+  },
+)
+```
+
+### Advanced Node Builder with Genogram Symbols
+
+```dart
+builder: (NodeBuilderDetails<FamilyMember> details) {
+  final member = details.item;
+  final isMale = controller.genderProvider(member) == 0;
+  
+  return AnimatedContainer(
+    duration: Duration(milliseconds: 200),
+    decoration: BoxDecoration(
+      color: details.isBeingDragged 
+        ? Colors.grey.shade200
+        : (isMale ? Colors.blue.shade50 : Colors.pink.shade50),
+      border: Border.all(
+        color: details.isOverlapped 
+          ? Colors.green.shade500
+          : (isMale ? Colors.blue : Colors.pink),
+        width: details.isOverlapped ? 3 : 2,
+      ),
+      shape: isMale ? BoxShape.rectangle : BoxShape.circle,
+      borderRadius: isMale ? BorderRadius.circular(8) : null,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(
+            details.isBeingDragged ? 0.3 : 0.1
+          ),
+          blurRadius: details.isBeingDragged ? 10 : 4,
+          offset: Offset(0, details.isBeingDragged ? 6 : 2),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Main content
+        Padding(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Gender symbol
+              Icon(
+                isMale ? Icons.male : Icons.female,
+                color: isMale ? Colors.blue : Colors.pink,
+                size: 24,
+              ),
+              SizedBox(height: 4),
+              // Name
+              Text(
+                member.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              // Birth/Death dates
+              if (member.birthDate != null)
+                Text(
+                  '${member.birthDate}${member.deathDate != null ? ' - ${member.deathDate}' : ''}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              // Medical conditions (if any)
+              if (member.medicalConditions.isNotEmpty)
+                Container(
+                  margin: EdgeInsets.only(top: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    member.medicalConditions.length.toString(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        
+        // Deceased indicator
+        if (member.isDeceased)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: CrossPainter(),
+            ),
+          ),
+        
+        // Generation badge
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              'G${details.level}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        
+        // Collapse/Expand button for parents
+        if (hasChildren(member))
+          Positioned(
+            bottom: -8,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => details.hideNodes(),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  child: Icon(
+                    details.nodesHidden
+                      ? Icons.expand_more
+                      : Icons.expand_less,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+```
+
+## Relationship Styling
+
+### GenogramEdgeConfig
+
+Configure the appearance of family relationships:
+
+```dart
+Genogram(
+  edgeConfig: GenogramEdgeConfig(
+    // Standard marriage line
+    defaultMarriageStyle: MarriageStyle(
+      lineStyle: MarriageLineStyle(
+        color: Colors.black,
+        strokeWidth: 2.0,
+      ),
+    ),
+    
+    // Divorced marriage line
+    divorcedMarriageStyle: MarriageStyle(
+      lineStyle: MarriageLineStyle(
+        color: Colors.red,
+        strokeWidth: 2.0,
+      ),
+      decorator: DivorceDecorator(), // Adds double slash
+    ),
+    
+    // Parent-child connections
+    childStrokeWidth: 1.5,
+    
+    // Single parent connections
+    childSingleParentStrokeWidth: 1.0,
+    childSingleParentColor: Colors.grey,
+    
+    // Different colors for multiple marriages
+    marriageColors: [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+    ],
+  ),
+)
+```
+
+### Marriage Status Provider
+
+Determine the relationship status between spouses:
+
+```dart
+Genogram(
+  marriageStatusProvider: (FamilyMember person, FamilyMember spouse) {
+    // Check your data model for relationship status
+    if (person.divorces?.contains(spouse.id) ?? false) {
+      return MarriageStatus.divorced;
+    }
+    return MarriageStatus.married;
+  },
+)
+```
+
+## Custom Marriage Styles
+
+<Tabs>
+  <TabItem value="standard" label="Standard Marriage" default>
+
+```dart
+class StandardMarriageStyle extends MarriageStyle {
+  StandardMarriageStyle() : super(
+    lineStyle: MarriageLineStyle(
+      color: Colors.black,
+      strokeWidth: 2.0,
+    ),
+  );
+}
+```
+
+  </TabItem>
+  <TabItem value="divorced" label="Divorced">
+
+```dart
+class DivorcedMarriageStyle extends MarriageStyle {
+  DivorcedMarriageStyle() : super(
+    lineStyle: MarriageLineStyle(
+      color: Colors.red,
+      strokeWidth: 2.0,
+      dashPattern: [5, 5], // Dashed line
+    ),
+    decorator: DivorceDecorator(
+      slashColor: Colors.red,
+      slashWidth: 3.0,
+    ),
+  );
+}
+```
+
+  </TabItem>
+  <TabItem value="separated" label="Separated">
+
+```dart
+class SeparatedMarriageStyle extends MarriageStyle {
+  SeparatedMarriageStyle() : super(
+    lineStyle: MarriageLineStyle(
+      color: Colors.orange,
+      strokeWidth: 1.5,
+      dashPattern: [10, 5],
+    ),
+  );
+}
+```
+
+  </TabItem>
+</Tabs>
+
+## Drag and Drop
+
+Enable rearranging family relationships:
+
+```dart
+Genogram<FamilyMember>(
+  controller: controller,
+  isDraggable: true,
+  onDrop: (FamilyMember dragged, FamilyMember target) {
+    // Validate the relationship change
+    if (!canChangeRelationship(dragged, target)) {
+      showSnackBar('Invalid relationship change');
+      return;
+    }
+    
+    // Update relationships
+    setState(() {
+      // Example: Changing spouse
+      if (isSpouseChange(dragged, target)) {
+        updateSpouseRelationship(dragged, target);
+      }
+      // Example: Adoption or custody change
+      else if (isParentChange(dragged, target)) {
+        updateParentRelationship(dragged, target);
+      }
+      
+      controller.updateItem(dragged);
+    });
+  },
+)
+```
+
+## Context Menus
+
+Add right-click menus for family members:
+
+```dart
+Genogram<FamilyMember>(
+  optionsBuilder: (BuildContext context, FamilyMember member) {
+    return Card(
+      elevation: 8,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.edit),
+            title: Text('Edit Details'),
+            onTap: () => editMember(member),
+          ),
+          ListTile(
+            leading: Icon(Icons.add),
+            title: Text('Add Child'),
+            onTap: () => addChild(member),
+          ),
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text('Add Spouse'),
+            onTap: () => addSpouse(member),
+          ),
+          if (member.spouses?.isNotEmpty ?? false)
+            ListTile(
+              leading: Icon(Icons.heart_broken),
+              title: Text('Record Divorce'),
+              onTap: () => recordDivorce(member),
+            ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.medical_services),
+            title: Text('Medical History'),
+            onTap: () => showMedicalHistory(member),
+          ),
+          ListTile(
+            leading: Icon(Icons.info),
+            title: Text('Full Details'),
+            onTap: () => showMemberDetails(member),
+          ),
+        ],
+      ),
+    );
+  },
+)
+```
+
+## Complete Example
+
+Here's a full-featured Genogram implementation:
+
+```dart
+class FamilyTreeViewer extends StatefulWidget {
+  @override
+  _FamilyTreeViewerState createState() => _FamilyTreeViewerState();
+}
+
+class _FamilyTreeViewerState extends State<FamilyTreeViewer> {
+  late GenogramController<FamilyMember> controller;
+  final viewerController = CustomInteractiveViewerController();
+  final focusNode = FocusNode();
+  
+  @override
+  void initState() {
+    super.initState();
+    controller = GenogramController<FamilyMember>(
+      items: loadFamilyData(),
+      idProvider: (m) => m.id,
+      fatherProvider: (m) => m.fatherId,
+      motherProvider: (m) => m.motherId,
+      spousesProvider: (m) => m.spouseIds,
+      genderProvider: (m) => m.gender,
+      boxSize: Size(160, 120),
+      spacing: 40,
+      runSpacing: 100,
+    );
+    controller.setViewerController(viewerController);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Family Genogram'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () => showSearchDialog(),
+          ),
+          IconButton(
+            icon: Icon(Icons.filter_list),
+            onPressed: () => showFilterOptions(),
+          ),
+        ],
+      ),
+      body: Genogram<FamilyMember>(
+        controller: controller,
+        viewerController: viewerController,
+        focusNode: focusNode,
+        
+        // Visual configuration
+        duration: Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+        cornerRadius: 8,
+        
+        // Relationship styling
+        edgeConfig: GenogramEdgeConfig(
+          defaultMarriageStyle: MarriageStyle(
+            lineStyle: MarriageLineStyle(
+              color: Colors.black87,
+              strokeWidth: 2.0,
+            ),
+          ),
+          divorcedMarriageStyle: MarriageStyle(
+            lineStyle: MarriageLineStyle(
+              color: Colors.red.shade400,
+              strokeWidth: 2.0,
+            ),
+            decorator: DivorceDecorator(),
+          ),
+          childStrokeWidth: 1.5,
+          marriageColors: [
+            Colors.blue.shade700,
+            Colors.green.shade700,
+            Colors.purple.shade700,
+          ],
+        ),
+        
+        // Marriage status determination
+        marriageStatusProvider: (person, spouse) {
+          if (person.divorces?.contains(spouse.id) ?? false) {
+            return MarriageStatus.divorced;
+          }
+          return MarriageStatus.married;
+        },
+        
+        // Interactions
+        isDraggable: true,
+        onDrop: handleFamilyMemberDrop,
+        optionsBuilder: buildContextMenu,
+        
+        // Zoom and pan
+        interactionConfig: InteractionConfig(
+          enableZoom: true,
+          enablePan: true,
+          enableDoubleTapZoom: true,
+        ),
+        zoomConfig: ZoomConfig(
+          minScale: 0.25,
+          maxScale: 4.0,
+          initialScale: 1.0,
+        ),
+        keyboardConfig: KeyboardConfig(
+          enableKeyboardControls: true,
+        ),
+        
+        // Node builder
+        builder: (details) => buildFamilyMemberNode(details),
+      ),
+    );
+  }
+  
+  Widget buildFamilyMemberNode(NodeBuilderDetails<FamilyMember> details) {
+    final member = details.item;
+    final isMale = controller.genderProvider(member) == 0;
+    
+    return GestureDetector(
+      onDoubleTap: () => showMemberDetails(member),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isMale
+              ? [Colors.blue.shade100, Colors.blue.shade50]
+              : [Colors.pink.shade100, Colors.pink.shade50],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          border: Border.all(
+            color: details.isOverlapped
+              ? Colors.green.shade500
+              : (isMale ? Colors.blue.shade300 : Colors.pink.shade300),
+            width: details.isOverlapped ? 3 : 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Photo or avatar
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: isMale ? Colors.blue : Colors.pink,
+              child: member.photoUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      member.photoUrl!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Icon(
+                    isMale ? Icons.male : Icons.female,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+            ),
+            SizedBox(height: 8),
+            // Name
+            Text(
+              member.name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // Dates
+            Text(
+              '${member.birthYear}${member.deathYear != null ? ' - ${member.deathYear}' : ''}',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+## Medical Genogram Features
+
+Add medical history visualization:
+
+```dart
+// Custom node builder for medical genogram
+Widget buildMedicalNode(NodeBuilderDetails<FamilyMember> details) {
+  final member = details.item;
+  final conditions = member.medicalConditions;
+  
+  return Container(
+    decoration: BoxDecoration(
+      color: conditions.isEmpty 
+        ? Colors.green.shade50
+        : Colors.red.shade50,
+      border: Border.all(
+        color: conditions.isEmpty
+          ? Colors.green
+          : Colors.red,
+      ),
+    ),
+    child: Column(
+      children: [
+        Text(member.name),
+        if (conditions.isNotEmpty)
+          ...conditions.map((condition) => 
+            Chip(
+              label: Text(
+                condition,
+                style: TextStyle(fontSize: 10),
+              ),
+              backgroundColor: getConditionColor(condition),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+Color getConditionColor(String condition) {
+  // Map conditions to colors
+  final colorMap = {
+    'diabetes': Colors.orange,
+    'heart disease': Colors.red,
+    'cancer': Colors.purple,
+    'hypertension': Colors.blue,
+  };
+  return colorMap[condition.toLowerCase()] ?? Colors.grey;
+}
+```
+
+## Performance Tips
+
+1. **Use RepaintBoundary**: Already built into the widget for each node
+2. **Optimize Images**: Cache family photos
+3. **Simplify Nodes**: Use simpler designs for large family trees
+4. **Lazy Loading**: Load distant relatives on-demand
+5. **Limit Animations**: Reduce animation duration for better performance
+
+## Next Steps
+
+- [Examples →](/docs/6.0.0-examples/01-live-playground)

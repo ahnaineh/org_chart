@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Org Chart',
-  tagline: 'From Interns to CEOs—Plot Them All!',
-  favicon: 'img/favicon.ico',
+  tagline: 'Professional Flutter Charts for Organizations & Family Trees',
+  favicon: 'img/icon.png',
 
   trailingSlash: true,
 
@@ -16,6 +16,7 @@ const config: Config = {
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/org_chart/',
   deploymentBranch: 'gh-pages',
+  
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -36,7 +37,10 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/ahnaineh/org_chart/tree/docs/docs/',
+            'https://github.com/ahnaineh/org_chart/tree/main/doc/',
+          showLastUpdateAuthor: true,
+          showLastUpdateTime: true,
+          breadcrumbs: true,
         },
         // blog: {
         //   showReadingTime: true,
@@ -61,6 +65,11 @@ const config: Config = {
     ],
   ],
 
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+
   themeConfig: {
     algolia: {
       appId: "L821DBNWTZ",
@@ -75,18 +84,18 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     announcementBar: {
-      id: 'support_us',
+      id: 'v5_release',
       content:
-        '✨ If you like Org Chart, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/ahnaineh/org_chart">GitHub</a>',
-      backgroundColor: 'rgba(63, 81, 181, 0.1)',
-      textColor: 'var(--ifm-color-primary)',
+        '🎉 <b>Version 5.0.2 is here!</b> Enhanced performance, new Genogram features, and improved customization. <a href="/org_chart/docs/7.0.0-changelog">See what\'s new →</a>',
+      backgroundColor: '#667eea',
+      textColor: '#ffffff',
       isCloseable: true,
     },
     navbar: {
       title: 'ORG CHART',
       logo: {
         alt: 'ORG CHART Logo',
-        src: 'img/logo.svg',
+        src: 'img/icon.png',
       },
       items: [
         {
@@ -96,13 +105,23 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          to: '/docs/getting-started/Installation',
+          to: '/docs/2.0.0-getting-started/01-installation',
           label: 'Getting Started',
           position: 'left',
         },
         {
-          to: '/docs/examples',
+          to: '/docs/6.0.0-examples/01-live-playground',
           label: 'Examples',
+          position: 'left',
+        },
+        {
+          to: '/docs/3.0.0-orgchart/01-overview',
+          label: 'API',
+          position: 'left',
+        },
+        {
+          to: '/docs/7.0.0-changelog',
+          label: 'Changelog',
           position: 'left',
         },
         {
@@ -123,7 +142,7 @@ const config: Config = {
       style: 'dark',
       logo: {
         alt: 'Org Chart Logo',
-        src: 'img/logo.svg',
+        src: 'img/icon.png',
         width: 160,
       },
       links: [
@@ -132,15 +151,19 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started/Installation',
+              to: '/docs/2.0.0-getting-started/01-installation',
             },
             {
               label: 'Examples',
-              to: '/docs/examples',
+              to: '/docs/6.0.0-examples/01-live-playground',
             },
             {
               label: 'API Reference',
-              to: '/docs/category/common',
+              to: '/docs/3.0.0-orgchart/01-overview',
+            },
+            {
+              label: 'Changelog',
+              to: '/docs/7.0.0-changelog',
             },
           ],
         },
@@ -184,7 +207,20 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['dart']
+      additionalLanguages: ['dart', 'yaml', 'bash']
+    },
+    docs: {
+      sidebar: {
+        hideable: true,
+        autoCollapseCategories: true,
+      },
+    },
+    tableOfContents: {
+      minHeadingLevel: 2,
+      maxHeadingLevel: 5,
+    },
+    mermaid: {
+      theme: { light: 'neutral', dark: 'dark' },
     },
   } satisfies Preset.ThemeConfig,
 };

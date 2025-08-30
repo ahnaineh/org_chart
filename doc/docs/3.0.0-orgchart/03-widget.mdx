@@ -1,0 +1,554 @@
+---
+id: 03-widget
+title: OrgChart Widget
+sidebar_label: OrgChart Widget
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# OrgChart Widget
+
+The `OrgChart` widget is the visual component that renders your organizational hierarchy. It provides extensive customization options for appearance, behavior, and interactions.
+
+## Widget Constructor
+
+```dart
+OrgChart<T>({
+  Key? key,
+  required OrgChartController<T> controller,
+  required Widget Function(NodeBuilderDetails<T>) builder,
+  bool isDraggable = false,
+  Curve curve = Curves.linear,
+  Duration duration = const Duration(milliseconds: 300),
+  Paint? linePaint,
+  double cornerRadius = 0,
+  GraphArrowStyle arrowStyle = const SolidGraphArrow(),
+  LineEndingType lineEndingType = LineEndingType.arrow,
+  Widget Function(BuildContext, T)? optionsBuilder,
+  void Function(T)? onOptionSelect,
+  void Function(T dragged, T target, bool isTargetSubnode)? onDrop,
+  CustomInteractiveViewerController? viewerController,
+  InteractionConfig? interactionConfig,
+  KeyboardConfig? keyboardConfig,
+  ZoomConfig? zoomConfig,
+  FocusNode? focusNode,
+})
+```
+
+## Widget Parameters
+
+### Required Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `controller` | `OrgChartController<T>` | Controls data and layout |
+| `builder` | `Widget Function(NodeBuilderDetails<T>)` | Builds each node widget |
+
+### Optional Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `isDraggable` | `bool` | `false` | Enable drag and drop |
+| `curve` | `Curve` | `Curves.linear` | Animation curve |
+| `duration` | `Duration` | `300ms` | Animation duration |
+| `linePaint` | `Paint?` | null | Edge line styling |
+| `cornerRadius` | `double` | 0 | Corner radius for edges |
+| `arrowStyle` | `GraphArrowStyle` | `SolidGraphArrow()` | Arrow/line style |
+| `lineEndingType` | `LineEndingType` | `.arrow` | Line ending decoration |
+| `optionsBuilder` | `Function?` | null | Context menu builder |
+| `onOptionSelect` | `Function?` | null | Context menu handler |
+| `onDrop` | `Function?` | null | Drag and drop handler |
+| `viewerController` | `Controller?` | null | Zoom/pan controller |
+| `interactionConfig` | `Config?` | null | Interaction settings |
+| `keyboardConfig` | `Config?` | null | Keyboard shortcuts |
+| `zoomConfig` | `Config?` | null | Zoom settings |
+| `focusNode` | `FocusNode?` | null | Keyboard focus node |
+
+## Node Builder
+
+The `builder` function receives a `NodeBuilderDetails<T>` object with context about each node:
+
+```dart
+class NodeBuilderDetails<T> {
+  final T item;                    // Your data object
+  final int level;                 // Hierarchy level (1 = root)
+  final Function hideNodes;        // Toggle children visibility
+  final bool nodesHidden;         // Are children hidden?
+  final bool isBeingDragged;      // Is node being dragged?
+  final bool isOverlapped;        // Is another node over this?
+}
+```
+
+### Basic Node Builder
+
+```dart
+OrgChart<Employee>(
+  controller: controller,
+  builder: (NodeBuilderDetails<Employee> details) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(details.item.name),
+      ),
+    );
+  },
+)
+```
+
+### Advanced Node Builder
+
+```dart
+builder: (NodeBuilderDetails<Employee> details) {
+  final employee = details.item;
+  
+  return AnimatedContainer(
+    duration: Duration(milliseconds: 200),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: details.level == 1
+          ? [Colors.purple, Colors.blue]
+          : [Colors.blue, Colors.cyan],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: details.isOverlapped 
+          ? Colors.green 
+          : Colors.transparent,
+        width: 3,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(
+            details.isBeingDragged ? 0.3 : 0.1
+          ),
+          blurRadius: details.isBeingDragged ? 15 : 5,
+          offset: Offset(0, details.isBeingDragged ? 8 : 3),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Main content
+        Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(employee.imageUrl),
+                radius: 30,
+              ),
+              SizedBox(height: 8),
+              Text(
+                employee.name,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                employee.position,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+              if (employee.teamSize > 0)
+                Container(
+                  margin: EdgeInsets.only(top: 8),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${employee.teamSize} team members',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        
+        // Collapse/Expand button
+        if (hasSubordinates(employee))
+          Positioned(
+            bottom: -10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => details.hideNodes(),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    details.nodesHidden
+                      ? Icons.add
+                      : Icons.remove,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        
+        // Level badge
+        if (details.level == 1)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                ),
+              ),
+              child: Icon(
+                Icons.star,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+```
+
+## Edge Styling
+
+### Line Paint Configuration
+
+```dart
+OrgChart(
+  linePaint: Paint()
+    ..color = Colors.blue.shade300
+    ..strokeWidth = 2.5
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..style = PaintingStyle.stroke,
+)
+```
+
+### Arrow Styles
+
+<Tabs>
+  <TabItem value="solid" label="Solid Arrow" default>
+
+```dart
+OrgChart(
+  arrowStyle: SolidGraphArrow(),
+  lineEndingType: LineEndingType.arrow,
+)
+```
+
+  </TabItem>
+  <TabItem value="dashed" label="Dashed Line">
+
+```dart
+OrgChart(
+  arrowStyle: DashedGraphArrow(
+    pattern: [10, 5], // 10px dash, 5px gap
+  ),
+  lineEndingType: LineEndingType.circle,
+)
+```
+
+  </TabItem>
+  <TabItem value="custom" label="Custom Pattern">
+
+```dart
+OrgChart(
+  arrowStyle: DashedGraphArrow(
+    pattern: [20, 5, 5, 5], // Long dash, short gap, short dash, short gap
+  ),
+  lineEndingType: LineEndingType.none,
+  cornerRadius: 15, // Rounded corners
+)
+```
+
+  </TabItem>
+</Tabs>
+
+## Drag and Drop
+
+Enable drag and drop with the `isDraggable` parameter and handle drops with `onDrop`:
+
+```dart
+OrgChart<Employee>(
+  controller: controller,
+  isDraggable: true,
+  onDrop: (Employee dragged, Employee target, bool isTargetSubnode) {
+    // Validate the move
+    if (!canReassignEmployee(dragged, target)) {
+      showSnackBar('Cannot move ${dragged.name} to ${target.name}');
+      return;
+    }
+    
+    // Update your data model
+    setState(() {
+      dragged.managerId = isTargetSubnode 
+        ? target.managerId  // Same level as target
+        : target.id;        // Under target
+      
+      // Refresh the chart
+      controller.updateItem(dragged);
+    });
+  },
+  builder: (details) {
+    // Visual feedback during drag
+    return Opacity(
+      opacity: details.isBeingDragged ? 0.7 : 1.0,
+      child: Transform.scale(
+        scale: details.isBeingDragged ? 1.05 : 1.0,
+        child: buildNode(details),
+      ),
+    );
+  },
+)
+```
+
+## Context Menus
+
+Add right-click or long-press context menus:
+
+```dart
+OrgChart<Employee>(
+  optionsBuilder: (BuildContext context, Employee employee) {
+    return Card(
+      elevation: 8,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.edit),
+            title: Text('Edit'),
+            onTap: () => editEmployee(employee),
+          ),
+          ListTile(
+            leading: Icon(Icons.person_add),
+            title: Text('Add Report'),
+            onTap: () => addSubordinate(employee),
+          ),
+          ListTile(
+            leading: Icon(Icons.delete),
+            title: Text('Remove'),
+            onTap: () => removeEmployee(employee),
+          ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.info),
+            title: Text('Details'),
+            onTap: () => showEmployeeDetails(employee),
+          ),
+        ],
+      ),
+    );
+  },
+  onOptionSelect: (Employee employee) {
+    // Optional: Handle selection
+    Navigator.pop(context);
+  },
+)
+```
+
+## Zoom and Pan Configuration
+
+### Basic Setup
+
+```dart
+final viewerController = CustomInteractiveViewerController();
+
+OrgChart(
+  viewerController: viewerController,
+  interactionConfig: InteractionConfig(
+    enableZoom: true,
+    enablePan: true,
+    enableDoubleTapZoom: true,
+  ),
+  zoomConfig: ZoomConfig(
+    minScale: 0.5,
+    maxScale: 3.0,
+    initialScale: 1.0,
+  ),
+)
+```
+
+### Programmatic Control
+
+```dart
+// Zoom to specific level
+viewerController.setScale(1.5);
+
+// Pan to position
+viewerController.panTo(Offset(100, 200));
+
+// Reset view
+viewerController.reset();
+
+// Center on specific node
+controller.centerNode(
+  'employee-123',
+  scale: 2.0,
+  animate: true,
+);
+```
+
+## Keyboard Navigation
+
+```dart
+OrgChart(
+  focusNode: FocusNode(),
+  keyboardConfig: KeyboardConfig(
+    enableKeyboardControls: true,
+    keyboardPanDistance: 50.0,
+    keyboardZoomFactor: 1.1,
+    enableKeyRepeat: true,
+    keyRepeatInitialDelay: Duration(milliseconds: 500),
+    keyRepeatInterval: Duration(milliseconds: 50),
+    animateKeyboardTransitions: true,
+    keyboardAnimationDuration: Duration(milliseconds: 200),
+    keyboardAnimationCurve: Curves.easeOutCubic,
+    invertArrowKeyDirection: false,
+  ),
+)
+
+// Or use predefined configurations:
+keyboardConfig: KeyboardConfig.fast(), // Fast, responsive controls
+keyboardConfig: KeyboardConfig.disabled(), // Disable keyboard controls
+```
+
+## Animation Configuration
+
+```dart
+OrgChart(
+  // Smooth animations
+  duration: Duration(milliseconds: 500),
+  curve: Curves.easeInOutCubic,
+  
+  // Or instant updates
+  duration: Duration.zero,
+  
+  // Or bouncy animations
+  duration: Duration(milliseconds: 800),
+  curve: Curves.elasticOut,
+)
+```
+
+## Complete Example
+
+Here's a full-featured OrgChart implementation:
+
+```dart
+class AdvancedOrgChart extends StatefulWidget {
+  @override
+  _AdvancedOrgChartState createState() => _AdvancedOrgChartState();
+}
+
+class _AdvancedOrgChartState extends State<AdvancedOrgChart> {
+  late OrgChartController<Employee> controller;
+  final viewerController = CustomInteractiveViewerController();
+  final focusNode = FocusNode();
+  
+  @override
+  void initState() {
+    super.initState();
+    controller = OrgChartController<Employee>(
+      items: loadEmployees(),
+      idProvider: (e) => e.id,
+      toProvider: (e) => e.managerId,
+      toSetter: (e, newId) => e.copyWith(managerId: newId),
+      boxSize: Size(250, 140),
+      spacing: 50,
+      runSpacing: 100,
+    );
+    controller.setViewerController(viewerController);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: OrgChart<Employee>(
+        controller: controller,
+        viewerController: viewerController,
+        focusNode: focusNode,
+        
+        // Visual configuration
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        linePaint: Paint()
+          ..color = Theme.of(context).primaryColor.withOpacity(0.5)
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.round,
+        arrowStyle: SolidGraphArrow(),
+        cornerRadius: 10,
+        lineEndingType: LineEndingType.arrow,
+        
+        // Interactions
+        isDraggable: true,
+        interactionConfig: InteractionConfig(
+          enableZoom: true,
+          enablePan: true,
+          enableDoubleTapZoom: true,
+        ),
+        zoomConfig: ZoomConfig(
+          minScale: 0.25,
+          maxScale: 4.0,
+          initialScale: 1.0,
+        ),
+        keyboardConfig: KeyboardConfig(
+          enableKeyboardControls: true,
+          keyboardPanDistance: 50.0,
+          keyboardZoomFactor: 1.1,
+        ),
+        
+        // Event handlers
+        onDrop: handleEmployeeDrop,
+        optionsBuilder: buildContextMenu,
+        onOptionSelect: handleOptionSelect,
+        
+        // Node builder
+        builder: (details) => buildAdvancedNode(details),
+      ),
+    );
+  }
+}
+```
+
+## Performance Tips
+
+1. **Use RepaintBoundary**: Wrap complex nodes in `RepaintBoundary`
+2. **Optimize Images**: Use cached network images
+3. **Limit Animations**: Reduce animation duration for large charts
+4. **Lazy Loading**: Load nodes on-demand for huge datasets
+5. **Simplify Nodes**: Use simpler designs for better performance
+
+## Next Steps
+
+- [Genogram Overview →](/docs/4.0.0-genogram/01-overview)
+- [View Examples →](/docs/6.0.0-examples/01-live-playground)
+- [Check Changelog →](/docs/7.0.0-changelog)

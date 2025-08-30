@@ -1,0 +1,50 @@
+---
+id: 01-overview
+title: Genogram Overview
+sidebar_label: Overview
+sidebar_position: 1
+---
+
+# Genogram Overview
+
+Visualize complex family relationships with multi-generational trees and relationship indicators.
+
+## Core Concepts
+
+- **Two Parents**: Each node can have a father and mother
+- **Multiple Spouses**: Support for multiple marriages
+- **Gender-Based Layout**: Automatic positioning based on gender
+- **Relationship Lines**: Visual indicators for marriages, divorces
+- **Multi-Generation**: Automatic generation-based positioning
+
+## Architecture
+
+- **Controller**: Manages family data and relationships
+- **Widget**: Renders the family tree visualization
+- **Model**: Your custom family member structures
+
+## Basic Usage
+
+```dart
+Genogram<FamilyMember>(
+  controller: controller,
+  builder: (details) => YourNodeWidget(),
+  edgeConfig: GenogramEdgeConfig(),
+  marriageStatusProvider: (person, spouse) => MarriageStatus.married,
+)
+```
+
+## Use Cases
+
+- Family genealogy and ancestry
+- Medical history tracking
+- Genetic counseling
+- Family therapy and counseling
+- Social work assessments
+- Academic research in genetics
+- Family history documentation
+
+## Next Steps
+
+- [Configure Controller](/docs/4.0.0-genogram/02-controller)
+- [Customize Widget](/docs/4.0.0-genogram/03-widget)

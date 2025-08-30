@@ -1,0 +1,480 @@
+---
+id: 02-controller
+title: OrgChartController
+sidebar_label: Controller
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# OrgChartController
+
+The `OrgChartController` is the brain of your organizational chart. It manages the data, handles updates, and provides methods for interacting with the chart programmatically.
+
+## 📋 Constructor
+
+```dart
+OrgChartController<T>({
+  required List<T> items,
+  required String Function(T) idProvider,
+  required String? Function(T) toProvider,
+  T Function(T, String?)? toSetter,
+  Size boxSize = const Size(200, 100),
+  double spacing = 20,
+  double runSpacing = 50,
+  GraphOrientation orientation = GraphOrientation.topToBottom,
+  int leafColumns = 2,
+})
+```
+
+### Constructor Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | `List<T>` | ✅ | - | The list of data items to display in the chart |
+| `idProvider` | `String Function(T)` | ✅ | - | Function that returns a unique ID for each item |
+| `toProvider` | `String? Function(T)` | ✅ | - | Function that returns the parent ID for each item |
+| `toSetter` | `T Function(T, String?)` | ❌ | null | Function to create a copy of item with new parent ID |
+| `boxSize` | `Size` | ❌ | `Size(200, 100)` | Size of each node box |
+| `spacing` | `double` | ❌ | 20 | Horizontal spacing between nodes |
+| `runSpacing` | `double` | ❌ | 50 | Vertical spacing between levels |
+| `orientation` | `GraphOrientation` | ❌ | `topToBottom` | Layout orientation |
+| `leafColumns` | `int` | ❌ | 2 | Number of columns for leaf node arrangement |
+
+## 🔧 Properties
+
+### Read-Only Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nodes` | `List<Node<T>>` | All nodes in the chart |
+| `roots` | `List<Node<T>>` | Root nodes (nodes without parents) |
+| `items` | `List<T>` | All data items |
+| `uniqueNodeId` | `String` | Generates a unique node ID |
+| `repaintBoundaryKey` | `GlobalKey` | Key for export functionality |
+
+### Configurable Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `orientation` | `GraphOrientation` | Chart orientation (vertical/horizontal) |
+| `boxSize` | `Size` | Size of node boxes |
+| `spacing` | `double` | Horizontal spacing between nodes |
+| `runSpacing` | `double` | Vertical spacing between levels |
+| `leafColumns` | `int` | Column arrangement for leaf nodes |
+| `viewerController` | `CustomInteractiveViewerController?` | Controller for zoom/pan |
+
+## 📚 Methods
+
+### Data Management
+
+#### `addItem`
+Adds a single item to the chart.
+
+```dart
+void addItem(
+  T item, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+**Example:**
+```dart
+controller.addItem(
+  Employee(id: '10', name: 'New Employee', managerId: '2'),
+  centerGraph: true,
+);
+```
+
+#### `addItems`
+Adds multiple items to the chart.
+
+```dart
+void addItems(
+  List<T> items, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `removeItem`
+Removes an item and handles its descendants.
+
+```dart
+void removeItem(
+  String? id,
+  ActionOnNodeRemoval action, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+**ActionOnNodeRemoval Options:**
+
+| Action | Description |
+|--------|-------------|
+| `unlinkDescendants` | Makes descendants root nodes |
+| `connectDescendantsToParent` | Connects descendants to removed node's parent |
+| `removeDescendants` | Removes node and all descendants |
+
+**Example:**
+```dart
+// Remove manager and promote subordinates to their manager's level
+controller.removeItem(
+  '5',
+  ActionOnNodeRemoval.connectDescendantsToParent,
+);
+
+// Remove entire department
+controller.removeItem(
+  '3',
+  ActionOnNodeRemoval.removeDescendants,
+);
+```
+
+#### `updateItem`
+Updates an existing item in the chart.
+
+```dart
+void updateItem(
+  T item, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `replaceAll`
+Replaces all items in the chart.
+
+```dart
+void replaceAll(
+  List<T> items, {
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+#### `clearItems`
+Removes all items from the chart.
+
+```dart
+void clearItems({
+  bool recalculatePosition = true,
+  bool centerGraph = false,
+})
+```
+
+### Layout and Positioning
+
+#### `calculatePosition`
+Recalculates node positions.
+
+```dart
+void calculatePosition({bool center = true})
+```
+
+#### `switchOrientation`
+Switches between vertical and horizontal layouts.
+
+```dart
+void switchOrientation({
+  GraphOrientation? orientation,
+  bool center = true,
+})
+```
+
+**Example:**
+```dart
+// Toggle orientation
+controller.switchOrientation();
+
+// Set specific orientation
+controller.switchOrientation(
+  orientation: GraphOrientation.leftToRight,
+);
+```
+
+#### `centerNode`
+Centers the view on a specific node.
+
+```dart
+Future<void> centerNode(
+  String nodeId, {
+  double? scale,
+  bool animate = true,
+  Duration duration = const Duration(milliseconds: 300),
+  Curve curve = Curves.easeInOut,
+})
+```
+
+**Example:**
+```dart
+// Center on CEO with zoom
+await controller.centerNode(
+  'ceo-001',
+  scale: 1.5,
+  animate: true,
+);
+```
+
+### Node Queries
+
+#### `getSubNodes`
+Gets direct children of a node.
+
+```dart
+List<Node<T>> getSubNodes(Node<T> node)
+```
+
+#### `getLevel`
+Gets the hierarchical level of a node.
+
+```dart
+int getLevel(Node<T> node)
+```
+
+**Example:**
+```dart
+final node = controller.nodes.first;
+final level = controller.getLevel(node); // 1 for root, 2 for children, etc.
+```
+
+#### `isNodeHidden`
+Checks if a node is currently hidden.
+
+```dart
+bool isNodeHidden(Node<T> node)
+```
+
+#### `isSubNode`
+Checks if one node is a descendant of another.
+
+```dart
+bool isSubNode(Node<T> child, Node<T> parent)
+```
+
+#### `getOverlapping`
+Gets nodes that overlap with a given node.
+
+```dart
+List<Node<T>> getOverlapping(Node<T> node)
+```
+
+### Export Functions
+
+#### `exportAsImage`
+Exports the chart as a PNG image.
+
+```dart
+Future<Uint8List?> exportAsImage()
+```
+
+**Example:**
+```dart
+final imageBytes = await controller.exportAsImage();
+if (imageBytes != null) {
+  // Save to file or share
+  await saveImageToGallery(imageBytes);
+}
+```
+
+#### `exportAsPdf`
+Exports the chart as a PDF document.
+
+```dart
+Future<pw.Document?> exportAsPdf()
+```
+
+## 🎯 Complete Example
+
+Here's a comprehensive example showing the controller in action:
+
+```dart
+class OrgChartManager extends StatefulWidget {
+  @override
+  _OrgChartManagerState createState() => _OrgChartManagerState();
+}
+
+class _OrgChartManagerState extends State<OrgChartManager> {
+  late OrgChartController<Employee> controller;
+  final viewerController = CustomInteractiveViewerController();
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize controller
+    controller = OrgChartController<Employee>(
+      items: loadEmployees(),
+      idProvider: (emp) => emp.id,
+      toProvider: (emp) => emp.managerId,
+      toSetter: (emp, newManagerId) => emp.copyWith(
+        managerId: newManagerId,
+      ),
+      boxSize: Size(220, 120),
+      spacing: 40,
+      runSpacing: 80,
+      orientation: GraphOrientation.topToBottom,
+      leafColumns: 3,
+    );
+    
+    // Set viewer controller for zoom/pan
+    controller.setViewerController(viewerController);
+  }
+  
+  // Add new employee
+  void hireEmployee(Employee newEmployee) {
+    setState(() {
+      controller.addItem(newEmployee, centerGraph: true);
+    });
+  }
+  
+  // Remove employee with options
+  void fireEmployee(String employeeId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Employee'),
+        content: Text('What should happen to their reports?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              controller.removeItem(
+                employeeId,
+                ActionOnNodeRemoval.connectDescendantsToParent,
+              );
+              Navigator.pop(context);
+            },
+            child: Text('Promote to Same Level'),
+          ),
+          TextButton(
+            onPressed: () {
+              controller.removeItem(
+                employeeId,
+                ActionOnNodeRemoval.removeDescendants,
+              );
+              Navigator.pop(context);
+            },
+            child: Text('Remove Entire Team'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Reorganize employee
+  void changeManager(Employee employee, String newManagerId) {
+    final updated = employee.copyWith(managerId: newManagerId);
+    controller.updateItem(updated);
+  }
+  
+  // Search and focus
+  void searchEmployee(String query) async {
+    final employee = controller.items.firstWhere(
+      (emp) => emp.name.toLowerCase().contains(query.toLowerCase()),
+    );
+    
+    if (employee != null) {
+      await controller.centerNode(
+        employee.id,
+        scale: 2.0,
+        animate: true,
+      );
+    }
+  }
+  
+  // Export functions
+  void exportChart() async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Export Chart'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'image'),
+            child: Text('Export as Image'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'pdf'),
+            child: Text('Export as PDF'),
+          ),
+        ],
+      ),
+    );
+    
+    if (action == 'image') {
+      final bytes = await controller.exportAsImage();
+      // Handle image bytes
+    } else if (action == 'pdf') {
+      final pdf = await controller.exportAsPdf();
+      // Handle PDF document
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Organization Chart'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.rotate_90_degrees_ccw),
+            onPressed: () => controller.switchOrientation(),
+          ),
+          IconButton(
+            icon: Icon(Icons.download),
+            onPressed: exportChart,
+          ),
+        ],
+      ),
+      body: OrgChart<Employee>(
+        controller: controller,
+        viewerController: viewerController,
+        // ... rest of configuration
+      ),
+    );
+  }
+}
+```
+
+## 💡 Best Practices
+
+### 1. **Efficient Updates**
+```dart
+// Bad: Multiple individual updates
+employees.forEach((emp) => controller.addItem(emp));
+
+// Good: Batch update
+controller.addItems(employees);
+```
+
+
+### 3. **Performance Optimization**
+```dart
+// Disable recalculation for batch operations
+controller.addItem(item1, recalculatePosition: false);
+controller.addItem(item2, recalculatePosition: false);
+controller.addItem(item3, recalculatePosition: false);
+controller.calculatePosition(); // Calculate once at the end
+```
+
+### Dynamic Data Loading
+
+Load data on-demand as nodes expand:
+
+```dart
+class LazyOrgChartController<T> extends OrgChartController<T> {
+  final Future<List<T>> Function(String parentId) loadChildren;
+  
+  Future<void> expandNode(String nodeId) async {
+    final children = await loadChildren(nodeId);
+    addItems(children);
+  }
+}
+```
+
+---
+
+Next: Learn about the [OrgChart Widget →](/docs/3.0.0-orgchart/03-widget)

@@ -1,0 +1,166 @@
+---
+id: 02-features
+title: Features
+sidebar_label: Features
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Features
+
+## Chart Types
+
+### Organization Chart
+- Hierarchical tree structures
+- Manager-subordinate relationships
+- Collapsible/expandable nodes
+- Drag & drop reorganization
+- Multi-level hierarchies
+- Leaf node column arrangement
+
+### Family Genogram
+- Multi-generational family trees
+- Parent-child relationships
+- Marriage/divorce indicators
+- Gender-based positioning
+- Multiple spouse support
+- Sibling group organization
+
+## Core Capabilities
+
+### Customization
+
+```dart
+OrgChart<Employee>(
+  controller: controller,
+  builder: (details) => Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.blue, Colors.cyan],
+      ),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Stack(
+      children: [
+        _buildNodeContent(details.item),
+        if (details.level == 1)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: _buildBadge('CEO'),
+          ),
+        if (details.isBeingDragged)
+          Container(
+            color: Colors.blue.withOpacity(0.3),
+          ),
+      ],
+    ),
+  ),
+);
+```
+
+### Edge Styling
+
+<Tabs>
+  <TabItem value="solid" label="Solid" default>
+
+```dart
+OrgChart(
+  arrowStyle: SolidGraphArrow(),
+  linePaint: Paint()
+    ..color = Colors.blue
+    ..strokeWidth = 2.0,
+  cornerRadius: 10.0,
+)
+```
+
+  </TabItem>
+  <TabItem value="dashed" label="Dashed">
+
+```dart
+OrgChart(
+  arrowStyle: DashedGraphArrow(
+    pattern: [10, 5],
+  ),
+  linePaint: Paint()
+    ..color = Colors.grey
+    ..strokeWidth = 1.5,
+)
+```
+
+  </TabItem>
+</Tabs>
+
+### Interactions
+
+#### Drag and Drop
+```dart
+OrgChart(
+  isDraggable: true,
+  onDrop: (dragged, target, isTargetSubnode) {
+    if (!canMoveEmployee(dragged, target)) {
+      return;
+    }
+    updateEmployeeManager(dragged, target);
+    controller.replaceAll(updatedEmployees);
+  },
+)
+```
+
+#### Zoom and Pan
+```dart
+OrgChart(
+  zoomConfig: ZoomConfig(
+    minScale: 0.5,
+    maxScale: 3.0,
+    initialScale: 1.0,
+  ),
+  interactionConfig: InteractionConfig(
+    enableZoom: true,
+    enablePan: true,
+    enableDoubleTapZoom: true,
+  ),
+)
+```
+
+### Performance
+
+- **QuadTree Optimization**: Fast node lookup for large charts
+- **Viewport Culling**: Only render visible nodes
+- **Lazy Loading**: Load children on demand
+- **Handles 1000+ nodes** smoothly
+
+### Export
+
+```dart
+// Export as PNG
+final imageBytes = await controller.exportAsImage();
+
+// Export as PDF
+final pdfDocument = await controller.exportAsPdf();
+
+// Custom resolution
+final hdImage = await exportChartAsImage(
+  controller.repaintBoundaryKey,
+  pixelRatio: 3.0,
+);
+```
+
+## Comparison Matrix
+
+| Feature | OrgChart | Genogram |
+|---------|----------|----------|
+| Hierarchical Layout | ✅ | ✅ |
+| Drag & Drop | ✅ | ✅ |
+| Zoom & Pan | ✅ | ✅ |
+| Node Collapse/Expand | ✅ | ❌ |
+| Custom Node Builder | ✅ | ✅ |
+| Edge Styling | ✅ | ✅ |
+| Marriage Relationships | ❌ | ✅ |
+| Gender-based Layout | ❌ | ✅ |
+| Multiple Parents | ❌ | ✅ |
+| Export (Image/PDF) | ✅ | ✅ |
+| Performance (1000+ nodes) | ✅ | ✅ |
+| Animations | ✅ | ✅ |

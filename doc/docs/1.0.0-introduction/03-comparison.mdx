@@ -1,0 +1,55 @@
+---
+id: 03-comparison
+title: OrgChart vs Genogram
+sidebar_label: Comparison
+sidebar_position: 3
+---
+
+# OrgChart vs Genogram
+
+Both charts share the same foundation but are optimized for different use cases.
+
+## When to Use
+
+### OrgChart
+- Corporate hierarchies
+- Team management
+- Project structures
+- Decision trees
+- File systems
+- Menu systems
+
+### Genogram
+- Family trees
+- Medical history
+- Social work
+- Genetic studies
+- Anthropology
+- Psychology
+
+## API Differences
+
+### Controllers
+
+**OrgChart:**
+```dart
+OrgChartController<Employee>(
+  items: employees,
+  idProvider: (emp) => emp.id,
+  toProvider: (emp) => emp.managerId,
+  toSetter: (emp, newManagerId) => 
+    emp.copyWith(managerId: newManagerId),
+)
+```
+
+**Genogram:**
+```dart
+GenogramController<Person>(
+  items: familyMembers,
+  idProvider: (person) => person.id,
+  fatherProvider: (person) => person.fatherId,
+  motherProvider: (person) => person.motherId,
+  spousesProvider: (person) => person.spouseIds,
+  genderProvider: (person) => person.gender,
+)
+```

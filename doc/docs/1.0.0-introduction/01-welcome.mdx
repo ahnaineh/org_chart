@@ -1,0 +1,131 @@
+---
+id: 01-welcome
+title: Welcome to Org Chart
+sidebar_label: Welcome
+sidebar_position: 1
+slug: /
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Org Chart
+
+Flutter library for organizational charts and family trees. High-performance, customizable, cross-platform.
+
+## Key Features
+
+<div className="feature-grid">
+  <div className="feature-card">
+    <span className="feature-icon">🚀</span>
+    <h3>Performance</h3>
+    <p>QuadTree optimization for 1000+ nodes</p>
+  </div>
+  
+  <div className="feature-card">
+    <span className="feature-icon">🎨</span>
+    <h3>Customizable</h3>
+    <p>Full control over nodes and edges</p>
+  </div>
+  
+  <div className="feature-card">
+    <span className="feature-icon">📱</span>
+    <h3>Cross-Platform</h3>
+    <p>iOS, Android, Web, Desktop</p>
+  </div>
+  
+  <div className="feature-card">
+    <span className="feature-icon">🔄</span>
+    <h3>Interactive</h3>
+    <p>Drag & drop, zoom, pan, collapse</p>
+  </div>
+  
+  <div className="feature-card">
+    <span className="feature-icon">💼</span>
+    <h3>Production Ready</h3>
+    <p>v5.0.2 - MIT License</p>
+  </div>
+  
+  <div className="feature-card">
+    <span className="feature-icon">🧬</span>
+    <h3>Dual Purpose</h3>
+    <p>Org charts + family genograms</p>
+  </div>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <TabItem value="orgchart" label="Organization Chart" default>
+
+```dart
+final controller = OrgChartController<Employee>(
+  items: employees,
+  idProvider: (emp) => emp.id,
+  toProvider: (emp) => emp.managerId,
+);
+
+return OrgChart<Employee>(
+  controller: controller,
+  builder: (details) => Card(
+    child: Padding(
+      padding: EdgeInsets.all(12),
+      child: Text(details.item.name),
+    ),
+  ),
+);
+```
+
+  </TabItem>
+  <TabItem value="genogram" label="Family Genogram">
+
+```dart
+final controller = GenogramController<Person>(
+  items: familyMembers,
+  idProvider: (person) => person.id,
+  fatherProvider: (person) => person.fatherId,
+  motherProvider: (person) => person.motherId,
+  spousesProvider: (person) => person.spouseIds,
+  genderProvider: (person) => person.gender,
+);
+
+return Genogram<Person>(
+  controller: controller,
+  builder: (details) => Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: details.item.gender == 0 
+        ? Colors.blue.shade100 
+        : Colors.pink.shade100,
+    ),
+    child: Center(child: Text(details.item.name)),
+  ),
+);
+```
+
+  </TabItem>
+</Tabs>
+
+## Get Started
+
+<div className="cta-buttons">
+  <a href="../2.0.0-getting-started/01-installation" className="cta-button primary">
+    <span>Get Started →</span>
+  </a>
+  <a href="../6.0.0-examples/01-live-playground" className="cta-button secondary">
+    <span>View Examples</span>
+  </a>
+  <a href="https://github.com/ahnaineh/org_chart" className="cta-button secondary">
+    <span>GitHub</span>
+  </a>
+</div>
+
+## Use Cases
+
+- **Corporate**: Company hierarchies, reporting structures
+- **HR Systems**: Employee org charts with interactions
+- **Medical**: Family genograms for medical history
+- **Genealogy**: Family trees with relationships
+- **Education**: Teaching organizational structures
+- **Project Management**: Team structures and dependencies
+
