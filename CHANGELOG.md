@@ -1,5 +1,9 @@
+## [5.0.3]
+1. Genogram update arrows when drawing link from parents to child.
+2. Update [Docs](https://ahnaineh.github.io/org_chart)
+
 ## [5.0.2]
-1. fix drawing parental arrows when parents are not married (mother arow was missing)
+1. Orgchart fix drawing parental arrows when parents are not married (mother arow was missing)
 
 
 ## [5.0.1]
