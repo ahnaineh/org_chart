@@ -147,8 +147,8 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   Widget buildEdges();
 
   // Common node interaction methods
-  void handleTapDown(TapDownDetails details) {
-    panDownPosition = details.globalPosition;
+  void handleTapDown(PointerDownEvent details) {
+    panDownPosition = details.position;
   }
 
   void toggleHideNodes(Node<E> node, bool? hide, bool center) {
