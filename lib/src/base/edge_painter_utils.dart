@@ -147,6 +147,70 @@ class EdgePainterUtils {
     }
   }
 
+  /// Draw a connection from precomputed points, including line endings.
+  void drawConnectionWithPoints(Canvas canvas, List<Offset> points,
+      {Paint? paint}) {
+    if (points.length < 2) return;
+    final Paint connectionPaint = paint ?? linePaint;
+
+    drawPath(canvas, points, connectionPaint);
+
+    if (lineEndingType == LineEndingType.none) {
+      return;
+    }
+
+    final double angle = vectorAngle(points.last - points[points.length - 2]);
+    switch (lineEndingType) {
+      case LineEndingType.arrow:
+        drawArrowHead(canvas, points.last, angle, connectionPaint);
+        break;
+      case LineEndingType.circle:
+        drawCircleEnd(canvas, points.last, connectionPaint);
+        break;
+      case LineEndingType.none:
+        break;
+    }
+  }
+
+  /// Returns the resolved connection type for the given endpoints.
+  ConnectionType resolveConnectionType({
+    required ConnectionType type,
+    required Offset start,
+    required Offset end,
+    required GraphOrientation orientation,
+  }) {
+    return _determineConnectionType(
+      type: type,
+      start: start,
+      end: end,
+      orientation: orientation,
+    );
+  }
+
+  /// Returns the list of points used to draw a connection.
+  List<Offset> getConnectionPoints({
+    required ConnectionType type,
+    required Offset start,
+    required Offset end,
+    required Size boxSize,
+    required GraphOrientation orientation,
+  }) {
+    final ConnectionType actualType = _determineConnectionType(
+      type: type,
+      start: start,
+      end: end,
+      orientation: orientation,
+    );
+
+    return _generateConnectionPoints(
+      type: actualType,
+      start: start,
+      end: end,
+      boxSize: boxSize,
+      orientation: orientation,
+    );
+  }
+
   /// Draw path with given points
   void drawPath(Canvas canvas, List<Offset> points, [Paint? paint]) {
     if (points.length < 2) return;

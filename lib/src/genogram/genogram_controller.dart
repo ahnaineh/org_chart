@@ -43,6 +43,9 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// Cache for generation level calculations
   final Map<String, int> _levelCache = {};
 
+  /// Spacing between spouses in a couple group
+  late double spouseSpacing;
+
   /// Creates a genogram controller with the specified parameters
   ///
   /// [items]: List of data items to display in the genogram
@@ -66,7 +69,9 @@ class GenogramController<E> extends BaseGraphController<E> {
     required this.motherProvider,
     required this.spousesProvider,
     required this.genderProvider,
+    double? spouseSpacing,
   }) {
+    this.spouseSpacing = spouseSpacing ?? spacing;
     // Calculate initial positions after construction
     calculatePosition();
   }
@@ -415,18 +420,20 @@ class GenogramController<E> extends BaseGraphController<E> {
 
       // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
+      final double groupSpacing =
+          groupCount > 1 ? spouseSpacing : spacing;
       final double groupSize = groupCount *
               (orientation == GraphOrientation.topToBottom
                   ? boxSize.width
                   : boxSize.height) +
-          (groupCount - 1) * spacing;
+          (groupCount - 1) * groupSpacing;
 
       // Position each person in the couple group in a row or column depending on orientation
       for (int i = 0; i < groupCount; i++) {
         final double offset = i *
             (orientation == GraphOrientation.topToBottom
-                ? boxSize.width + spacing
-                : boxSize.height + spacing);
+                ? boxSize.width + groupSpacing
+                : boxSize.height + groupSpacing);
 
         if (orientation == GraphOrientation.topToBottom) {
           final double nodeX = x + offset;

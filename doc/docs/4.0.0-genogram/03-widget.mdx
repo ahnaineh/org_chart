@@ -26,6 +26,9 @@ Genogram<T>({
   double cornerRadius = 0,
   GraphArrowStyle arrowStyle = const SolidGraphArrow(),
   LineEndingType lineEndingType = LineEndingType.arrow,
+  EdgeStyle Function(EdgeInfo<T>)? edgeStyleProvider,
+  Widget Function(EdgeInfo<T>)? edgeLabelBuilder,
+  EdgeLabelConfig edgeLabelConfig = const EdgeLabelConfig(),
   GenogramEdgeConfig edgeConfig = const GenogramEdgeConfig(),
   MarriageStatus Function(T, T)? marriageStatusProvider,
   void Function(T dragged, T target)? onDrop,
@@ -59,6 +62,9 @@ Genogram<T>({
 | `cornerRadius` | `double` | 0 | Corner radius for edges |
 | `arrowStyle` | `GraphArrowStyle` | `SolidGraphArrow()` | Arrow/line style |
 | `lineEndingType` | `LineEndingType` | `.arrow` | Line ending decoration |
+| `edgeStyleProvider` | `Function?` | null | Per-edge styling (opacity, color, width) |
+| `edgeLabelBuilder` | `Function?` | null | Builds widget labels for edges |
+| `edgeLabelConfig` | `EdgeLabelConfig` | default | Label placement configuration |
 | `edgeConfig` | `GenogramEdgeConfig` | default | Marriage/relationship styling |
 | `marriageStatusProvider` | `Function?` | null | Returns marriage status between two people |
 | `onDrop` | `Function?` | null | Drag and drop handler |
@@ -298,6 +304,9 @@ Genogram(
       Colors.orange,
       Colors.purple,
     ],
+    
+    // Anchor distance from spouse for label/child edge
+    marriageAnchorDistance: 16.0,
   ),
 )
 ```

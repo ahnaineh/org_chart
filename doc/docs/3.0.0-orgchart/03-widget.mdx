@@ -26,6 +26,9 @@ OrgChart<T>({
   double cornerRadius = 0,
   GraphArrowStyle arrowStyle = const SolidGraphArrow(),
   LineEndingType lineEndingType = LineEndingType.arrow,
+  EdgeStyle Function(EdgeInfo<T>)? edgeStyleProvider,
+  Widget Function(EdgeInfo<T>)? edgeLabelBuilder,
+  EdgeLabelConfig edgeLabelConfig = const EdgeLabelConfig(),
   Widget Function(BuildContext, T)? optionsBuilder,
   void Function(T)? onOptionSelect,
   void Function(T dragged, T target, bool isTargetSubnode)? onDrop,
@@ -57,6 +60,9 @@ OrgChart<T>({
 | `cornerRadius` | `double` | 0 | Corner radius for edges |
 | `arrowStyle` | `GraphArrowStyle` | `SolidGraphArrow()` | Arrow/line style |
 | `lineEndingType` | `LineEndingType` | `.arrow` | Line ending decoration |
+| `edgeStyleProvider` | `Function?` | null | Per-edge styling (opacity, color, width) |
+| `edgeLabelBuilder` | `Function?` | null | Builds widget labels for edges |
+| `edgeLabelConfig` | `EdgeLabelConfig` | default | Label placement configuration |
 | `optionsBuilder` | `Function?` | null | Context menu builder |
 | `onOptionSelect` | `Function?` | null | Context menu handler |
 | `onDrop` | `Function?` | null | Drag and drop handler |

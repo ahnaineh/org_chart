@@ -7,6 +7,7 @@ import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/base/base_controller.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
+import 'package:org_chart/src/common/edge_models.dart';
 
 /// Base abstract graph widget that provides common functionality for all graph types
 abstract class BaseGraph<E> extends StatefulWidget {
@@ -24,6 +25,9 @@ abstract class BaseGraph<E> extends StatefulWidget {
   final double cornerRadius;
   final GraphArrowStyle arrowStyle;
   final LineEndingType lineEndingType;
+  final EdgeStyle Function(EdgeInfo<E> edge)? edgeStyleProvider;
+  final Widget? Function(EdgeInfo<E> edge)? edgeLabelBuilder;
+  final EdgeLabelConfig edgeLabelConfig;
 
   // Callback functions
   final List<PopupMenuEntry<dynamic>> Function(E item)? optionsBuilder;
@@ -51,6 +55,9 @@ abstract class BaseGraph<E> extends StatefulWidget {
     this.arrowStyle = const SolidGraphArrow(),
     this.cornerRadius = 10.0,
     this.lineEndingType = LineEndingType.arrow,
+    this.edgeStyleProvider,
+    this.edgeLabelBuilder,
+    this.edgeLabelConfig = const EdgeLabelConfig(),
     this.viewerController,
     this.interactionConfig,
     this.keyboardConfig,

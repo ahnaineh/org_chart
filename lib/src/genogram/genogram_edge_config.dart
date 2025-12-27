@@ -20,6 +20,9 @@ class GenogramEdgeConfig {
   /// Colors to use for different marriage connections
   final List<Color> marriageColors;
 
+  /// Distance from spouse along the marriage line for label/child anchor
+  final double marriageAnchorDistance;
+
   /// Creates a new genogram edge configuration with default styling
   const GenogramEdgeConfig({
     this.defaultMarriageStyle = const MarriageStyle(
@@ -40,6 +43,7 @@ class GenogramEdgeConfig {
       Colors.purple,
       Colors.teal,
     ],
+    this.marriageAnchorDistance = 16.0,
   });
 
   /// Gets the appropriate marriage style based on the provided status
@@ -61,6 +65,7 @@ class GenogramEdgeConfig {
     List<Color>? marriageColors,
     double? childSingleParentStrokeWidth,
     Color? childSingleParentColor,
+    double? marriageAnchorDistance,
   }) {
     return GenogramEdgeConfig(
       defaultMarriageStyle: defaultMarriageStyle ?? this.defaultMarriageStyle,
@@ -72,6 +77,8 @@ class GenogramEdgeConfig {
           childSingleParentStrokeWidth ?? this.childSingleParentStrokeWidth,
       childSingleParentColor:
           childSingleParentColor ?? this.childSingleParentColor,
+      marriageAnchorDistance:
+          marriageAnchorDistance ?? this.marriageAnchorDistance,
     );
   }
 }

@@ -24,6 +24,7 @@ GenogramController<T>({
   required int Function(T) genderProvider,
   Size boxSize = const Size(150, 150),
   double spacing = 30,
+  double? spouseSpacing,
   double runSpacing = 60,
   GraphOrientation orientation = GraphOrientation.topToBottom,
 })
@@ -41,6 +42,7 @@ GenogramController<T>({
 | `genderProvider` | `int Function(T)` | ✅ | - | Function that returns gender (0=male, 1=female) |
 | `boxSize` | `Size` | ❌ | `Size(150, 150)` | Size of each person node |
 | `spacing` | `double` | ❌ | 30 | Horizontal spacing between siblings |
+| `spouseSpacing` | `double?` | ❌ | `spacing` | Spacing between spouses in a couple group |
 | `runSpacing` | `double` | ❌ | 60 | Vertical spacing between generations |
 | `orientation` | `GraphOrientation` | ❌ | `topToBottom` | Layout orientation |
 

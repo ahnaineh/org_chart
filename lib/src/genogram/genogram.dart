@@ -7,6 +7,7 @@ import 'package:org_chart/src/genogram/genogram_controller.dart';
 import 'package:org_chart/src/base/base_graph.dart';
 import 'package:org_chart/src/genogram/edge_painter.dart';
 import 'package:org_chart/src/genogram/genogram_edge_config.dart';
+import 'package:org_chart/src/common/edge_label_layer.dart';
 
 /// A widget that displays an organizational chart
 class Genogram<E> extends BaseGraph<E> {
@@ -30,6 +31,9 @@ class Genogram<E> extends BaseGraph<E> {
     super.cornerRadius,
     super.arrowStyle,
     super.lineEndingType,
+    super.edgeStyleProvider,
+    super.edgeLabelBuilder,
+    super.edgeLabelConfig,
     super.optionsBuilder,
     super.onOptionSelect,
     super.viewerController,
@@ -51,7 +55,17 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   @override
   void initState() {
     super.initState();
-    _edgePainter = GenogramEdgePainter<E>(
+    _edgePainter = _createEdgePainter();
+  }
+
+  @override
+  void didUpdateWidget(covariant Genogram<E> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _edgePainter = _createEdgePainter();
+  }
+
+  GenogramEdgePainter<E> _createEdgePainter() {
+    return GenogramEdgePainter<E>(
       controller: controller,
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
@@ -59,6 +73,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
       lineEndingType: widget.lineEndingType,
       config: widget.edgeConfig,
       marriageStatusProvider: widget.marriageStatusProvider,
+      edgeStyleProvider: widget.edgeStyleProvider,
     );
   }
 
@@ -66,6 +81,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   List<Widget> buildGraphElements(BuildContext context) {
     return [
       buildEdges(),
+      buildEdgeLabels(),
       ...buildNodes(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
     ];
   }
@@ -87,6 +103,20 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   Widget buildEdges() {
     return CustomPaint(
       painter: _edgePainter,
+    );
+  }
+
+  Widget buildEdgeLabels() {
+    if (widget.edgeLabelBuilder == null) {
+      return const SizedBox.shrink();
+    }
+
+    return EdgeLabelLayer<E>(
+      edges: _edgePainter.buildEdges(),
+      labelBuilder: widget.edgeLabelBuilder!,
+      config: widget.edgeLabelConfig,
+      graphSize: controller.getSize(),
+      edgeStyleProvider: widget.edgeStyleProvider,
     );
   }
 

@@ -12,6 +12,14 @@ export 'src/base/edge_painter_utils.dart'
         ConnectionType,
         LineEndingType;
 export 'src/common/node_builder_details.dart' show NodeBuilderDetails;
+export 'src/common/edge_models.dart'
+    show
+        EdgeType,
+        EdgeInfo,
+        EdgeStyle,
+        EdgeLabelConfig,
+        EdgeLabelAnchor,
+        EdgeLabelRotation;
 
 export 'src/genogram/genogram.dart' show Genogram;
 export 'src/genogram/genogram_controller.dart' show GenogramController;

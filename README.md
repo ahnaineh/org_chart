@@ -4,7 +4,7 @@
 
 **A powerful, flexible organizational chart package built entirely in Flutter**
 
-[![Version](https://img.shields.io/badge/version-5.0.0-blue.svg)](https://pub.dev/packages/org_chart)
+[![Version](https://img.shields.io/badge/version-5.1.0-blue.svg)](https://pub.dev/packages/org_chart)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev)
 [![Stars](https://img.shields.io/github/stars/ahnaineh/org_chart?style=social)](https://github.com/ahnaineh/org_chart)
 
@@ -32,6 +32,7 @@
       <ul>
         <li>Flexible node styling</li>
         <li>Custom arrow styles</li>
+        <li>Per-edge styling and labels</li>
         <li>Multiple orientation options</li>
         <li>Responsive design</li>
       </ul>
@@ -75,7 +76,7 @@ Our new documentation includes:
 
 ```yaml
 dependencies:
-  org_chart: ^5.0.0
+  org_chart: ^5.1.0
 ```
 
 ### Import
@@ -105,11 +106,17 @@ We maintain a detailed project roadmap on GitHub:
 - ✅ Multiple orientation support
 - ✅ Arrow style customization
 - ✅ Genogram relationship visualization
+- ✅ Constant support in setter methods
+- ✅ Enhanced documentation
+- 🚧 Per Edge Customization
+
 
 #### In Progress:
-- 🚧 Arrow animations
-- 🚧 Enhanced documentation
-- 🚧 Constant support in setter methods
+- 🚧 Edge animations
+
+#### Planned:
+- DAG (Directed Acyclic Graph) support
+
 
 Visit our [GitHub Project Board](https://github.com/users/ahnaineh/projects/3) to see our complete development plan, vote on features, and track progress.
 

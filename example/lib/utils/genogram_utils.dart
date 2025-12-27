@@ -2,7 +2,7 @@ import '../models/family_member.dart';
 
 /// Utility class for genogram-related functions
 class GenogramUtils {
-  /// Generate sample family data for the genogram with relationship statuses and adoption types
+  /// Generate sample family data for the genogram with relationship statuses
   static List<FamilyMember> getSampleFamilyDataWithStatuses() {
     // Start with the basic family data
     final familyMembers = getSampleFamilyData();

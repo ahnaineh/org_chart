@@ -1,3 +1,11 @@
+## [5.1.0]
+1. Add `edgeStyleProvider` for per-edge styling across org charts and genograms.
+2. Add widget-based edge labels via `edgeLabelBuilder` and `EdgeLabelConfig`.
+3. Example: tap to highlight horizontal relations and fade unrelated edges/nodes.
+4. Genogram: render marriage decorators (e.g., divorce slash).
+5. Genogram: optional `spouseSpacing` and marriage labels anchored to marriage point.
+6. Genogram: configurable `marriageAnchorDistance`.
+
 ## [5.0.4]
 1. Genogram: adjust couple generation to avoid parent-child arrow oddities when spouse has ancestors.
 2. Example: refresh sample family names and remove duplicate siblings.

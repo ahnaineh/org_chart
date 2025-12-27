@@ -5,6 +5,7 @@ import 'package:org_chart/src/common/node_builder_details.dart';
 import 'package:org_chart/src/orgchart/org_chart_controller.dart';
 import 'package:org_chart/src/base/base_graph.dart';
 import 'package:org_chart/src/orgchart/edge_painter.dart';
+import 'package:org_chart/src/common/edge_label_layer.dart';
 
 /// A widget that displays an organizational chart
 class OrgChart<E> extends BaseGraph<E> {
@@ -21,6 +22,9 @@ class OrgChart<E> extends BaseGraph<E> {
     super.cornerRadius,
     super.arrowStyle,
     super.lineEndingType,
+    super.edgeStyleProvider,
+    super.edgeLabelBuilder,
+    super.edgeLabelConfig,
     super.optionsBuilder,
     super.onOptionSelect,
     super.viewerController,
@@ -41,12 +45,23 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   @override
   void initState() {
     super.initState();
-    _edgePainter = OrgChartEdgePainter<E>(
+    _edgePainter = _createEdgePainter();
+  }
+
+  @override
+  void didUpdateWidget(covariant OrgChart<E> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _edgePainter = _createEdgePainter();
+  }
+
+  OrgChartEdgePainter<E> _createEdgePainter() {
+    return OrgChartEdgePainter<E>(
       controller: controller,
       linePaint: widget.linePaint,
       arrowStyle: widget.arrowStyle,
       cornerRadius: widget.cornerRadius,
       lineEndingType: widget.lineEndingType,
+      edgeStyleProvider: widget.edgeStyleProvider,
     );
   }
 
@@ -54,6 +69,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   List<Widget> buildGraphElements(BuildContext context) {
     return [
       buildEdges(),
+      buildEdgeLabels(),
       ...buildNodes(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
     ];
   }
@@ -77,6 +93,20 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
     return CustomPaint(
       painter: _edgePainter,
       child: SizedBox.shrink(),
+    );
+  }
+
+  Widget buildEdgeLabels() {
+    if (widget.edgeLabelBuilder == null) {
+      return const SizedBox.shrink();
+    }
+
+    return EdgeLabelLayer<E>(
+      edges: _edgePainter.buildEdges(),
+      labelBuilder: widget.edgeLabelBuilder!,
+      config: widget.edgeLabelConfig,
+      graphSize: controller.getSize(),
+      edgeStyleProvider: widget.edgeStyleProvider,
     );
   }
 
