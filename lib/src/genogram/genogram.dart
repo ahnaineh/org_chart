@@ -115,8 +115,9 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
               maintainAnimation: true,
               maintainSize: true,
               maintainState: true,
-              child: GestureDetector(
-                onTapDown: handleTapDown,
+              child: Listener(
+                onPointerDown: handleTapDown,
+                child: GestureDetector(
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:
                     widget.isDraggable ? (_) => startDragging(node) : null,
@@ -138,7 +139,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
                   ),
                 ),
               ),
-            ),
+            )),
           ),
         ),
       );
