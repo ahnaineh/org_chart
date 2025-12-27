@@ -40,6 +40,9 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// Cache for getSpouseList method to improve performance
   final Map<String, List<Node<E>>> _spousesCache = {};
 
+  /// Cache for generation level calculations
+  final Map<String, int> _levelCache = {};
+
   /// Creates a genogram controller with the specified parameters
   ///
   /// [items]: List of data items to display in the genogram
@@ -94,6 +97,7 @@ class GenogramController<E> extends BaseGraphController<E> {
   void _clearCaches() {
     _parentsCache.clear();
     _spousesCache.clear();
+    _levelCache.clear();
   }
 
   @override
@@ -219,6 +223,52 @@ class GenogramController<E> extends BaseGraphController<E> {
     return result;
   }
 
+  /// Returns the generation level (depth) of a node in the genogram
+  ///
+  /// Level is 1 for individuals with no parents, and increases by 1 for each
+  /// generation based on the deepest parent chain.
+  int getLevel(Node<E> node) {
+    final String nodeId = idProvider(node.data);
+
+    if (_levelCache.containsKey(nodeId)) {
+      return _levelCache[nodeId]!;
+    }
+
+    int level = 1;
+    final String? fatherId = fatherProvider(node.data);
+    final String? motherId = motherProvider(node.data);
+
+    int fatherLevel = 0;
+    int motherLevel = 0;
+
+    if (fatherId != null) {
+      try {
+        final fatherNode =
+            nodes.firstWhere((n) => idProvider(n.data) == fatherId);
+        fatherLevel = getLevel(fatherNode);
+      } catch (_) {
+        fatherLevel = 0;
+      }
+    }
+
+    if (motherId != null) {
+      try {
+        final motherNode =
+            nodes.firstWhere((n) => idProvider(n.data) == motherId);
+        motherLevel = getLevel(motherNode);
+      } catch (_) {
+        motherLevel = 0;
+      }
+    }
+
+    if (fatherLevel > 0 || motherLevel > 0) {
+      level = 1 + max(fatherLevel, motherLevel);
+    }
+
+    _levelCache[nodeId] = level;
+    return level;
+  }
+
   /// Calculates the positions of all nodes in the genogram
   ///
   /// This is the core layout algorithm for the genogram. It:
@@ -274,6 +324,10 @@ class GenogramController<E> extends BaseGraphController<E> {
     /// [y]: Y-coordinate for this node
     /// [level]: Current generation level (0 = roots)
     double layoutFamily(Node<E> node, double x, double y, int level) {
+      final double generationStep = orientation == GraphOrientation.topToBottom
+          ? boxSize.height + runSpacing
+          : boxSize.width + runSpacing;
+
       // Ensure starting position is never less than minimum
       if (orientation == GraphOrientation.topToBottom) {
         x = max(x, minPos);
@@ -284,19 +338,6 @@ class GenogramController<E> extends BaseGraphController<E> {
       // Skip if this node has already been positioned
       if (laidOut.contains(node)) {
         return 0; // No additional space required
-      }
-
-      // Check if we need to adjust position to avoid overlapping with existing nodes
-      if (levelEdges.containsKey(level)) {
-        if (orientation == GraphOrientation.topToBottom) {
-          // Ensure we start after the rightmost node at this level plus spacing
-          x = max(x, levelEdges[level]! + spacing);
-        } else {
-          // For leftToRight, ensure we start after the bottommost node plus spacing
-          y = max(y, levelEdges[level]! + spacing);
-        }
-      } else {
-        levelEdges[level] = orientation == GraphOrientation.topToBottom ? x : y;
       }
 
       // Build the couple group (a husband and his wife/wives, or just a single individual)
@@ -344,6 +385,34 @@ class GenogramController<E> extends BaseGraphController<E> {
         return 0;
       }
 
+      // Align couple generation based on the deepest ancestry within the group
+      final int groupLevel = coupleGroup
+          .map(getLevel)
+          .fold<int>(1, (current, next) => max(current, next));
+      final int desiredLevel = max(level + 1, groupLevel);
+      if (desiredLevel > level + 1) {
+        final double levelShift = (desiredLevel - (level + 1)) * generationStep;
+        if (orientation == GraphOrientation.topToBottom) {
+          y += levelShift;
+        } else {
+          x += levelShift;
+        }
+        level = desiredLevel - 1;
+      }
+
+      // Check if we need to adjust position to avoid overlapping with existing nodes
+      if (levelEdges.containsKey(level)) {
+        if (orientation == GraphOrientation.topToBottom) {
+          // Ensure we start after the rightmost node at this level plus spacing
+          x = max(x, levelEdges[level]! + spacing);
+        } else {
+          // For leftToRight, ensure we start after the bottommost node plus spacing
+          y = max(y, levelEdges[level]! + spacing);
+        }
+      } else {
+        levelEdges[level] = orientation == GraphOrientation.topToBottom ? x : y;
+      }
+
       // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
       final double groupSize = groupCount *
@@ -386,9 +455,7 @@ class GenogramController<E> extends BaseGraphController<E> {
       }
 
       // Distance for children from parent
-      final double childDistance = orientation == GraphOrientation.topToBottom
-          ? boxSize.height + runSpacing
-          : boxSize.width + runSpacing;
+      final double childDistance = generationStep;
 
       // Position coordinates for children based on orientation
       final double childrenX =

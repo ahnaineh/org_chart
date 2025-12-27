@@ -469,7 +469,7 @@ class EdgePainterUtils {
           boxSize: boxSize,
           orientation: orientation,
         );
-        
+
       case ConnectionType.genogramParentChild:
         return _generateGenogramParentChildPoints(
           start: start,

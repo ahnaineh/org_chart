@@ -67,7 +67,7 @@ class GenogramUtils {
       // Grandparents - First Generation
       FamilyMember(
         id: 'gf1',
-        name: 'Robert Smith',
+        name: 'Hassan Nasser',
         gender: 0,
         spouses: ['gm1'],
         // relationshipTypes: {'gm1': RelationshipType.married},
@@ -77,7 +77,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gm1',
-        name: 'Mary Smith',
+        name: 'Salma Nasser',
         gender: 1,
         spouses: ['gf1'],
         // relationshipTypes: {'gf1': RelationshipType.married},
@@ -89,7 +89,7 @@ class GenogramUtils {
       // First generation - Other side
       FamilyMember(
         id: 'gf2',
-        name: 'James Johnson',
+        name: 'Khalil Nasser',
         gender: 0,
         spouses: ['gm2', 'gm2b'],
         // relationshipTypes: {
@@ -102,7 +102,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gm2',
-        name: 'Emma Johnson',
+        name: 'Nadia Nasser',
         gender: 1,
         spouses: ['gf2'],
         // relationshipTypes: {'gf2': RelationshipType.divorced},
@@ -112,7 +112,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gm2b',
-        name: 'Helen Johnson',
+        name: 'Amal Nasser',
         gender: 1,
         spouses: ['gf2'],
         // relationshipTypes: {'gf2': RelationshipType.married},
@@ -120,10 +120,46 @@ class GenogramUtils {
         isDeceased: false,
       ),
 
+      // Root spouse with ancestors (layout edge case)
+      FamilyMember(
+        id: 'ce_f',
+        name: 'Adel Hamdan',
+        gender: 0,
+        spouses: ['ce_m'],
+        dateOfBirth: DateTime(1938),
+        isDeceased: false,
+      ),
+      FamilyMember(
+        id: 'ce_m',
+        name: 'Rima Hamdan',
+        gender: 1,
+        spouses: ['ce_f'],
+        dateOfBirth: DateTime(1942),
+        isDeceased: false,
+      ),
+      FamilyMember(
+        id: 'ce1',
+        name: 'Celena Hamdan',
+        gender: 1,
+        fatherId: 'ce_f',
+        motherId: 'ce_m',
+        spouses: ['z1'],
+        dateOfBirth: DateTime(1965),
+        isDeceased: false,
+      ),
+      FamilyMember(
+        id: 'z1',
+        name: 'Ziad Ali',
+        gender: 0,
+        spouses: ['ce1'],
+        dateOfBirth: DateTime(1960),
+        isDeceased: false,
+      ),
+
       // Second generation - Parents
       FamilyMember(
         id: 'f1',
-        name: 'John Smith',
+        name: 'Ali Nasser',
         gender: 0,
         fatherId: 'gf1',
         motherId: 'gm1',
@@ -134,7 +170,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'm1',
-        name: 'Sarah Smith',
+        name: 'Rana Nasser',
         gender: 1,
         fatherId: 'gf2',
         motherId: 'gm2',
@@ -145,7 +181,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'm2',
-        name: 'Sarah Smith',
+        name: 'Maya Saad',
         gender: 1,
         // fatherId: 'gf2',
         // motherId: 'gm2',
@@ -156,7 +192,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'm3',
-        name: 'Sarah Smith',
+        name: 'Dima Saad',
         gender: 1,
         // fatherId: 'gf2',
         // motherId: 'gm2',
@@ -167,7 +203,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'm4',
-        name: 'Sarah Smith',
+        name: 'Hala Saad',
         gender: 1,
         // fatherId: 'gf2',
         // motherId: 'gm2',
@@ -179,107 +215,8 @@ class GenogramUtils {
 
       // Uncle with multiple marriages
       FamilyMember(
-        id: 'u2241',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u201',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u2901',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u-21',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u219=',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u21',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      FamilyMember(
-        id: 'u212',
-        name: 'Thomas Smith',
-        gender: 0,
-        fatherId: 'gf1',
-        motherId: 'gm1',
-        // spouses: ['a1', 'a2'],
-        // relationshipTypes: {
-        //   'a1': RelationshipType.divorced,
-        //   'a2': RelationshipType.married
-        // },
-        dateOfBirth: DateTime(1955),
-        isDeceased: false,
-      ),
-      // Uncle with multiple marriages
-      FamilyMember(
         id: 'u1',
-        name: 'Thomas Smith',
+        name: 'Fadi Nasser',
         gender: 0,
         fatherId: 'gf1',
         motherId: 'gm1',
@@ -293,7 +230,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'a1',
-        name: 'Patricia',
+        name: 'Lina Qasem',
         gender: 1,
         spouses: ['u1'],
         // relationshipTypes: {'u1': RelationshipType.divorced},
@@ -302,7 +239,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'a2',
-        name: 'Jennifer',
+        name: 'Nour Qasem',
         gender: 1,
         spouses: ['u1'],
         // relationshipTypes: {'u1': RelationshipType.married},
@@ -313,7 +250,7 @@ class GenogramUtils {
       // Aunt from second marriage
       FamilyMember(
         id: 'a3',
-        name: 'Barbara Johnson',
+        name: 'Jana Nasser',
         gender: 1,
         fatherId: 'gf2',
         motherId: 'gm2b',
@@ -324,7 +261,7 @@ class GenogramUtils {
       // Third generation - Siblings including twins
       FamilyMember(
         id: 'c1',
-        name: 'Michael Smith',
+        name: 'Karim Nasser',
         gender: 0,
         fatherId: 'f1',
         motherId: 'm1',
@@ -335,7 +272,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'c2',
-        name: 'David Smith',
+        name: 'Tarek Nasser',
         gender: 0,
         fatherId: 'f1',
         motherId: 'm1',
@@ -346,7 +283,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'c3',
-        name: 'Daniel Smith',
+        name: 'Rami Nasser',
         gender: 0,
         fatherId: 'f1',
         motherId: 'm1',
@@ -356,7 +293,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'c4',
-        name: 'Emily Smith',
+        name: 'Yara Nasser',
         gender: 1,
         fatherId: 'f1',
         motherId: 'm1',
@@ -367,7 +304,7 @@ class GenogramUtils {
       // Cousins from uncle's first marriage
       FamilyMember(
         id: 'c5',
-        name: 'Jessica',
+        name: 'Leila Nasser',
         gender: 1,
         fatherId: 'u1',
         motherId: 'a1',
@@ -378,7 +315,7 @@ class GenogramUtils {
       // Cousins from uncle's second marriage - Fraternal twins
       FamilyMember(
         id: 'c6',
-        name: 'Matthew',
+        name: 'Omar Nasser',
         gender: 0,
         fatherId: 'u1',
         motherId: 'a2',
@@ -389,7 +326,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'c7',
-        name: 'Olivia',
+        name: 'Hiba Nasser',
         gender: 1,
         fatherId: 'u1',
         motherId: 'a2',
@@ -402,7 +339,7 @@ class GenogramUtils {
       // Fourth generation
       FamilyMember(
         id: 'p1',
-        name: 'Amanda Smith',
+        name: 'Mira Saleh',
         gender: 1,
         spouses: ['c1'],
         // relationshipTypes: {'c1': RelationshipType.married},
@@ -411,7 +348,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gc1',
-        name: 'Sophia Smith',
+        name: 'Samar Nasser',
         gender: 1,
         fatherId: 'c1',
         motherId: 'p1',
@@ -420,7 +357,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gc2',
-        name: 'JJJ',
+        name: 'Jad Nasser',
         // spouses: ['45gc1'],
         gender: 0,
         dateOfBirth: DateTime(2008),
@@ -428,7 +365,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: '45gc1',
-        name: 'FFF',
+        name: 'Yasmin Mansour',
         gender: 1,
         // spouses: ['gc2'],
         dateOfBirth: DateTime(2005),
@@ -436,7 +373,7 @@ class GenogramUtils {
       ),
       FamilyMember(
         id: 'gc542',
-        name: 'CCC',
+        name: 'Sami Mansour',
         gender: 0,
         motherId: '45gc1',
         fatherId: 'gc2',

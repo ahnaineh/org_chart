@@ -1,3 +1,7 @@
+## [5.0.4]
+1. Genogram: adjust couple generation to avoid parent-child arrow oddities when spouse has ancestors.
+2. Example: refresh sample family names and remove duplicate siblings.
+
 ## [5.0.3]
 1. Genogram update arrows when drawing link from parents to child.
 2. Update [Docs](https://ahnaineh.github.io/org_chart)

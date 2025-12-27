@@ -54,7 +54,7 @@ class _NodeDialogState extends State<NodeDialog> {
           if (widget.isNewNode)
             DropdownButtonFormField<String?>(
               decoration: const InputDecoration(labelText: 'Parent Node'),
-              value: parentId,
+              initialValue: parentId,
               items: [
                 const DropdownMenuItem(
                   value: null,
