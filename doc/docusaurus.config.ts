@@ -86,7 +86,7 @@ const config: Config = {
     announcementBar: {
       id: 'v5_release',
       content:
-        '🎉 <b>Version 5.0.2 is here!</b> Enhanced performance, new Genogram features, and improved customization. <a href="/org_chart/docs/7.0.0-changelog">See what\'s new →</a>',
+        '🎉 <b>Version 5.1.0 is here!</b> Enhanced performance, new Genogram features, and improved customization. <a href="/org_chart/docs/7.0.0-changelog">See what\'s new →</a>',
       backgroundColor: '#667eea',
       textColor: '#ffffff',
       isCloseable: true,
