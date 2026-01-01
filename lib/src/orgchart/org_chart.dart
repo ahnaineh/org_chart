@@ -41,11 +41,22 @@ class OrgChart<E> extends BaseGraph<E> {
 
 class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   late OrgChartEdgePainter<E> _edgePainter;
+  TextDirection _textDirection = TextDirection.ltr;
 
   @override
   void initState() {
     super.initState();
     _edgePainter = _createEdgePainter();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final TextDirection direction = Directionality.of(context);
+    if (_textDirection != direction) {
+      _textDirection = direction;
+      _edgePainter = _createEdgePainter();
+    }
   }
 
   @override
@@ -62,6 +73,7 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
       cornerRadius: widget.cornerRadius,
       lineEndingType: widget.lineEndingType,
       edgeStyleProvider: widget.edgeStyleProvider,
+      textDirection: _textDirection,
     );
   }
 
@@ -91,8 +103,8 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   @override
   Widget buildEdges() {
     return CustomPaint(
+      size: controller.getSize(),
       painter: _edgePainter,
-      child: SizedBox.shrink(),
     );
   }
 
@@ -101,31 +113,36 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
       return const SizedBox.shrink();
     }
 
-    return EdgeLabelLayer<E>(
-      edges: _edgePainter.buildEdges(),
-      labelBuilder: widget.edgeLabelBuilder!,
-      config: widget.edgeLabelConfig,
-      graphSize: controller.getSize(),
-      edgeStyleProvider: widget.edgeStyleProvider,
+    final Size graphSize = controller.getSize();
+    return SizedBox(
+      width: graphSize.width,
+      height: graphSize.height,
+      child: EdgeLabelLayer<E>(
+        edges: _edgePainter.buildEdges(),
+        labelBuilder: widget.edgeLabelBuilder!,
+        config: widget.edgeLabelConfig,
+        graphSize: graphSize,
+        edgeStyleProvider: widget.edgeStyleProvider,
+      ),
     );
   }
 
   @override
-  List<CustomAnimatedPositioned> buildNodes(BuildContext context,
+  List<CustomAnimatedPositionedDirectional> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     final nodes = nodesToDraw ?? controller.roots;
-    final List<CustomAnimatedPositioned> nodeWidgets = [];
+    final List<CustomAnimatedPositionedDirectional> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
 
       nodeWidgets.add(
-        CustomAnimatedPositioned(
+        CustomAnimatedPositionedDirectional(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
           duration: nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
-          left: node.position.dx,
+          start: node.position.dx,
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,

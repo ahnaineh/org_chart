@@ -77,10 +77,10 @@ packages:
     dependency: transitive
     description:
       name: custom_interactive_viewer
-      sha256: b81623e13c16dd7a9bf417a7379f270ef1256a8c89b34b327945c26bb7017549
+      sha256: "613facb0a23bacdbdfd9b00ffc0682ca9fde60bb68a590a1663e9fdd78dab646"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.7"
+    version: "0.0.9"
   fake_async:
     dependency: transitive
     description:
@@ -196,17 +196,17 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c
+      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
       url: "https://pub.dev"
     source: hosted
-    version: "1.16.0"
+    version: "1.17.0"
   org_chart:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "5.0.3"
+    version: "5.1.0"
   path:
     dependency: transitive
     description:
@@ -328,10 +328,10 @@ packages:
     dependency: transitive
     description:
       name: test_api
-      sha256: "522f00f556e73044315fa4585ec3270f1808a4b186c936e612cab0b565ff1e00"
+      sha256: ab2726c1a94d3176a45960b6234466ec367179b87dd74f1611adb1f3b5fb9d55
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.6"
+    version: "0.7.7"
   typed_data:
     dependency: transitive
     description:

@@ -22,7 +22,6 @@ class Genogram<E> extends BaseGraph<E> {
   Genogram({
     super.key,
     required super.controller,
-    // required GenogramController<E> super.controller,
     required super.builder,
     super.isDraggable,
     super.curve,
@@ -52,10 +51,21 @@ class Genogram<E> extends BaseGraph<E> {
 
 class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   late GenogramEdgePainter<E> _edgePainter;
+  TextDirection _textDirection = TextDirection.ltr;
   @override
   void initState() {
     super.initState();
     _edgePainter = _createEdgePainter();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final TextDirection direction = Directionality.of(context);
+    if (_textDirection != direction) {
+      _textDirection = direction;
+      _edgePainter = _createEdgePainter();
+    }
   }
 
   @override
@@ -74,6 +84,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
       config: widget.edgeConfig,
       marriageStatusProvider: widget.marriageStatusProvider,
       edgeStyleProvider: widget.edgeStyleProvider,
+      textDirection: _textDirection,
     );
   }
 
@@ -102,6 +113,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   @override
   Widget buildEdges() {
     return CustomPaint(
+      size: controller.getSize(),
       painter: _edgePainter,
     );
   }
@@ -111,31 +123,36 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
       return const SizedBox.shrink();
     }
 
-    return EdgeLabelLayer<E>(
-      edges: _edgePainter.buildEdges(),
-      labelBuilder: widget.edgeLabelBuilder!,
-      config: widget.edgeLabelConfig,
-      graphSize: controller.getSize(),
-      edgeStyleProvider: widget.edgeStyleProvider,
+    final Size graphSize = controller.getSize();
+    return SizedBox(
+      width: graphSize.width,
+      height: graphSize.height,
+      child: EdgeLabelLayer<E>(
+        edges: _edgePainter.buildEdges(),
+        labelBuilder: widget.edgeLabelBuilder!,
+        config: widget.edgeLabelConfig,
+        graphSize: graphSize,
+        edgeStyleProvider: widget.edgeStyleProvider,
+      ),
     );
   }
 
   @override
-  List<CustomAnimatedPositioned> buildNodes(BuildContext context,
+  List<CustomAnimatedPositionedDirectional> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     final nodes = nodesToDraw ?? controller.nodes;
-    final List<CustomAnimatedPositioned> nodeWidgets = [];
+    final List<CustomAnimatedPositionedDirectional> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
 
       nodeWidgets.add(
-        CustomAnimatedPositioned(
+        CustomAnimatedPositionedDirectional(
           key: ValueKey(nodeId),
           isBeingDragged: nodeId == draggedID,
           duration: nodeId == draggedID ? Duration.zero : widget.duration,
           curve: widget.curve,
-          left: node.position.dx,
+          start: node.position.dx,
           top: node.position.dy,
           width: controller.boxSize.width,
           height: controller.boxSize.height,

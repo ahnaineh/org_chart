@@ -40,8 +40,7 @@ class _EdgeLabelLayerState<E> extends State<EdgeLabelLayer<E>> {
       final Widget? label = widget.labelBuilder(edge);
       if (label == null) continue;
 
-      final double labelOpacity =
-          (style.opacity ?? 1.0).clamp(0.0, 1.0);
+      final double labelOpacity = (style.opacity ?? 1.0).clamp(0.0, 1.0);
       if (labelOpacity <= 0) continue;
 
       final Size size = _sizes[edge.id] ?? Size.zero;
@@ -162,8 +161,8 @@ class _PathProbe {
 class _EdgeLabelLayout {
   static _PathProbe probe(List<Offset> points, EdgeLabelAnchor anchor) {
     if (points.length < 2) {
-      return _PathProbe(points.isEmpty ? Offset.zero : points.first,
-          const Offset(1, 0));
+      return _PathProbe(
+          points.isEmpty ? Offset.zero : points.first, const Offset(1, 0));
     }
 
     final double fraction;
@@ -184,8 +183,8 @@ class _EdgeLabelLayout {
 
   static _PathProbe _pointAtFraction(List<Offset> points, double fraction) {
     if (points.length < 2) {
-      return _PathProbe(points.isEmpty ? Offset.zero : points.first,
-          const Offset(1, 0));
+      return _PathProbe(
+          points.isEmpty ? Offset.zero : points.first, const Offset(1, 0));
     }
 
     double totalLength = 0;

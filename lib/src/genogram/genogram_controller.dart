@@ -420,8 +420,7 @@ class GenogramController<E> extends BaseGraphController<E> {
 
       // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
-      final double groupSpacing =
-          groupCount > 1 ? spouseSpacing : spacing;
+      final double groupSpacing = groupCount > 1 ? spouseSpacing : spacing;
       final double groupSize = groupCount *
               (orientation == GraphOrientation.topToBottom
                   ? boxSize.width

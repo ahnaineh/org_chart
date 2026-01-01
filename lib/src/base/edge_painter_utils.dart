@@ -103,6 +103,26 @@ class EdgePainterUtils {
     this.arrowHeadAngle = defaultArrowHeadAngle,
   });
 
+  /// Resolve points based on the current text direction.
+  List<Offset> resolveDirectionalPoints({
+    required List<Offset> points,
+    required double width,
+    required TextDirection textDirection,
+  }) {
+    if (textDirection != TextDirection.rtl) return points;
+    return points.map((point) => Offset(width - point.dx, point.dy)).toList();
+  }
+
+  /// Resolve a single point based on the current text direction.
+  Offset resolveDirectionalOffset({
+    required Offset offset,
+    required double width,
+    required TextDirection textDirection,
+  }) {
+    if (textDirection != TextDirection.rtl) return offset;
+    return Offset(width - offset.dx, offset.dy);
+  }
+
   /// Draw a line between two points
   void drawConnection(Canvas canvas, Offset start, Offset end, Size boxSize,
       GraphOrientation orientation,

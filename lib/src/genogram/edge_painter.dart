@@ -39,6 +39,9 @@ class GenogramEdgePainter<E> extends CustomPainter {
   /// Function to get marriage status for a relationship (defaults to married)
   final MarriageStatus Function(E person, E spouse)? marriageStatusProvider;
 
+  /// Text direction for handling LTR/RTL layouts
+  final TextDirection textDirection;
+
   GenogramEdgePainter({
     required this.controller,
     required Paint linePaint,
@@ -48,6 +51,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
     this.config = const GenogramEdgeConfig(),
     this.marriageStatusProvider,
     this.edgeStyleProvider,
+    this.textDirection = TextDirection.ltr,
   }) : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
@@ -77,7 +81,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
           if (opacity < 1.0) {
             canvas.saveLayer(
               null,
-              Paint()..color = Colors.white.withOpacity(opacity),
+              Paint()..color = Colors.white.withValues(alpha: opacity),
             );
             decorator.paint(canvas, start, end, strokeWidth: paint.strokeWidth);
             canvas.restore();
@@ -136,8 +140,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
         paintStyle: marriageStyle.lineStyle.paintStyle,
       );
 
-      final Offset marriagePoint =
-          _getMarriagePoint(husbandOffset, wifeOffset);
+      final Offset marriagePoint = _getMarriagePoint(husbandOffset, wifeOffset);
       marriagePoints[marriage.marriageKey] = marriagePoint;
 
       edges.add(EdgeInfo<E>(
@@ -160,7 +163,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
     }
 
     edges.addAll(_buildParentChildEdges(nodes, marriagePoints, marriageColors));
-    return edges;
+    return _applyTextDirection(edges);
   }
 
   List<EdgeInfo<E>> _buildParentChildEdges(
@@ -276,8 +279,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
 
     return [
       EdgeInfo<E>(
-        id:
-            'pc:${controller.idProvider(parent.data)}:${controller.idProvider(child.data)}',
+        id: 'pc:${controller.idProvider(parent.data)}:${controller.idProvider(child.data)}',
         type: EdgeType.genogramParentChild,
         source: parent,
         target: child,
@@ -369,6 +371,37 @@ class GenogramEdgePainter<E> extends CustomPainter {
     }
   }
 
+  List<EdgeInfo<E>> _applyTextDirection(List<EdgeInfo<E>> edges) {
+    if (textDirection != TextDirection.rtl) return edges;
+    final double width = controller.getSize().width;
+    return edges.map((edge) => _mirrorEdge(edge, width)).toList();
+  }
+
+  EdgeInfo<E> _mirrorEdge(EdgeInfo<E> edge, double width) {
+    final List<Offset> points = utils.resolveDirectionalPoints(
+      points: edge.points,
+      width: width,
+      textDirection: textDirection,
+    );
+
+    if (!edge.data.containsKey('labelPoint')) {
+      return edge.copyWith(points: points);
+    }
+
+    final Object? labelPoint = edge.data['labelPoint'];
+    if (labelPoint is! Offset) {
+      return edge.copyWith(points: points);
+    }
+
+    final Map<String, Object?> data = Map<String, Object?>.from(edge.data);
+    data['labelPoint'] = utils.resolveDirectionalOffset(
+      offset: labelPoint,
+      width: width,
+      textDirection: textDirection,
+    );
+
+    return edge.copyWith(points: points, data: data);
+  }
 
   @override
   bool shouldRepaint(covariant GenogramEdgePainter<E> oldDelegate) {
@@ -380,7 +413,8 @@ class GenogramEdgePainter<E> extends CustomPainter {
         oldDelegate.utils.linePaint != utils.linePaint ||
         oldDelegate.utils.cornerRadius != utils.cornerRadius ||
         oldDelegate.utils.arrowStyle != utils.arrowStyle ||
-        oldDelegate.utils.lineEndingType != utils.lineEndingType;
+        oldDelegate.utils.lineEndingType != utils.lineEndingType ||
+        oldDelegate.textDirection != textDirection;
   }
 }
 

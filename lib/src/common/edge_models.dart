@@ -93,18 +93,16 @@ class EdgeStyle {
 
   Paint applyTo(Paint basePaint) {
     final Color baseColor = color ?? basePaint.color;
-    final double opacityValue =
-        (opacity ?? 1.0).clamp(0.0, 1.0).toDouble();
-    final double mergedOpacity = (baseColor.opacity * opacityValue)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final double opacityValue = (opacity ?? 1.0).clamp(0.0, 1.0).toDouble();
+    final double mergedOpacity =
+        (baseColor.a * opacityValue).clamp(0.0, 1.0).toDouble();
 
     return Paint()
       ..blendMode = basePaint.blendMode
       ..isAntiAlias = basePaint.isAntiAlias
       ..strokeJoin = basePaint.strokeJoin
       ..strokeMiterLimit = basePaint.strokeMiterLimit
-      ..color = baseColor.withOpacity(mergedOpacity)
+      ..color = baseColor.withValues(alpha: mergedOpacity)
       ..strokeWidth = strokeWidth ?? basePaint.strokeWidth
       ..style = paintStyle ?? basePaint.style
       ..strokeCap = strokeCap ?? basePaint.strokeCap;

@@ -1,3 +1,10 @@
+## [5.2.0]
+1. Bump `custom_interactive_viewer` to version 0.0.9
+2. Add RTL support across org chart and genogram layouts (nodes, edges, labels).
+3. Fix node positioning in RTL by using directional placement.
+4. Fix edge/label rendering in RTL by mirroring edge points and sizing edge layers to graph bounds.
+5. Fix: Update usage of deprecated api in the example.
+
 ## [5.1.0]
 1. Add `edgeStyleProvider` for per-edge styling across org charts and genograms.
 2. Add widget-based edge labels via `edgeLabelBuilder` and `EdgeLabelConfig`.
