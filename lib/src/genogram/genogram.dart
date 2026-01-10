@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/custom_animated_positioned.dart';
 import 'package:org_chart/src/genogram/genogram_enums.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
@@ -8,6 +7,7 @@ import 'package:org_chart/src/base/base_graph.dart';
 import 'package:org_chart/src/genogram/edge_painter.dart';
 import 'package:org_chart/src/genogram/genogram_edge_config.dart';
 import 'package:org_chart/src/common/edge_label_layer.dart';
+import 'package:org_chart/src/rendering/graph_render_widget.dart';
 
 /// A widget that displays an organizational chart
 class Genogram<E> extends BaseGraph<E> {
@@ -90,10 +90,17 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
 
   @override
   List<Widget> buildGraphElements(BuildContext context) {
+    final Size graphSize = controller.getSize();
     return [
       buildEdges(),
       buildEdgeLabels(),
-      ...buildNodes(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
+      SizedBox(
+        width: graphSize.width,
+        height: graphSize.height,
+        child: GraphRenderWidget(
+          children: buildNodes(context),
+        ),
+      ),
     ];
   }
 
@@ -138,22 +145,23 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   }
 
   @override
-  List<CustomAnimatedPositionedDirectional> buildNodes(BuildContext context,
+  List<AnimatedGraphChild> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     final nodes = nodesToDraw ?? controller.nodes;
-    final List<CustomAnimatedPositionedDirectional> nodeWidgets = [];
+    final List<AnimatedGraphChild> normalNodes = [];
+    final List<AnimatedGraphChild> draggedNodes = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
+      final bool isBeingDragged = nodeId == draggedID;
 
-      nodeWidgets.add(
-        CustomAnimatedPositionedDirectional(
-          key: ValueKey(nodeId),
-          isBeingDragged: nodeId == draggedID,
-          duration: nodeId == draggedID ? Duration.zero : widget.duration,
-          curve: widget.curve,
-          start: node.position.dx,
-          top: node.position.dy,
+      final AnimatedGraphChild positioned = AnimatedGraphChild(
+        key: ValueKey(nodeId),
+        nodeId: nodeId,
+        offset: node.position,
+        duration: isBeingDragged ? Duration.zero : widget.duration,
+        curve: widget.curve,
+        child: SizedBox(
           width: controller.boxSize.width,
           height: controller.boxSize.height,
           child: RepaintBoundary(
@@ -179,7 +187,7 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
                     hideNodes: ({hide, center = true}) =>
                         toggleHideNodes(node, hide, center),
                     nodesHidden: node.hideNodes,
-                    isBeingDragged: nodeId == draggedID,
+                    isBeingDragged: isBeingDragged,
                     isOverlapped: overlappingNodes.isNotEmpty &&
                         overlappingNodes.first.data == node.data,
                   ),
@@ -189,9 +197,15 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
           ),
         ),
       );
+
+      if (isBeingDragged) {
+        draggedNodes.add(positioned);
+      } else {
+        normalNodes.add(positioned);
+      }
     }
 
-    return nodeWidgets;
+    return [...normalNodes, ...draggedNodes];
   }
 
   @override
