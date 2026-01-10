@@ -32,6 +32,21 @@ export 'src/genogram/marriage_style.dart'
 export 'src/genogram/genogram_enums.dart' show Gender, MarriageStatus;
 export 'src/base/base_controller.dart'
     show BaseGraphController, GraphOrientation;
+
+export 'src/layout/layout.dart'
+    show
+        LayoutDiagnostics,
+        LayoutGraph,
+        LayoutNode,
+        LayoutOrientation,
+        LayoutRequest,
+        LayoutResult,
+        GraphLayoutEngine,
+        OrgChartLayoutEngine,
+        GenogramLayoutEngine,
+        OrgChartLayoutGraph,
+        GenogramLayoutGraph,
+        GenogramPersonRelations;
 export 'package:custom_interactive_viewer/custom_interactive_viewer.dart'
     show
         CustomInteractiveViewerController,
