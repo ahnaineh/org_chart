@@ -96,6 +96,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T>
   late final Listenable _edgeRepaintListenable;
   final GlobalKey _graphLayoutKey = GlobalKey();
   final GlobalKey _repaintBoundaryKey = GlobalKey();
+  bool _hasCenteredGraph = false;
 
   @protected
   AnimationController get layoutAnimationController =>
@@ -130,7 +131,13 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T>
 
   void _initializeController() {
     widget.controller.setState = setState;
-    widget.controller.centerGraph = viewerController.center;
+    widget.controller.centerGraph = () {
+      final Size contentSize = widget.controller.contentSize;
+      if (contentSize.isEmpty) return;
+      final bool animate = _hasCenteredGraph;
+      _hasCenteredGraph = true;
+      viewerController.center(contentSize: contentSize, animate: animate);
+    };
     widget.controller.setViewerController(viewerController);
     widget.controller.repaintBoundaryKey = _repaintBoundaryKey;
     widget.controller.markNeedsLayout = _markGraphLayout;
@@ -161,6 +168,7 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T>
     }
     if (oldWidget.controller != widget.controller) {
       widget.controller.repaintBoundaryKey = _repaintBoundaryKey;
+      _hasCenteredGraph = false;
     }
   }
 

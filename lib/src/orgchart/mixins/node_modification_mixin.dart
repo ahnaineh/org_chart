@@ -80,7 +80,14 @@ mixin NodeModificationMixin<E> {
 
     if (existingIndex != -1) {
       // Replace existing item
-      nodes[existingIndex] = Node(data: item);
+      final existingNode = nodes[existingIndex];
+      nodes[existingIndex] = Node(
+        data: item,
+        position: existingNode.position,
+        size: existingNode.size,
+        renderPosition: existingNode.renderPosition,
+        hideNodes: existingNode.hideNodes,
+      );
     } else {
       // Add new item if it doesn't exist
       nodes.add(Node(data: item));

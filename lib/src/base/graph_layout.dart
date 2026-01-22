@@ -103,6 +103,7 @@ class RenderGraphLayout<E> extends RenderBox
   bool _isAnimating = false;
   bool _deferredExplicitLayout = false;
   bool _deferredCollision = false;
+  bool _hasLaidOut = false;
 
   RenderGraphLayout({
     required BaseGraphController<E> controller,
@@ -120,6 +121,7 @@ class RenderGraphLayout<E> extends RenderBox
   set controller(BaseGraphController<E> value) {
     if (_controller == value) return;
     _controller = value;
+    _hasLaidOut = false;
     markNeedsLayout();
   }
 
@@ -254,8 +256,14 @@ class RenderGraphLayout<E> extends RenderBox
     }
 
     _syncParentOffsets();
-    _maybeStartAnimation(layoutPerformed || collisionPerformed);
+    if (_hasLaidOut) {
+      _maybeStartAnimation(layoutPerformed || collisionPerformed);
+    } else {
+      _isAnimating = false;
+      _animationController.stop();
+    }
     _applyRenderPositions();
+    _hasLaidOut = true;
   }
 
   bool _isAnyNodeDragging() {
