@@ -22,7 +22,10 @@ GenogramController<T>({
   required String? Function(T) motherProvider,
   required List<String>? Function(T) spousesProvider,
   required int Function(T) genderProvider,
-  Size boxSize = const Size(150, 150),
+  SizeChangeAction sizeChangeAction = SizeChangeAction.ignore,
+  double sizeChangeThreshold = 0.0,
+  bool preserveManualPositionsOnSizeChange = false,
+  CollisionAvoidanceSettings collisionSettings = const CollisionAvoidanceSettings(),
   double spacing = 30,
   double? spouseSpacing,
   double runSpacing = 60,
@@ -40,11 +43,23 @@ GenogramController<T>({
 | `motherProvider` | `String? Function(T)` | ✅ | - | Function that returns the mother's ID |
 | `spousesProvider` | `List<String>? Function(T)` | ✅ | - | Function that returns spouse IDs |
 | `genderProvider` | `int Function(T)` | ✅ | - | Function that returns gender (0=male, 1=female) |
-| `boxSize` | `Size` | ❌ | `Size(150, 150)` | Size of each person node |
+| `sizeChangeAction` | `SizeChangeAction` | ❌ | `ignore` | What to do when a node's rendered size changes |
+| `sizeChangeThreshold` | `double` | ❌ | 0.0 | Minimum size delta before triggering collision handling |
+| `preserveManualPositionsOnSizeChange` | `bool` | ❌ | false | Keep manually positioned nodes fixed during size-change collision handling |
+| `collisionSettings` | `CollisionAvoidanceSettings` | ❌ | `CollisionAvoidanceSettings()` | Settings for size-change collision handling |
 | `spacing` | `double` | ❌ | 30 | Horizontal spacing between siblings |
 | `spouseSpacing` | `double?` | ❌ | `spacing` | Spacing between spouses in a couple group |
 | `runSpacing` | `double` | ❌ | 60 | Vertical spacing between generations |
 | `orientation` | `GraphOrientation` | ❌ | `topToBottom` | Layout orientation |
+
+Node sizes are inferred from each node widget's layout size.
+
+`SizeChangeAction.ignore` disables automatic handling when a node changes size.
+Use `SizeChangeAction.collisionAvoidance` to run a global collision pass when
+node sizes change.
+
+`CollisionAvoidanceSettings` controls the collision pass with:
+`maxIterations`, `padding`, and `minSeparation`.
 
 ## 🔧 Properties
 
@@ -63,7 +78,10 @@ GenogramController<T>({
 | Property | Type | Description |
 |----------|------|-------------|
 | `orientation` | `GraphOrientation` | Chart orientation (vertical/horizontal) |
-| `boxSize` | `Size` | Size of person nodes |
+| `sizeChangeAction` | `SizeChangeAction` | Size-change behavior for automatic collision handling |
+| `sizeChangeThreshold` | `double` | Threshold for size-change collision handling |
+| `preserveManualPositionsOnSizeChange` | `bool` | Keep dragged nodes fixed during size-change collision handling |
+| `collisionSettings` | `CollisionAvoidanceSettings` | Settings for size-change collision handling |
 | `spacing` | `double` | Horizontal spacing between siblings |
 | `runSpacing` | `double` | Vertical spacing between generations |
 | `viewerController` | `CustomInteractiveViewerController?` | Controller for zoom/pan |
@@ -354,7 +372,6 @@ class _FamilyTreeManagerState extends State<FamilyTreeManager> {
       motherProvider: (member) => member.motherId,
       spousesProvider: (member) => member.spouseIds,
       genderProvider: (member) => member.gender, // 0 = male, 1 = female
-      boxSize: Size(180, 120),
       spacing: 40,
       runSpacing: 100,
       orientation: GraphOrientation.topToBottom,

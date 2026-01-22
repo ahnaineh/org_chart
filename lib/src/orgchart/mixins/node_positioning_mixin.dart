@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import '../../base/base_controller.dart';
@@ -9,17 +11,27 @@ mixin NodePositioningMixin<E> {
   List<Node<E>> get nodes;
   List<Node<E>> get roots;
   GraphOrientation get orientation;
-  Size get boxSize;
   double get spacing;
   double get runSpacing;
+  void requestLayout({bool center});
   void Function(void Function() function)? get setState;
   void Function()? get centerGraph;
   int getLevel(Node<E> node);
   bool allLeaf(List<Node<E>> nodes);
   List<Node<E>> getSubNodes(Node<E> node);
 
-  /// Calculates the positions of all nodes in the chart
+  final Map<int, double> _levelSizes = {};
+  final Map<int, double> _levelOffsets = {};
+
+  /// Marks layout as required. Actual layout happens in the render object.
   void calculatePosition({bool center = true}) {
+    requestLayout(center: center);
+  }
+
+  /// Performs layout using measured node sizes.
+  void performLayout() {
+    _buildLevelMetrics();
+
     double offset = 0;
     for (Node<E> node in roots) {
       offset += _calculateNodePositions(
@@ -29,38 +41,34 @@ mixin NodePositioningMixin<E> {
             : Offset(0, offset),
       );
     }
-
-    setState?.call(() {});
-    if (center) {
-      centerGraph?.call();
-    }
   }
 
-  /// Returns the size of the chart
-  Size getSize({Size size = const Size(0, 0)}) {
-    for (Node<E> root in roots) {
-      size = _calculateMaxSize(root, size);
-    }
-    return size + Offset(boxSize.width, boxSize.height);
-  }
+  double _levelOffsetFor(int level) => _levelOffsets[level] ?? 0;
 
-  /// Recursively calculates the maximum size occupied by the chart
-  Size _calculateMaxSize(Node<E> node, Size currentSize) {
-    Size updatedSize = Size(
-      currentSize.width > node.position.dx
-          ? currentSize.width
-          : node.position.dx,
-      currentSize.height > node.position.dy
-          ? currentSize.height
-          : node.position.dy,
-    );
-    if (!node.hideNodes) {
-      List<Node<E>> children = getSubNodes(node);
-      for (Node<E> child in children) {
-        updatedSize = _calculateMaxSize(child, updatedSize);
+  void _buildLevelMetrics() {
+    _levelSizes.clear();
+    _levelOffsets.clear();
+
+    int maxLevel = 0;
+    for (final node in nodes) {
+      final int level = getLevel(node);
+      final double mainSize = orientation == GraphOrientation.topToBottom
+          ? node.size.height
+          : node.size.width;
+      final double current = _levelSizes[level] ?? 0;
+      if (mainSize > current) {
+        _levelSizes[level] = mainSize;
+      }
+      if (level > maxLevel) {
+        maxLevel = level;
       }
     }
-    return updatedSize;
+
+    double offset = 0;
+    for (int level = 1; level <= maxLevel; level++) {
+      _levelOffsets[level] = offset;
+      offset += (_levelSizes[level] ?? 0) + runSpacing;
+    }
   }
 
   /// Private method to calculate node positions
@@ -93,56 +101,85 @@ mixin NodePositioningMixin<E> {
 
   double _positionLeafNodesTopToBottom(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
-    if (subNodes.isEmpty) {
-      node.position = offset +
-          Offset(
-            0,
-            (getLevel(node) - 1) * (boxSize.height + runSpacing),
-          );
-      return boxSize.width + spacing;
+    final double nodeWidth = node.size.width;
+    final int nodeLevel = getLevel(node);
+    final double nodeY = _levelOffsetFor(nodeLevel);
+
+    if (subNodes.isEmpty || node.hideNodes) {
+      node.position = offset + Offset(0, nodeY);
+      return nodeWidth + spacing;
     }
+
     int leafColumns = OrgChartConstants.defaultLeafColumns;
     if (this is OrgChartController<E>) {
       leafColumns = (this as OrgChartController<E>).leafColumns;
     }
-    int effectiveColumns =
+
+    final int columnCount =
         subNodes.length < leafColumns ? subNodes.length : leafColumns;
+    final int rowCount = (subNodes.length / columnCount).ceil();
+
+    final List<double> columnWidths =
+        List<double>.filled(columnCount, 0);
+    final List<double> rowHeights = List<double>.filled(rowCount, 0);
+
     for (var i = 0; i < subNodes.length; i++) {
-      int row = i ~/ effectiveColumns;
-      int col = i % effectiveColumns;
+      final int row = i ~/ columnCount;
+      final int col = i % columnCount;
+      final Node<E> child = subNodes[i];
+      columnWidths[col] = math.max(columnWidths[col], child.size.width);
+      rowHeights[row] = math.max(rowHeights[row], child.size.height);
+    }
+
+    final List<double> columnOffsets = List<double>.filled(columnCount, 0);
+    double runningX = 0;
+    for (int col = 0; col < columnCount; col++) {
+      columnOffsets[col] = runningX;
+      runningX += columnWidths[col] + (col == columnCount - 1 ? 0 : spacing);
+    }
+
+    final List<double> rowOffsets = List<double>.filled(rowCount, 0);
+    double runningY = 0;
+    for (int row = 0; row < rowCount; row++) {
+      rowOffsets[row] = runningY;
+      runningY += rowHeights[row] + (row == rowCount - 1 ? 0 : runSpacing);
+    }
+
+    final double gridWidth =
+        columnWidths.fold(0.0, (sum, width) => sum + width) +
+            spacing * math.max(0, columnCount - 1);
+    final double baseY = _levelOffsetFor(getLevel(subNodes.first));
+
+    for (var i = 0; i < subNodes.length; i++) {
+      final int row = i ~/ columnCount;
+      final int col = i % columnCount;
       subNodes[i].position = offset +
           Offset(
-            col * (boxSize.width + spacing),
-            (getLevel(subNodes[i]) - 1 + row) * (boxSize.height + runSpacing),
+            columnOffsets[col],
+            baseY + rowOffsets[row],
           );
     }
-    int itemsInLastRow = subNodes.length % effectiveColumns == 0
-        ? effectiveColumns
-        : subNodes.length % effectiveColumns;
-    double lastRowWidth =
-        itemsInLastRow * boxSize.width + (itemsInLastRow - 1) * spacing;
-    double fullRowWidth =
-        effectiveColumns * boxSize.width + (effectiveColumns - 1) * spacing;
-    double maxRowWidth =
-        fullRowWidth > lastRowWidth ? fullRowWidth : lastRowWidth;
+
     node.position = offset +
         Offset(
-          (maxRowWidth - boxSize.width) / 2,
-          (getLevel(node) - 1) * (boxSize.height + runSpacing),
+          (gridWidth - nodeWidth) / 2,
+          nodeY,
         );
-    return maxRowWidth + spacing;
+
+    return gridWidth + spacing;
   }
 
   double _positionNonLeafNodesTopToBottom(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
+    final double nodeWidth = node.size.width;
+    final int nodeLevel = getLevel(node);
+    final double nodeY = _levelOffsetFor(nodeLevel);
+
     if (subNodes.isEmpty || node.hideNodes) {
-      node.position = offset +
-          Offset(
-            0,
-            (getLevel(node) - 1) * (boxSize.height + runSpacing),
-          );
-      return boxSize.width + spacing;
+      node.position = offset + Offset(0, nodeY);
+      return nodeWidth + spacing;
     }
+
     double totalWidth = 0;
     for (var i = 0; i < subNodes.length; i++) {
       double nodeWidth = _calculatePositionsTopToBottom(
@@ -151,18 +188,20 @@ mixin NodePositioningMixin<E> {
       );
       totalWidth += nodeWidth;
     }
+
     if (subNodes.length == 1) {
       node.position = Offset(
         subNodes.first.position.dx,
-        (getLevel(node) - 1) * (boxSize.height + runSpacing),
+        nodeY,
       );
     } else {
       double leftmostX = subNodes.first.position.dx;
-      double rightmostX = subNodes.last.position.dx + boxSize.width;
-      double centerX = (leftmostX + rightmostX) / 2 - boxSize.width / 2;
+      final Node<E> last = subNodes.last;
+      double rightmostX = last.position.dx + last.size.width;
+      double centerX = (leftmostX + rightmostX) / 2 - nodeWidth / 2;
       node.position = Offset(
         centerX,
-        (getLevel(node) - 1) * (boxSize.height + runSpacing),
+        nodeY,
       );
     }
     return totalWidth;
@@ -170,56 +209,85 @@ mixin NodePositioningMixin<E> {
 
   double _positionLeafNodesLeftToRight(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
-    if (subNodes.isEmpty) {
-      node.position = offset +
-          Offset(
-            (getLevel(node) - 1) * (boxSize.width + runSpacing),
-            0,
-          );
-      return boxSize.height + spacing;
+    final double nodeHeight = node.size.height;
+    final int nodeLevel = getLevel(node);
+    final double nodeX = _levelOffsetFor(nodeLevel);
+
+    if (subNodes.isEmpty || node.hideNodes) {
+      node.position = offset + Offset(nodeX, 0);
+      return nodeHeight + spacing;
     }
+
     int leafColumns = OrgChartConstants.defaultLeafColumns;
     if (this is OrgChartController<E>) {
       leafColumns = (this as OrgChartController<E>).leafColumns;
     }
-    int effectiveColumns =
+
+    final int rowCount =
         subNodes.length < leafColumns ? subNodes.length : leafColumns;
+    final int columnCount = (subNodes.length / rowCount).ceil();
+
+    final List<double> columnWidths =
+        List<double>.filled(columnCount, 0);
+    final List<double> rowHeights = List<double>.filled(rowCount, 0);
+
     for (var i = 0; i < subNodes.length; i++) {
-      int col = i ~/ effectiveColumns;
-      int row = i % effectiveColumns;
+      final int col = i ~/ rowCount;
+      final int row = i % rowCount;
+      final Node<E> child = subNodes[i];
+      columnWidths[col] = math.max(columnWidths[col], child.size.width);
+      rowHeights[row] = math.max(rowHeights[row], child.size.height);
+    }
+
+    final List<double> columnOffsets = List<double>.filled(columnCount, 0);
+    double runningX = 0;
+    for (int col = 0; col < columnCount; col++) {
+      columnOffsets[col] = runningX;
+      runningX += columnWidths[col] + (col == columnCount - 1 ? 0 : runSpacing);
+    }
+
+    final List<double> rowOffsets = List<double>.filled(rowCount, 0);
+    double runningY = 0;
+    for (int row = 0; row < rowCount; row++) {
+      rowOffsets[row] = runningY;
+      runningY += rowHeights[row] + (row == rowCount - 1 ? 0 : spacing);
+    }
+
+    final double gridHeight =
+        rowHeights.fold(0.0, (sum, height) => sum + height) +
+            spacing * math.max(0, rowCount - 1);
+    final double baseX = _levelOffsetFor(getLevel(subNodes.first));
+
+    for (var i = 0; i < subNodes.length; i++) {
+      final int col = i ~/ rowCount;
+      final int row = i % rowCount;
       subNodes[i].position = offset +
           Offset(
-            (getLevel(subNodes[i]) - 1 + col) * (boxSize.width + runSpacing),
-            row * (boxSize.height + spacing),
+            baseX + columnOffsets[col],
+            rowOffsets[row],
           );
     }
-    int itemsInLastCol = subNodes.length % effectiveColumns == 0
-        ? effectiveColumns
-        : subNodes.length % effectiveColumns;
-    double lastColHeight =
-        itemsInLastCol * boxSize.height + (itemsInLastCol - 1) * spacing;
-    double fullColHeight =
-        effectiveColumns * boxSize.height + (effectiveColumns - 1) * spacing;
-    double maxColHeight =
-        fullColHeight > lastColHeight ? fullColHeight : lastColHeight;
+
     node.position = offset +
         Offset(
-          (getLevel(node) - 1) * (boxSize.width + runSpacing),
-          (maxColHeight - boxSize.height) / 2,
+          nodeX,
+          (gridHeight - nodeHeight) / 2,
         );
-    return maxColHeight + spacing;
+
+    return gridHeight + spacing;
   }
 
   double _positionNonLeafNodesLeftToRight(
       Node<E> node, List<Node<E>> subNodes, Offset offset) {
+    final double nodeHeight = node.size.height;
+    final int nodeLevel = getLevel(node);
+    final double nodeX = _levelOffsetFor(nodeLevel);
+
     if (subNodes.isEmpty || node.hideNodes) {
-      node.position = offset +
-          Offset(
-            (getLevel(node) - 1) * (boxSize.width + runSpacing),
-            0,
-          );
-      return boxSize.height + spacing;
+      node.position = offset + Offset(nodeX, 0);
+      return nodeHeight + spacing;
     }
+
     double totalHeight = 0;
     for (var i = 0; i < subNodes.length; i++) {
       double nodeHeight = _calculatePositionsLeftToRight(
@@ -228,17 +296,19 @@ mixin NodePositioningMixin<E> {
       );
       totalHeight += nodeHeight;
     }
+
     if (subNodes.length == 1) {
       node.position = Offset(
-        (getLevel(node) - 1) * (boxSize.width + runSpacing),
+        nodeX,
         subNodes.first.position.dy,
       );
     } else {
       double topmostY = subNodes.first.position.dy;
-      double bottommostY = subNodes.last.position.dy + boxSize.height;
-      double centerY = (topmostY + bottommostY) / 2 - boxSize.height / 2;
+      final Node<E> last = subNodes.last;
+      double bottommostY = last.position.dy + last.size.height;
+      double centerY = (topmostY + bottommostY) / 2 - nodeHeight / 2;
       node.position = Offset(
-        (getLevel(node) - 1) * (boxSize.width + runSpacing),
+        nodeX,
         centerY,
       );
     }

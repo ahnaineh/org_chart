@@ -34,9 +34,6 @@ class ChartNodeWidget extends StatelessWidget {
               : details.isOverlapped
                   ? Colors.red.withAlpha(80)
                   : null,
-
-          // width: controller.boxSize.width,
-          // height: controller.boxSize.height,
           padding: const EdgeInsets.all(8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -20,7 +20,10 @@ OrgChartController<T>({
   required String Function(T) idProvider,
   required String? Function(T) toProvider,
   T Function(T, String?)? toSetter,
-  Size boxSize = const Size(200, 100),
+  SizeChangeAction sizeChangeAction = SizeChangeAction.ignore,
+  double sizeChangeThreshold = 0.0,
+  bool preserveManualPositionsOnSizeChange = false,
+  CollisionAvoidanceSettings collisionSettings = const CollisionAvoidanceSettings(),
   double spacing = 20,
   double runSpacing = 50,
   GraphOrientation orientation = GraphOrientation.topToBottom,
@@ -36,11 +39,23 @@ OrgChartController<T>({
 | `idProvider` | `String Function(T)` | ✅ | - | Function that returns a unique ID for each item |
 | `toProvider` | `String? Function(T)` | ✅ | - | Function that returns the parent ID for each item |
 | `toSetter` | `T Function(T, String?)` | ❌ | null | Function to create a copy of item with new parent ID |
-| `boxSize` | `Size` | ❌ | `Size(200, 100)` | Size of each node box |
+| `sizeChangeAction` | `SizeChangeAction` | ❌ | `ignore` | What to do when a node's rendered size changes |
+| `sizeChangeThreshold` | `double` | ❌ | 0.0 | Minimum size delta before triggering collision handling |
+| `preserveManualPositionsOnSizeChange` | `bool` | ❌ | false | Keep manually positioned nodes fixed during size-change collision handling |
+| `collisionSettings` | `CollisionAvoidanceSettings` | ❌ | `CollisionAvoidanceSettings()` | Settings for size-change collision handling |
 | `spacing` | `double` | ❌ | 20 | Horizontal spacing between nodes |
 | `runSpacing` | `double` | ❌ | 50 | Vertical spacing between levels |
 | `orientation` | `GraphOrientation` | ❌ | `topToBottom` | Layout orientation |
 | `leafColumns` | `int` | ❌ | 2 | Number of columns for leaf node arrangement |
+
+Node sizes are inferred from each node widget's layout size.
+
+`SizeChangeAction.ignore` disables automatic handling when a node changes size.
+Use `SizeChangeAction.collisionAvoidance` to run a global collision pass when
+node sizes change.
+
+`CollisionAvoidanceSettings` controls the collision pass with:
+`maxIterations`, `padding`, and `minSeparation`.
 
 ## 🔧 Properties
 
@@ -59,7 +74,10 @@ OrgChartController<T>({
 | Property | Type | Description |
 |----------|------|-------------|
 | `orientation` | `GraphOrientation` | Chart orientation (vertical/horizontal) |
-| `boxSize` | `Size` | Size of node boxes |
+| `sizeChangeAction` | `SizeChangeAction` | Size-change behavior for automatic collision handling |
+| `sizeChangeThreshold` | `double` | Threshold for size-change collision handling |
+| `preserveManualPositionsOnSizeChange` | `bool` | Keep dragged nodes fixed during size-change collision handling |
+| `collisionSettings` | `CollisionAvoidanceSettings` | Settings for size-change collision handling |
 | `spacing` | `double` | Horizontal spacing between nodes |
 | `runSpacing` | `double` | Vertical spacing between levels |
 | `leafColumns` | `int` | Column arrangement for leaf nodes |
@@ -313,7 +331,6 @@ class _OrgChartManagerState extends State<OrgChartManager> {
       toSetter: (emp, newManagerId) => emp.copyWith(
         managerId: newManagerId,
       ),
-      boxSize: Size(220, 120),
       spacing: 40,
       runSpacing: 80,
       orientation: GraphOrientation.topToBottom,

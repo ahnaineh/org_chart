@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
 import 'package:org_chart/org_chart.dart';
 
 class TestEmployee {
@@ -34,7 +33,6 @@ void main() {
     test('Controller initialization', () {
       expect(controller.nodes.length, equals(5));
       expect(controller.orientation, equals(GraphOrientation.topToBottom));
-      expect(controller.boxSize, equals(const Size(200, 100)));
     });
 
     test('Root nodes identification', () {

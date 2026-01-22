@@ -31,11 +31,14 @@ class OrgChartController<E> extends BaseGraphController<E>
 
   OrgChartController({
     required super.items,
-    super.boxSize = OrgChartConstants.defaultBoxSize,
     super.spacing = OrgChartConstants.defaultSpacing,
     super.runSpacing = OrgChartConstants.defaultRunSpacing,
     super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
+    super.sizeChangeAction = SizeChangeAction.ignore,
+    super.sizeChangeThreshold = 0.0,
+    super.preserveManualPositionsOnSizeChange = false,
+    super.collisionSettings,
     required this.toProvider,
     this.toSetter,
     this.leafColumns = OrgChartConstants.defaultLeafColumns,
@@ -95,5 +98,10 @@ class OrgChartController<E> extends BaseGraphController<E>
     if (node == null || isNodeHidden(node)) return;
     return super.centerNode(nodeId,
         scale: scale, animate: animate, duration: duration, curve: curve);
+  }
+
+  @override
+  void onLayoutComplete() {
+    rebuildQuadTree();
   }
 }

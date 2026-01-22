@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:org_chart/src/common/custom_animated_positioned.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/node_builder_details.dart';
 import 'package:org_chart/src/orgchart/org_chart_controller.dart';
 import 'package:org_chart/src/base/base_graph.dart';
+import 'package:org_chart/src/base/graph_layout.dart';
 import 'package:org_chart/src/orgchart/edge_painter.dart';
 import 'package:org_chart/src/common/edge_label_layer.dart';
 
@@ -74,15 +74,32 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
       lineEndingType: widget.lineEndingType,
       edgeStyleProvider: widget.edgeStyleProvider,
       textDirection: _textDirection,
+      repaint: edgeRepaintListenable,
     );
   }
 
   @override
   List<Widget> buildGraphElements(BuildContext context) {
+    final List<Widget> nodeWidgets = buildNodes(context);
+    nodeWidgets.sort((a, b) {
+      final bool aDragged =
+          a is GraphNode<E> ? a.isBeingDragged : false;
+      final bool bDragged =
+          b is GraphNode<E> ? b.isBeingDragged : false;
+      if (aDragged == bDragged) return 0;
+      return aDragged ? 1 : -1;
+    });
     return [
       buildEdges(),
       buildEdgeLabels(),
-      ...buildNodes(context)..sort((a, b) => a.isBeingDragged ? 1 : -1),
+      GraphLayout<E>(
+        key: graphLayoutKey,
+        controller: controller,
+        animationController: layoutAnimationController,
+        curve: widget.curve,
+        textDirection: _textDirection,
+        children: nodeWidgets,
+      ),
     ];
   }
 
@@ -95,16 +112,19 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
           controller.isSubNode(node, overlapping.first));
     }
     draggedID = null;
+    widget.controller.draggedNodeId = null;
     overlapping = [];
     lastDraggedNode = null;
+    notifyEdgeRepaint();
     setState(() {});
   }
 
   @override
   Widget buildEdges() {
-    return CustomPaint(
-      size: controller.getSize(),
-      painter: _edgePainter,
+    return Positioned.fill(
+      child: CustomPaint(
+        painter: _edgePainter,
+      ),
     );
   }
 
@@ -113,39 +133,44 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
       return const SizedBox.shrink();
     }
 
-    final Size graphSize = controller.getSize();
-    return SizedBox(
-      width: graphSize.width,
-      height: graphSize.height,
-      child: EdgeLabelLayer<E>(
-        edges: _edgePainter.buildEdges(),
-        labelBuilder: widget.edgeLabelBuilder!,
-        config: widget.edgeLabelConfig,
-        graphSize: graphSize,
-        edgeStyleProvider: widget.edgeStyleProvider,
+    return Positioned.fill(
+      child: AnimatedBuilder(
+        animation: edgeRepaintListenable,
+        builder: (context, child) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final Size graphSize = Size(
+                constraints.maxWidth,
+                constraints.maxHeight,
+              );
+              return EdgeLabelLayer<E>(
+                edges: _edgePainter.buildEdges(graphSize),
+                labelBuilder: widget.edgeLabelBuilder!,
+                config: widget.edgeLabelConfig,
+                graphSize: graphSize,
+                edgeStyleProvider: widget.edgeStyleProvider,
+              );
+            },
+          );
+        },
       ),
     );
   }
 
   @override
-  List<CustomAnimatedPositionedDirectional> buildNodes(BuildContext context,
+  List<Widget> buildNodes(BuildContext context,
       {List<Node<E>>? nodesToDraw, bool hidden = false, int level = 1}) {
     final nodes = nodesToDraw ?? controller.roots;
-    final List<CustomAnimatedPositionedDirectional> nodeWidgets = [];
+    final List<Widget> nodeWidgets = [];
 
     for (Node<E> node in nodes) {
       final String nodeId = controller.idProvider(node.data);
 
       nodeWidgets.add(
-        CustomAnimatedPositionedDirectional(
+        GraphNode<E>(
           key: ValueKey(nodeId),
+          node: node,
           isBeingDragged: nodeId == draggedID,
-          duration: nodeId == draggedID ? Duration.zero : widget.duration,
-          curve: widget.curve,
-          start: node.position.dx,
-          top: node.position.dy,
-          width: controller.boxSize.width,
-          height: controller.boxSize.height,
           child: RepaintBoundary(
             child: Visibility(
               visible: !hidden,

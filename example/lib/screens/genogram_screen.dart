@@ -42,7 +42,6 @@ class _GenogramScreenState extends State<GenogramScreen> {
       motherProvider: (data) => data.motherId,
       genderProvider: (data) => data.gender,
       spousesProvider: (data) => data.spouses,
-      boxSize: const Size(150, 150),
       spacing: 30,
       spouseSpacing: 80,
       runSpacing: 80,

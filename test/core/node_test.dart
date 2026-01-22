@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:org_chart/src/common/node.dart';
 
@@ -8,6 +9,8 @@ void main() {
 
       expect(node.data, equals('test'));
       expect(node.position, equals(Offset.zero));
+      expect(node.size, equals(Size.zero));
+      expect(node.renderPosition, equals(Offset.zero));
       expect(node.hideNodes, isFalse);
     });
 
@@ -15,11 +18,15 @@ void main() {
       final node = Node(
         data: 'test',
         position: const Offset(100, 200),
+        size: const Size(50, 60),
+        renderPosition: const Offset(10, 20),
         hideNodes: true,
       );
 
       expect(node.data, equals('test'));
       expect(node.position, equals(const Offset(100, 200)));
+      expect(node.size, equals(const Size(50, 60)));
+      expect(node.renderPosition, equals(const Offset(10, 20)));
       expect(node.hideNodes, isTrue);
     });
 

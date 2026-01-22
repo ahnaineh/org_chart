@@ -55,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
       idProvider: (item) => item['id'],
       toProvider: (item) => item['parent'],
       toSetter: (item, newId) => {...item, 'parent': newId},
-      boxSize: const Size(180, 90),
       spacing: config.nodeSpacing,
       runSpacing: config.levelSpacing,
       leafColumns: config.leafColumnCount,

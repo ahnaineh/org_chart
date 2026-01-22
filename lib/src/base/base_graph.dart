@@ -72,7 +72,8 @@ abstract class BaseGraph<E> extends StatefulWidget {
 }
 
 /// Base state class for graph widgets
-abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
+abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T>
+    with TickerProviderStateMixin {
   @protected
   List<Node<E>> overlapping = [];
   @protected
@@ -90,9 +91,38 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
   @protected
   List<Node<E>> get overlappingNodes => overlapping;
 
+  late final AnimationController _layoutAnimationController;
+  late final ValueNotifier<int> _edgeRepaintNotifier;
+  late final Listenable _edgeRepaintListenable;
+  final GlobalKey _graphLayoutKey = GlobalKey();
+  final GlobalKey _repaintBoundaryKey = GlobalKey();
+
+  @protected
+  AnimationController get layoutAnimationController =>
+      _layoutAnimationController;
+
+  @protected
+  Listenable get edgeRepaintListenable => _edgeRepaintListenable;
+
+  @protected
+  GlobalKey get graphLayoutKey => _graphLayoutKey;
+
+  @protected
+  GlobalKey get repaintBoundaryKey => _repaintBoundaryKey;
+
+  @protected
+  void notifyEdgeRepaint() {
+    _edgeRepaintNotifier.value++;
+  }
+
   @override
   void initState() {
     super.initState();
+    _layoutAnimationController =
+        AnimationController(vsync: this, duration: widget.duration);
+    _edgeRepaintNotifier = ValueNotifier<int>(0);
+    _edgeRepaintListenable =
+        Listenable.merge([_layoutAnimationController, _edgeRepaintNotifier]);
     viewerController =
         widget.viewerController ?? CustomInteractiveViewerController();
     _initializeController();
@@ -102,41 +132,53 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
     widget.controller.setState = setState;
     widget.controller.centerGraph = viewerController.center;
     widget.controller.setViewerController(viewerController);
+    widget.controller.repaintBoundaryKey = _repaintBoundaryKey;
+    widget.controller.markNeedsLayout = _markGraphLayout;
+  }
 
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   viewerController.center();
-    // });
+  void _markGraphLayout() {
+    final RenderObject? renderObject =
+        _graphLayoutKey.currentContext?.findRenderObject();
+    renderObject?.markNeedsLayout();
   }
 
   @override
   void dispose() {
+    widget.controller.markNeedsLayout = null;
     if (widget.viewerController == null) {
       viewerController.dispose();
     }
+    _layoutAnimationController.dispose();
+    _edgeRepaintNotifier.dispose();
     super.dispose();
   }
 
   @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) {
+      _layoutAnimationController.duration = widget.duration;
+    }
+    if (oldWidget.controller != widget.controller) {
+      widget.controller.repaintBoundaryKey = _repaintBoundaryKey;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final size = widget.controller.getSize();
     return CustomInteractiveViewer(
       controller: viewerController,
-      contentSize: size,
       interactionConfig: widget.interactionConfig ?? const InteractionConfig(),
       keyboardConfig: widget.keyboardConfig ?? const KeyboardConfig(),
       zoomConfig: widget.zoomConfig ?? const ZoomConfig(),
       focusNode: widget.focusNode,
       child: RepaintBoundary(
-        key: widget.controller.repaintBoundaryKey,
+        key: repaintBoundaryKey,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: SizedBox(
-            width: size.width,
-            height: size.height,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: buildGraphElements(context),
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: buildGraphElements(context),
           ),
         ),
       ),
@@ -170,23 +212,31 @@ abstract class BaseGraphState<E, T extends BaseGraph<E>> extends State<T> {
 
   void startDragging(Node<E> node) {
     draggedID = widget.controller.idProvider(node.data);
+    widget.controller.draggedNodeId = draggedID;
     setState(() {});
   }
 
   void updateDragging(Node<E> node, DragUpdateDetails details) {
+    final Offset oldPosition = node.position;
     // Update position immediately for smooth visual feedback
     node.position = Offset(
       max(0, node.position.dx + details.delta.dx),
       max(0, node.position.dy + details.delta.dy),
     );
+    node.renderPosition = node.position;
+    widget.controller.markNodeManuallyPositioned(node);
 
     // Calculate overlapping immediately for real-time visual feedback
     overlapping = widget.controller.getOverlapping(node);
+
+    widget.controller.updateNodePosition(node, oldPosition);
 
     // Store the node for any additional operations
     lastDraggedNode = node;
 
     // Trigger UI update with immediate overlap calculation
+    _edgeRepaintNotifier.value++;
+    _graphLayoutKey.currentContext?.findRenderObject()?.markNeedsPaint();
     setState(() {});
   }
 

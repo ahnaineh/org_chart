@@ -124,9 +124,16 @@ class EdgePainterUtils {
   }
 
   /// Draw a line between two points
-  void drawConnection(Canvas canvas, Offset start, Offset end, Size boxSize,
-      GraphOrientation orientation,
-      {ConnectionType type = ConnectionType.adaptive, Paint? paint}) {
+  void drawConnection(
+    Canvas canvas,
+    Offset start,
+    Offset end, {
+    required Size startSize,
+    required Size endSize,
+    required GraphOrientation orientation,
+    ConnectionType type = ConnectionType.adaptive,
+    Paint? paint,
+  }) {
     // Use provided paint or default linePaint
     final Paint connectionPaint = paint ?? linePaint;
 
@@ -143,7 +150,8 @@ class EdgePainterUtils {
       type: actualType,
       start: start,
       end: end,
-      boxSize: boxSize,
+      startSize: startSize,
+      endSize: endSize,
       orientation: orientation,
     );
     // Draw the path with appropriate style
@@ -212,7 +220,8 @@ class EdgePainterUtils {
     required ConnectionType type,
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
     required GraphOrientation orientation,
   }) {
     final ConnectionType actualType = _determineConnectionType(
@@ -226,7 +235,8 @@ class EdgePainterUtils {
       type: actualType,
       start: start,
       end: end,
-      boxSize: boxSize,
+      startSize: startSize,
+      endSize: endSize,
       orientation: orientation,
     );
   }
@@ -525,7 +535,8 @@ class EdgePainterUtils {
     required ConnectionType type,
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
     required GraphOrientation orientation,
   }) {
     switch (type) {
@@ -542,7 +553,8 @@ class EdgePainterUtils {
         return _generateSimpleLeafNodePoints(
           start: start,
           end: end,
-          boxSize: boxSize,
+          startSize: startSize,
+          endSize: endSize,
           orientation: orientation,
         );
 
@@ -550,7 +562,8 @@ class EdgePainterUtils {
         return _generateAdaptivePoints(
           start: start,
           end: end,
-          boxSize: boxSize,
+          startSize: startSize,
+          endSize: endSize,
           orientation: orientation,
         );
 
@@ -558,7 +571,8 @@ class EdgePainterUtils {
         return _generateGenogramParentChildPoints(
           start: start,
           end: end,
-          boxSize: boxSize,
+          startSize: startSize,
+          endSize: endSize,
           orientation: orientation,
         );
     }
@@ -607,16 +621,17 @@ class EdgePainterUtils {
   }
 
   /// Generate points for genogram parent-child connection
-  /// This adds extra vertical drop (half boxSize height) from the marriage line
+  /// This adds extra vertical drop (half startSize height) from the marriage line
   List<Offset> _generateGenogramParentChildPoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
     required GraphOrientation orientation,
   }) {
     if (orientation == GraphOrientation.topToBottom) {
-      // Add half boxSize height to the first segment for extra vertical drop
-      final double firstDropY = start.dy + (boxSize.height / 2);
+      // Add half startSize height to the first segment for extra vertical drop
+      final double firstDropY = start.dy + (startSize.height / 2);
       final double midY = (firstDropY + end.dy) / 2;
       return [
         start,
@@ -625,8 +640,8 @@ class EdgePainterUtils {
         end,
       ];
     } else {
-      // Add half boxSize width to the first segment for horizontal orientation
-      final double firstDropX = start.dx + (boxSize.width / 2);
+      // Add half startSize width to the first segment for horizontal orientation
+      final double firstDropX = start.dx + (startSize.width / 2);
       final double midX = (firstDropX + end.dx) / 2;
       return [
         start,
@@ -641,20 +656,23 @@ class EdgePainterUtils {
   List<Offset> _generateSimpleLeafNodePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
     required GraphOrientation orientation,
   }) {
     if (orientation == GraphOrientation.topToBottom) {
       return _generateVerticalSimpleLeafNodePoints(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     } else {
       return _generateHorizontalSimpleLeafNodePoints(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     }
   }
@@ -663,7 +681,8 @@ class EdgePainterUtils {
   List<Offset> _generateVerticalSimpleLeafNodePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final bool needsSpecialRouting = end.dy < start.dy + defaultSegmentPadding;
 
@@ -671,13 +690,15 @@ class EdgePainterUtils {
       return _generateVerticalSimpleLeafNodeSpecialRouting(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     } else {
       return _generateVerticalSimpleLeafNodeStandardRouting(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     }
   }
@@ -686,17 +707,18 @@ class EdgePainterUtils {
   List<Offset> _generateVerticalSimpleLeafNodeSpecialRouting({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final Offset p1 = start;
     final Offset p2 = Offset(
       start.dx,
-      start.dy + boxSize.height / 2 + defaultSegmentPadding,
+      start.dy + startSize.height / 2 + defaultSegmentPadding,
     );
 
     final bool nodesTooClose =
         (start.dx - end.dx).abs() - defaultSegmentPadding - cornerRadius <
-            boxSize.width * defaultNodeProximityThreshold;
+            _maxWidth(startSize, endSize) * defaultNodeProximityThreshold;
 
     final double horizontalDir = nodesTooClose
         ? (end.dx < start.dx ? -1 : 1)
@@ -705,11 +727,14 @@ class EdgePainterUtils {
     final double horizontalDist = (start.dx - end.dx).abs() / 2 +
         (!nodesTooClose
             ? 0
-            : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
+            : (_maxWidth(startSize, endSize) / 2 +
+                    (end.dx - start.dx).abs() / 2) +
                 defaultSegmentPadding);
     end = end +
         Offset(
-          (nodesTooClose ? 1 : -1) * horizontalDir * (boxSize.width / 2),
+          (nodesTooClose ? 1 : -1) *
+              horizontalDir *
+              (endSize.width / 2),
           0,
         );
 
@@ -726,19 +751,20 @@ class EdgePainterUtils {
   List<Offset> _generateVerticalSimpleLeafNodeStandardRouting({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final double verticalDrop = defaultSegmentPadding;
     final double horizontalDir = end.dx < start.dx ? 1.0 : -1.0;
 
     final Offset p2 = Offset(start.dx, start.dy + verticalDrop);
     final Offset p3 = Offset(
-      end.dx + horizontalDir * (boxSize.width / 2 + defaultSegmentPadding),
+      end.dx + horizontalDir * (endSize.width / 2 + defaultSegmentPadding),
       p2.dy,
     );
     end = end +
         Offset(
-          horizontalDir * (boxSize.width / 2),
+          horizontalDir * (endSize.width / 2),
           0,
         );
     final Offset p4 = Offset(p3.dx, end.dy);
@@ -750,7 +776,8 @@ class EdgePainterUtils {
   List<Offset> _generateHorizontalSimpleLeafNodePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final bool needsSpecialRouting = end.dx < start.dx + defaultSegmentPadding;
 
@@ -758,13 +785,15 @@ class EdgePainterUtils {
       return _generateHorizontalSimpleLeafNodeSpecialRouting(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     } else {
       return _generateHorizontalSimpleLeafNodeStandardRouting(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     }
   }
@@ -773,17 +802,18 @@ class EdgePainterUtils {
   List<Offset> _generateHorizontalSimpleLeafNodeSpecialRouting({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final Offset p1 = start;
     final Offset p2 = Offset(
-      start.dx + boxSize.width / 2 + defaultSegmentPadding,
+      start.dx + startSize.width / 2 + defaultSegmentPadding,
       start.dy,
     );
 
     final bool nodesTooClose =
         (start.dy - end.dy).abs() - defaultSegmentPadding - cornerRadius <
-            boxSize.height * defaultNodeProximityThreshold;
+            _maxHeight(startSize, endSize) * defaultNodeProximityThreshold;
 
     final double verticalDir = nodesTooClose
         ? (end.dy < start.dy ? -1 : 1)
@@ -792,12 +822,13 @@ class EdgePainterUtils {
     final double verticalDist = (start.dy - end.dy).abs() / 2 +
         (!nodesTooClose
             ? 0
-            : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
+            : (_maxHeight(startSize, endSize) / 2 +
+                    (end.dy - start.dy).abs() / 2) +
                 defaultSegmentPadding);
     end = end +
         Offset(
           0,
-          (nodesTooClose ? 1 : -1) * verticalDir * (boxSize.height / 2),
+          (nodesTooClose ? 1 : -1) * verticalDir * (endSize.height / 2),
         );
 
     return [
@@ -813,7 +844,8 @@ class EdgePainterUtils {
   List<Offset> _generateHorizontalSimpleLeafNodeStandardRouting({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final double horizontalDrop = defaultSegmentPadding;
     final double verticalDir = end.dy < start.dy ? 1.0 : -1.0;
@@ -821,12 +853,12 @@ class EdgePainterUtils {
     final Offset p2 = Offset(start.dx + horizontalDrop, start.dy);
     final Offset p3 = Offset(
       p2.dx,
-      end.dy + verticalDir * (boxSize.height / 2 + defaultSegmentPadding),
+      end.dy + verticalDir * (endSize.height / 2 + defaultSegmentPadding),
     );
     end = end +
         Offset(
           0,
-          verticalDir * (boxSize.height / 2),
+          verticalDir * (endSize.height / 2),
         );
     final Offset p4 = Offset(end.dx, p3.dy);
 
@@ -837,20 +869,23 @@ class EdgePainterUtils {
   List<Offset> _generateAdaptivePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
     required GraphOrientation orientation,
   }) {
     if (orientation == GraphOrientation.topToBottom) {
       return _generateVerticalAdaptivePoints(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     } else {
       return _generateHorizontalAdaptivePoints(
         start: start,
         end: end,
-        boxSize: boxSize,
+        startSize: startSize,
+        endSize: endSize,
       );
     }
   }
@@ -859,16 +894,17 @@ class EdgePainterUtils {
   List<Offset> _generateVerticalAdaptivePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final Offset p1 = start;
     final Offset p2 = Offset(
       start.dx,
-      start.dy + boxSize.height / 2 + defaultSegmentPadding,
+      start.dy + startSize.height / 2 + defaultSegmentPadding,
     );
 
     final bool nodesTooClose = (start.dx - end.dx).abs() <
-        boxSize.width * defaultNodeProximityThreshold;
+        _maxWidth(startSize, endSize) * defaultNodeProximityThreshold;
 
     final double horizontalDir = nodesTooClose
         ? (end.dx < start.dx ? -1 : 1)
@@ -877,7 +913,8 @@ class EdgePainterUtils {
     final double horizontalDist = (start.dx - end.dx).abs() / 2 +
         (!nodesTooClose
             ? 0
-            : (boxSize.width / 2 + (end.dx - start.dx).abs() / 2) +
+            : (_maxWidth(startSize, endSize) / 2 +
+                    (end.dx - start.dx).abs() / 2) +
                 defaultSegmentPadding);
 
     return [
@@ -886,9 +923,9 @@ class EdgePainterUtils {
       Offset(start.dx + horizontalDir * horizontalDist, p2.dy),
       Offset(
         start.dx + horizontalDir * horizontalDist,
-        end.dy - boxSize.height / 2 - defaultSegmentPadding,
+        end.dy - endSize.height / 2 - defaultSegmentPadding,
       ),
-      Offset(end.dx, end.dy - boxSize.height / 2 - defaultSegmentPadding),
+      Offset(end.dx, end.dy - endSize.height / 2 - defaultSegmentPadding),
       end,
     ];
   }
@@ -897,16 +934,17 @@ class EdgePainterUtils {
   List<Offset> _generateHorizontalAdaptivePoints({
     required Offset start,
     required Offset end,
-    required Size boxSize,
+    required Size startSize,
+    required Size endSize,
   }) {
     final Offset p1 = start;
     final Offset p2 = Offset(
-      start.dx + boxSize.width / 2 + defaultSegmentPadding,
+      start.dx + startSize.width / 2 + defaultSegmentPadding,
       start.dy,
     );
 
     final bool nodesTooClose = (start.dy - end.dy).abs() <
-        boxSize.height * defaultNodeProximityThreshold;
+        _maxHeight(startSize, endSize) * defaultNodeProximityThreshold;
 
     final double verticalDir = nodesTooClose
         ? (end.dy < start.dy ? -1 : 1)
@@ -915,7 +953,8 @@ class EdgePainterUtils {
     final double verticalDist = (start.dy - end.dy).abs() / 2 +
         (!nodesTooClose
             ? 0
-            : (boxSize.height / 2 + (end.dy - start.dy).abs() / 2) +
+            : (_maxHeight(startSize, endSize) / 2 +
+                    (end.dy - start.dy).abs() / 2) +
                 defaultSegmentPadding);
 
     return [
@@ -923,11 +962,15 @@ class EdgePainterUtils {
       p2,
       Offset(p2.dx, start.dy + verticalDir * verticalDist),
       Offset(
-        end.dx - boxSize.width / 2 - defaultSegmentPadding,
+        end.dx - endSize.width / 2 - defaultSegmentPadding,
         start.dy + verticalDir * verticalDist,
       ),
-      Offset(end.dx - boxSize.width / 2 - defaultSegmentPadding, end.dy),
+      Offset(end.dx - endSize.width / 2 - defaultSegmentPadding, end.dy),
       end,
     ];
   }
+
+  double _maxWidth(Size a, Size b) => math.max(a.width, b.width);
+
+  double _maxHeight(Size a, Size b) => math.max(a.height, b.height);
 }

@@ -5,10 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/exporting.dart';
 import 'package:org_chart/src/base/base_graph_constants.dart';
+import 'package:org_chart/src/base/collision_avoidance.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 /// The orientation of the organizational chart
 enum GraphOrientation { topToBottom, leftToRight }
+
+/// How the graph should react when a node's rendered size changes.
+enum SizeChangeAction { ignore, collisionAvoidance }
 
 /// Base controller class that all specific graph controllers should extend
 abstract class BaseGraphController<E> {
@@ -31,10 +35,38 @@ abstract class BaseGraphController<E> {
   }
 
   // Common graph controller properties
-  Size boxSize;
   double spacing;
   double runSpacing;
   String Function(E data) idProvider;
+
+  /// Behavior to apply when a node size changes.
+  final SizeChangeAction sizeChangeAction;
+
+  /// Minimum size delta required to trigger size-change collision handling.
+  final double sizeChangeThreshold;
+
+  /// Preserve manually positioned nodes when resolving size-change collisions.
+  final bool preserveManualPositionsOnSizeChange;
+
+  /// Settings for collision avoidance behavior.
+  final CollisionAvoidanceSettings collisionSettings;
+
+  /// Current content size of the graph, updated during layout.
+  Size _contentSize = Size.zero;
+
+  /// Tracks whether a layout pass is needed.
+  bool _layoutRequested = true;
+
+  /// Whether to center the graph after the next layout.
+  bool _centerAfterLayout = true;
+
+  /// The ID of the node currently being dragged (if any).
+  String? draggedNodeId;
+
+  final Map<String, Offset> _manualPositions = {};
+
+  /// Callback to force a layout pass when requested.
+  void Function()? markNeedsLayout;
 
   // Reference to the interactive viewer controller
   CustomInteractiveViewerController? viewerController;
@@ -50,12 +82,14 @@ abstract class BaseGraphController<E> {
 
   BaseGraphController({
     required List<E> items,
-    this.boxSize =
-        const Size(200, 100), // Will be overridden by specific controllers
     this.spacing = 20,
     this.runSpacing = 50,
     this.orientation = GraphOrientation.topToBottom,
     required this.idProvider,
+    this.sizeChangeAction = SizeChangeAction.ignore,
+    this.sizeChangeThreshold = 0.0,
+    this.preserveManualPositionsOnSizeChange = false,
+    this.collisionSettings = const CollisionAvoidanceSettings(),
   }) {
     // this.items = items;
     _nodes = items.map((e) => Node(data: e)).toList();
@@ -71,7 +105,80 @@ abstract class BaseGraphController<E> {
 
   // Common getters and setters
 
-  Size getSize();
+  Size getSize() => _contentSize;
+
+  Size get contentSize => _contentSize;
+
+  void updateContentSize(Size size) {
+    _contentSize = size;
+  }
+
+  /// Marks a node as manually positioned.
+  void markNodeManuallyPositioned(Node<E> node) {
+    _manualPositions[idProvider(node.data)] = node.position;
+  }
+
+  /// Clears manual position for a single node.
+  void clearManualPosition(Node<E> node) {
+    _manualPositions.remove(idProvider(node.data));
+  }
+
+  /// Clears all manual positions.
+  void clearManualPositions() {
+    _manualPositions.clear();
+  }
+
+  /// Returns the manual position for a node, if set.
+  Offset? getManualPosition(Node<E> node) {
+    return _manualPositions[idProvider(node.data)];
+  }
+
+  /// Returns the IDs of nodes with manual positions.
+  Set<String> get manualPositionIds => _manualPositions.keys.toSet();
+
+  /// Runs a global collision pass and triggers a repaint if nodes moved.
+  bool applyCollisionAvoidance({
+    CollisionAvoidanceSettings? settings,
+    Set<String>? pinnedIds,
+  }) {
+    final bool moved = CollisionAvoidance.resolveGlobal(
+      nodes: nodes,
+      idProvider: idProvider,
+      pinnedIds: pinnedIds ??
+          (preserveManualPositionsOnSizeChange ? manualPositionIds : <String>{}),
+      settings: settings ?? collisionSettings,
+    );
+
+    if (moved) {
+      setState?.call(() {});
+      markNeedsLayout?.call();
+      onLayoutComplete();
+    }
+
+    return moved;
+  }
+
+  /// Marks layout as required and optionally centers after layout.
+  void requestLayout({bool center = true}) {
+    _layoutRequested = true;
+    _centerAfterLayout = center;
+    setState?.call(() {});
+    markNeedsLayout?.call();
+  }
+
+  bool consumeLayoutRequest() {
+    final bool value = _layoutRequested;
+    _layoutRequested = false;
+    return value;
+  }
+
+  bool get isLayoutRequested => _layoutRequested;
+
+  bool consumeCenterAfterLayout() {
+    final bool value = _centerAfterLayout;
+    _centerAfterLayout = false;
+    return value;
+  }
 
   /// Adds a single item to the chart
   /// If an item with the same ID already exists, it will be replaced
@@ -150,6 +257,9 @@ abstract class BaseGraphController<E> {
 
   void calculatePosition({bool center = true});
 
+  /// Perform a layout pass using measured node sizes.
+  void performLayout();
+
   List<Node<E>> getOverlapping(Node<E> node) {
     List<Node<E>> overlapping = [];
     final String nodeId = idProvider(node.data);
@@ -157,9 +267,19 @@ abstract class BaseGraphController<E> {
     for (Node<E> n in nodes) {
       final String nId = idProvider(n.data);
       if (nodeId != nId) {
-        Offset offset = node.position - n.position;
-        if (offset.dx.abs() < boxSize.width &&
-            offset.dy.abs() < boxSize.height) {
+        final Rect nodeRect = Rect.fromLTWH(
+          node.position.dx,
+          node.position.dy,
+          node.size.width,
+          node.size.height,
+        );
+        final Rect otherRect = Rect.fromLTWH(
+          n.position.dx,
+          n.position.dy,
+          n.size.width,
+          n.size.height,
+        );
+        if (nodeRect.overlaps(otherRect)) {
           // Check if the node is hidden
           overlapping.add(n);
         }
@@ -194,8 +314,8 @@ abstract class BaseGraphController<E> {
     final nodeRect = Rect.fromLTWH(
       node.position.dx,
       node.position.dy,
-      boxSize.width,
-      boxSize.height,
+      node.size.width,
+      node.size.height,
     );
 
     // Center on this rectangle
@@ -207,4 +327,10 @@ abstract class BaseGraphController<E> {
       curve: curve,
     );
   }
+
+  /// Hook for controllers that need to react after a layout pass.
+  void onLayoutComplete() {}
+
+  /// Hook to update spatial indexes when a node is dragged.
+  void updateNodePosition(Node<E> node, Offset oldPosition) {}
 }

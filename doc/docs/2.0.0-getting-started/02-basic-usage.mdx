@@ -213,9 +213,6 @@ class _MyOrgChartScreenState extends State<MyOrgChartScreen> {
         imageUrl: employee.imageUrl,
       ),
       
-      // Optional: Customize box size
-      boxSize: Size(220, 120),
-      
       // Optional: Customize spacing
       spacing: 40,
       runSpacing: 80,
@@ -269,9 +266,6 @@ class _MyGenogramScreenState extends State<MyGenogramScreen> {
       
       // Required: Provide gender (0=male, 1=female)
       genderProvider: (person) => person.gender,
-      
-      // Optional: Customize box size
-      boxSize: Size(150, 150),
       
       // Optional: Customize spacing
       spacing: 30,
@@ -630,7 +624,6 @@ class _BasicOrgChartDemoState extends State<BasicOrgChartDemo> {
       items: employees,
       idProvider: (item) => item['id'],
       toProvider: (item) => item['managerId'],
-      boxSize: Size(180, 100),
       spacing: 30,
       runSpacing: 60,
     );

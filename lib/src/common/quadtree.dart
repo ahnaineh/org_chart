@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:org_chart/src/common/node.dart';
 import 'package:org_chart/src/common/quadtree_constants.dart';
@@ -45,8 +44,8 @@ class QuadTree<E> {
   /// Inserts a node into the QuadTree
   ///
   /// Returns true if the node was successfully inserted, false otherwise
-  bool insert(Node<E> node, Size nodeSize) {
-    if (!_isNodeInBounds(node, nodeSize)) {
+  bool insert(Node<E> node) {
+    if (!_isNodeInBounds(node)) {
       return false;
     }
 
@@ -64,14 +63,14 @@ class QuadTree<E> {
     }
 
     // Try to insert into appropriate child quadrant
-    return _insertIntoChild(node, nodeSize);
+    return _insertIntoChild(node);
   }
 
   /// Removes a node from the QuadTree
   ///
   /// Returns true if the node was found and removed, false otherwise
-  bool remove(Node<E> node, Size nodeSize) {
-    if (!_isNodeInBounds(node, nodeSize)) {
+  bool remove(Node<E> node) {
+    if (!_isNodeInBounds(node)) {
       return false;
     }
 
@@ -85,7 +84,7 @@ class QuadTree<E> {
 
     // Try to remove from child quadrants
     for (final child in _children!) {
-      if (child != null && child.remove(node, nodeSize)) {
+      if (child != null && child.remove(node)) {
         _totalNodeCount--;
         _tryMergeChildren();
         return true;
@@ -98,32 +97,31 @@ class QuadTree<E> {
   /// Updates a node's position in the QuadTree
   ///
   /// This is more efficient than remove + insert for position updates
-  bool updateNode(Node<E> node, Size nodeSize, Offset oldPosition) {
+  bool updateNode(Node<E> node, Offset oldPosition) {
     // Remove from old position using a copy of the node with old position
     final currentPosition = node.position;
     node.position = oldPosition;
-    final removed = remove(node, nodeSize);
+    final removed = remove(node);
 
     // Restore current position and insert
     node.position = currentPosition;
     if (removed) {
-      return insert(node, nodeSize);
+      return insert(node);
     }
 
     // If not found at old position, try inserting anyway
-    return insert(node, nodeSize);
+    return insert(node);
   }
 
   /// Returns all nodes within the specified circular range
   ///
   /// [center] - The center point of the search
   /// [radius] - The search radius
-  /// [nodeSize] - The size of nodes for intersection calculation
-  List<Node<E>> getNodesInRange(Offset center, double radius, Size nodeSize) {
+  List<Node<E>> getNodesInRange(Offset center, double radius) {
     final results = <Node<E>>[];
     final radiusSquared = radius * radius;
 
-    _collectNodesInRange(center, radiusSquared, nodeSize, results);
+    _collectNodesInRange(center, radiusSquared, results);
 
     // Limit results to prevent memory issues
     if (results.length > QuadTreeConstants.maxQueryResults) {
@@ -141,23 +139,22 @@ class QuadTree<E> {
   /// Returns all nodes within the specified rectangular bounds
   ///
   /// [queryBounds] - The rectangular area to search
-  /// [nodeSize] - The size of nodes for intersection calculation
-  List<Node<E>> getNodesInBounds(Rect queryBounds, Size nodeSize) {
+  List<Node<E>> getNodesInBounds(Rect queryBounds) {
     final results = <Node<E>>[];
-    _collectNodesInBounds(queryBounds, nodeSize, results);
+    _collectNodesInBounds(queryBounds, results);
     return results;
   }
 
   /// Returns all nodes that potentially overlap with the given node
   ///
   /// This is optimized for drag-and-drop collision detection
-  List<Node<E>> getOverlappingNodes(Node<E> targetNode, Size nodeSize) {
-    final nodeRect = _getNodeRect(targetNode, nodeSize);
+  List<Node<E>> getOverlappingNodes(Node<E> targetNode) {
+    final nodeRect = _getNodeRect(targetNode);
 
     // Expand search area slightly to account for near-misses
-    final searchBounds = nodeRect.inflate(nodeSize.width * 0.1);
+    final searchBounds = nodeRect.inflate(targetNode.size.width * 0.1);
 
-    return getNodesInBounds(searchBounds, nodeSize);
+    return getNodesInBounds(searchBounds);
   }
 
   /// Clears all nodes from the QuadTree
@@ -187,8 +184,8 @@ class QuadTree<E> {
   // ===== Private Methods =====
 
   /// Checks if a node intersects with this quadrant's bounds
-  bool _isNodeInBounds(Node<E> node, Size nodeSize) {
-    final nodeRect = _getNodeRect(node, nodeSize);
+  bool _isNodeInBounds(Node<E> node) {
+    final nodeRect = _getNodeRect(node);
     return bounds.overlaps(nodeRect);
   }
 
@@ -236,185 +233,164 @@ class QuadTree<E> {
       _nodes!.clear();
 
       for (final node in nodesToRedistribute) {
-        _insertIntoChild(node, Size.zero); // Size will be recalculated
+        _insertIntoChild(node);
       }
     }
-
-    // Clear the nodes list since we're no longer a leaf
-    _nodes = null;
   }
 
-  /// Inserts a node into the appropriate child quadrant
-  bool _insertIntoChild(Node<E> node, Size nodeSize) {
-    if (!isSubdivided) return false;
-
-    // Try to insert into each child that intersects with the node
-    bool inserted = false;
+  /// Attempts to insert a node into a child quadrant
+  bool _insertIntoChild(Node<E> node) {
     for (final child in _children!) {
-      if (child != null && child._isNodeInBounds(node, nodeSize)) {
-        if (child.insert(node, nodeSize)) {
-          inserted = true;
-          break; // Node should only be in one quadrant
+      if (child != null && child._isNodeInBounds(node)) {
+        if (child.insert(node)) {
+          return true;
         }
       }
     }
-
-    return inserted;
+    return false;
   }
 
-  /// Attempts to merge child quadrants if they collectively have few nodes
+  /// Attempts to merge child quadrants if node count is below threshold
   void _tryMergeChildren() {
-    if (isLeaf) return;
+    if (isLeaf || _children == null) return;
 
-    var totalChildNodes = 0;
-    final allChildNodes = <Node<E>>[];
-
-    // Count nodes in all children
+    // Count total nodes in children
+    int totalNodesInChildren = 0;
     for (final child in _children!) {
       if (child != null) {
-        if (child.isLeaf) {
-          totalChildNodes += child._nodes?.length ?? 0;
-          allChildNodes.addAll(child._nodes ?? []);
-        } else {
-          return; // Don't merge if any child is subdivided
-        }
+        totalNodesInChildren += child._totalNodeCount;
       }
     }
 
-    // Merge if total nodes are small enough
-    if (totalChildNodes <= QuadTreeConstants.maxNodesPerQuadrant ~/ 2) {
-      _children = null;
-      _nodes = allChildNodes;
+    // If total nodes is small enough, merge children
+    if (totalNodesInChildren <= QuadTreeConstants.maxNodesPerQuadrant) {
+      _nodes = <Node<E>>[];
+
+      for (final child in _children!) {
+        if (child != null) {
+          child._collectAllNodes(_nodes!);
+        }
+      }
+
+      _children = null; // Remove subdivisions
     }
   }
 
-  /// Collects nodes within a circular range
+  /// Collects all nodes from this quadrant and its children
+  void _collectAllNodes(List<Node<E>> results) {
+    if (isLeaf && _nodes != null) {
+      results.addAll(_nodes!);
+      return;
+    }
+
+    for (final child in _children!) {
+      child?._collectAllNodes(results);
+    }
+  }
+
   void _collectNodesInRange(
     Offset center,
     double radiusSquared,
-    Size nodeSize,
     List<Node<E>> results,
   ) {
-    // Quick bounds check
-    final circleLeft = center.dx - math.sqrt(radiusSquared);
-    final circleTop = center.dy - math.sqrt(radiusSquared);
-    final circleRight = center.dx + math.sqrt(radiusSquared);
-    final circleBottom = center.dy + math.sqrt(radiusSquared);
+    // Check if this quadrant intersects with the search circle
+    if (!_intersectsCircle(center, radiusSquared)) return;
 
-    final circleBounds =
-        Rect.fromLTRB(circleLeft, circleTop, circleRight, circleBottom);
-
-    if (!bounds.overlaps(circleBounds)) {
-      return;
-    }
-
-    if (isLeaf) {
+    if (isLeaf && _nodes != null) {
       for (final node in _nodes!) {
-        final nodeCenter =
-            node.position + Offset(nodeSize.width / 2, nodeSize.height / 2);
-        final distanceSquared = (nodeCenter - center).distanceSquared;
+        final Offset nodeCenter =
+            node.position + Offset(node.size.width / 2, node.size.height / 2);
+        final double distSquared = (nodeCenter - center).distanceSquared;
 
-        if (distanceSquared <= radiusSquared) {
+        if (distSquared <= radiusSquared) {
           results.add(node);
         }
       }
-    } else {
-      for (final child in _children!) {
-        child?._collectNodesInRange(center, radiusSquared, nodeSize, results);
-      }
-    }
-  }
-
-  /// Collects nodes within rectangular bounds
-  void _collectNodesInBounds(
-    Rect queryBounds,
-    Size nodeSize,
-    List<Node<E>> results,
-  ) {
-    if (!bounds.overlaps(queryBounds)) {
       return;
     }
 
-    if (isLeaf) {
+    // Recurse into children
+    for (final child in _children!) {
+      child?._collectNodesInRange(center, radiusSquared, results);
+    }
+  }
+
+  void _collectNodesInBounds(
+    Rect queryBounds,
+    List<Node<E>> results,
+  ) {
+    if (!bounds.overlaps(queryBounds)) return;
+
+    if (isLeaf && _nodes != null) {
       for (final node in _nodes!) {
-        final nodeRect = _getNodeRect(node, nodeSize);
+        final nodeRect = _getNodeRect(node);
         if (queryBounds.overlaps(nodeRect)) {
           results.add(node);
         }
       }
-    } else {
-      for (final child in _children!) {
-        child?._collectNodesInBounds(queryBounds, nodeSize, results);
-      }
+      return;
+    }
+
+    for (final child in _children!) {
+      child?._collectNodesInBounds(queryBounds, results);
     }
   }
 
-  /// Gets the rectangular bounds of a node
-  Rect _getNodeRect(Node<E> node, Size nodeSize) {
+  Rect _getNodeRect(Node<E> node) {
     return Rect.fromLTWH(
       node.position.dx,
       node.position.dy,
-      nodeSize.width,
-      nodeSize.height,
+      node.size.width,
+      node.size.height,
     );
   }
 
-  /// Recursively collects statistics about the QuadTree
-  static void _collectStats<E>(
-    QuadTree<E> quadrant,
-    _StatsCollector stats,
-  ) {
-    if (quadrant.isLeaf) {
-      stats.leafCount++;
-      stats.nodeCount += quadrant._nodes?.length ?? 0;
-    } else {
-      for (final child in quadrant._children!) {
-        if (child != null) {
-          stats.maxDepth = math.max(stats.maxDepth, child.level);
-          _collectStats(child, stats);
-        }
-      }
-    }
+  bool _intersectsCircle(Offset center, double radiusSquared) {
+    final double closestX = center.dx.clamp(bounds.left, bounds.right);
+    final double closestY = center.dy.clamp(bounds.top, bounds.bottom);
+
+    final double distanceX = center.dx - closestX;
+    final double distanceY = center.dy - closestY;
+
+    final double distanceSquared = distanceX * distanceX + distanceY * distanceY;
+    return distanceSquared <= radiusSquared;
   }
 }
 
-/// Helper class for collecting statistics
-class _StatsCollector {
-  int leafCount = 0;
-  int maxDepth = 0;
-  int nodeCount = 0;
-}
-
-/// Statistics about a QuadTree's structure and performance
 class QuadTreeStats {
   final int totalNodes;
   final int leafQuadrants;
   final int maxDepth;
   final Rect bounds;
 
-  const QuadTreeStats({
+  QuadTreeStats({
     required this.totalNodes,
     required this.leafQuadrants,
     required this.maxDepth,
     required this.bounds,
   });
+}
 
-  /// Average nodes per leaf quadrant
-  double get averageNodesPerLeaf =>
-      leafQuadrants > 0 ? totalNodes / leafQuadrants : 0.0;
+class _StatsCollector {
+  int nodeCount = 0;
+  int leafCount = 0;
+  int maxDepth = 0;
+}
 
-  /// Efficiency ratio (lower is better, ideal is close to maxNodesPerQuadrant)
-  double get efficiencyRatio =>
-      averageNodesPerLeaf / QuadTreeConstants.maxNodesPerQuadrant;
+void _collectStats<E>(QuadTree<E> tree, _StatsCollector stats) {
+  if (tree.level > stats.maxDepth) {
+    stats.maxDepth = tree.level;
+  }
 
-  @override
-  String toString() {
-    return 'QuadTreeStats('
-        'nodes: $totalNodes, '
-        'leafs: $leafQuadrants, '
-        'depth: $maxDepth, '
-        'avgPerLeaf: ${averageNodesPerLeaf.toStringAsFixed(1)}, '
-        'efficiency: ${efficiencyRatio.toStringAsFixed(2)}'
-        ')';
+  if (tree.isLeaf) {
+    stats.leafCount++;
+    stats.nodeCount += tree._nodes?.length ?? 0;
+    return;
+  }
+
+  for (final child in tree._children!) {
+    if (child != null) {
+      _collectStats(child, stats);
+    }
   }
 }

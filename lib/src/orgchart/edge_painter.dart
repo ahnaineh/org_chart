@@ -23,7 +23,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     LineEndingType lineEndingType = LineEndingType.arrow,
     this.edgeStyleProvider,
     this.textDirection = TextDirection.ltr,
-  }) : utils = EdgePainterUtils(
+    super.repaint,
+  })  : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
@@ -45,7 +46,7 @@ class OrgChartEdgePainter<E> extends CustomPainter {
   /// Draw arrows for all root nodes
   @override
   void paint(Canvas canvas, Size size) {
-    final edges = buildEdges();
+    final edges = buildEdges(size);
     for (final edge in edges) {
       final EdgeStyle style =
           edge.baseStyle.merge(edgeStyleProvider?.call(edge));
@@ -56,12 +57,12 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     }
   }
 
-  List<EdgeInfo<E>> buildEdges() {
+  List<EdgeInfo<E>> buildEdges(Size size) {
     final List<EdgeInfo<E>> edges = [];
     for (final node in controller.roots) {
       _collectEdges(node, edges);
     }
-    return _applyTextDirection(edges);
+    return _applyTextDirection(edges, size.width);
   }
 
   void _collectEdges(Node<E> node, List<EdgeInfo<E>> edges) {
@@ -77,23 +78,22 @@ class OrgChartEdgePainter<E> extends CustomPainter {
         Offset end;
 
         if (controller.orientation == GraphOrientation.leftToRight) {
-          start = getNodeCenter(node) + Offset(controller.boxSize.width / 2, 0);
+          start = getNodeCenter(node) + Offset(node.size.width / 2, 0);
 
           if (allChildrenAreLeaves) {
             end = getNodeCenter(subNode);
           } else {
             end = getNodeCenter(subNode) -
-                Offset(controller.boxSize.width / 2, 0);
+                Offset(subNode.size.width / 2, 0);
           }
         } else {
-          start =
-              getNodeCenter(node) + Offset(0, controller.boxSize.height / 2);
+          start = getNodeCenter(node) + Offset(0, node.size.height / 2);
 
           if (allChildrenAreLeaves) {
             end = getNodeCenter(subNode);
           } else {
             end = getNodeCenter(subNode) -
-                Offset(0, controller.boxSize.height / 2);
+                Offset(0, subNode.size.height / 2);
           }
         }
 
@@ -111,7 +111,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
           type: resolvedType,
           start: start,
           end: end,
-          boxSize: controller.boxSize,
+          startSize: node.size,
+          endSize: subNode.size,
           orientation: controller.orientation,
         );
 
@@ -143,8 +144,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
 
   /// Get the center position of a node
   Offset getNodeCenter(Node<E> node) {
-    return node.position +
-        Offset(controller.boxSize.width / 2, controller.boxSize.height / 2);
+    return node.renderPosition +
+        Offset(node.size.width / 2, node.size.height / 2);
   }
 
   /// Check if a node is a leaf node (no visible children)
@@ -191,9 +192,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     final Offset far = distA <= distB ? b : a;
 
     final bool isMostlyHorizontal = segment.dx.abs() >= segment.dy.abs();
-    final double nodeLength = isMostlyHorizontal
-        ? controller.boxSize.width
-        : controller.boxSize.height;
+    final double nodeLength =
+        isMostlyHorizontal ? child.size.width : child.size.height;
     final double desired = nodeLength * 0.5;
 
     if (desired >= length) {
@@ -204,9 +204,8 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     return near + direction * desired;
   }
 
-  List<EdgeInfo<E>> _applyTextDirection(List<EdgeInfo<E>> edges) {
+  List<EdgeInfo<E>> _applyTextDirection(List<EdgeInfo<E>> edges, double width) {
     if (textDirection != TextDirection.rtl) return edges;
-    final double width = controller.getSize().width;
     return edges.map((edge) => _mirrorEdge(edge, width)).toList();
   }
 

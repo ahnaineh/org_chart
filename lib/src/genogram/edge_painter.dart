@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:org_chart/src/base/edge_painter_utils.dart';
 import 'package:org_chart/src/genogram/genogram_enums.dart';
@@ -52,7 +54,8 @@ class GenogramEdgePainter<E> extends CustomPainter {
     this.marriageStatusProvider,
     this.edgeStyleProvider,
     this.textDirection = TextDirection.ltr,
-  }) : utils = EdgePainterUtils(
+    super.repaint,
+  })  : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
@@ -61,7 +64,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final edges = buildEdges();
+    final edges = buildEdges(size);
     for (final edge in edges) {
       final EdgeStyle style =
           edge.baseStyle.merge(edgeStyleProvider?.call(edge));
@@ -95,7 +98,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
     }
   }
 
-  List<EdgeInfo<E>> buildEdges() {
+  List<EdgeInfo<E>> buildEdges(Size size) {
     final List<Node<E>> nodes = controller.nodes;
     final List<_MarriageInfo<E>> marriages = _collectMarriages(nodes);
     final Map<String, Color> marriageColors = {};
@@ -163,7 +166,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
     }
 
     edges.addAll(_buildParentChildEdges(nodes, marriagePoints, marriageColors));
-    return _applyTextDirection(edges);
+    return _applyTextDirection(edges, size.width);
   }
 
   List<EdgeInfo<E>> _buildParentChildEdges(
@@ -213,7 +216,8 @@ class GenogramEdgePainter<E> extends CustomPainter {
             type: connectionType,
             start: marriagePoint,
             end: childConn,
-            boxSize: controller.boxSize,
+            startSize: _maxSize(father.size, mother.size),
+            endSize: child.size,
             orientation: controller.orientation,
           );
 
@@ -273,7 +277,8 @@ class GenogramEdgePainter<E> extends CustomPainter {
       type: connectionType,
       start: parentConn,
       end: childConn,
-      boxSize: controller.boxSize,
+      startSize: parent.size,
+      endSize: child.size,
       orientation: controller.orientation,
     );
 
@@ -356,25 +361,28 @@ class GenogramEdgePainter<E> extends CustomPainter {
   Offset _getConnectionPoint(Node<E> node, ConnectionPoint point) {
     switch (point) {
       case ConnectionPoint.top:
-        return node.position + Offset(controller.boxSize.width / 2, 0);
+        return node.renderPosition + Offset(node.size.width / 2, 0);
       case ConnectionPoint.right:
-        return node.position +
-            Offset(controller.boxSize.width, controller.boxSize.height / 2);
+        return node.renderPosition +
+            Offset(node.size.width, node.size.height / 2);
       case ConnectionPoint.bottom:
-        return node.position +
-            Offset(controller.boxSize.width / 2, controller.boxSize.height);
+        return node.renderPosition +
+            Offset(node.size.width / 2, node.size.height);
       case ConnectionPoint.left:
-        return node.position + Offset(0, controller.boxSize.height / 2);
+        return node.renderPosition + Offset(0, node.size.height / 2);
       case ConnectionPoint.center:
-        return node.position +
-            Offset(controller.boxSize.width / 2, controller.boxSize.height / 2);
+        return node.renderPosition +
+            Offset(node.size.width / 2, node.size.height / 2);
     }
   }
 
-  List<EdgeInfo<E>> _applyTextDirection(List<EdgeInfo<E>> edges) {
+  List<EdgeInfo<E>> _applyTextDirection(List<EdgeInfo<E>> edges, double width) {
     if (textDirection != TextDirection.rtl) return edges;
-    final double width = controller.getSize().width;
     return edges.map((edge) => _mirrorEdge(edge, width)).toList();
+  }
+
+  Size _maxSize(Size a, Size b) {
+    return Size(math.max(a.width, b.width), math.max(a.height, b.height));
   }
 
   EdgeInfo<E> _mirrorEdge(EdgeInfo<E> edge, double width) {

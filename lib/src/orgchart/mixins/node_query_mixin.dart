@@ -8,7 +8,6 @@ mixin NodeQueryMixin<E> {
   List<Node<E>> get nodes;
   String Function(E data) get idProvider;
   String? Function(E data) get toProvider;
-  Size get boxSize;
 
   /// Cache for node levels to avoid repeated calculations
   final Map<String, int> _levelCache = {};
@@ -103,7 +102,7 @@ mixin NodeQueryMixin<E> {
 
     // Insert all nodes
     for (final node in nodes) {
-      _quadTree!.insert(node, boxSize);
+      _quadTree!.insert(node);
     }
   }
 
@@ -174,17 +173,26 @@ mixin NodeQueryMixin<E> {
     final String nodeId = idProvider(node.data);
 
     // Get candidates from QuadTree
-    final candidates = _quadTree!.getOverlappingNodes(node, boxSize);
+    final candidates = _quadTree!.getOverlappingNodes(node);
 
     final overlapping = <Node<E>>[];
+    final Rect nodeRect = Rect.fromLTWH(
+      node.position.dx,
+      node.position.dy,
+      node.size.width,
+      node.size.height,
+    );
 
     for (final candidate in candidates) {
       final String candidateId = idProvider(candidate.data);
       if (nodeId != candidateId) {
-        final offset = node.position - candidate.position;
-        if (offset.dx.abs() < boxSize.width &&
-            offset.dy.abs() < boxSize.height) {
-          // Check if the node is hidden
+        final Rect candidateRect = Rect.fromLTWH(
+          candidate.position.dx,
+          candidate.position.dy,
+          candidate.size.width,
+          candidate.size.height,
+        );
+        if (nodeRect.overlaps(candidateRect)) {
           if (!isNodeHidden(candidate)) {
             overlapping.add(candidate);
           }
@@ -205,13 +213,23 @@ mixin NodeQueryMixin<E> {
     final overlapping = <Node<E>>[];
     final String nodeId = idProvider(node.data);
 
+    final Rect nodeRect = Rect.fromLTWH(
+      node.position.dx,
+      node.position.dy,
+      node.size.width,
+      node.size.height,
+    );
+
     for (final n in nodes) {
       final String nId = idProvider(n.data);
       if (nodeId != nId) {
-        final offset = node.position - n.position;
-        if (offset.dx.abs() < boxSize.width &&
-            offset.dy.abs() < boxSize.height) {
-          // Check if the node is hidden
+        final Rect candidateRect = Rect.fromLTWH(
+          n.position.dx,
+          n.position.dy,
+          n.size.width,
+          n.size.height,
+        );
+        if (nodeRect.overlaps(candidateRect)) {
           if (!isNodeHidden(n)) {
             overlapping.add(n);
           }
@@ -229,7 +247,7 @@ mixin NodeQueryMixin<E> {
 
   /// Updates a node's position in the QuadTree
   void updateNodePosition(Node<E> node, Offset oldPosition) {
-    _quadTree?.updateNode(node, boxSize, oldPosition);
+    _quadTree?.updateNode(node, oldPosition);
   }
 
   /// Calculates the bounding rectangle for all nodes
@@ -244,8 +262,8 @@ mixin NodeQueryMixin<E> {
     for (final node in nodes) {
       final left = node.position.dx;
       final top = node.position.dy;
-      final right = left + boxSize.width;
-      final bottom = top + boxSize.height;
+      final right = left + node.size.width;
+      final bottom = top + node.size.height;
 
       minX = minX < left ? minX : left;
       minY = minY < top ? minY : top;

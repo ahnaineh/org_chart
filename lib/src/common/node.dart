@@ -5,6 +5,12 @@ class Node<E> {
   /// The position of the node in the graph
   Offset position;
 
+  /// The measured size of the node widget
+  Size size;
+
+  /// The animated position used for rendering and edge calculations
+  Offset renderPosition;
+
   /// The data that the node contains (custom data type)
   final E data;
 
@@ -15,6 +21,8 @@ class Node<E> {
   Node({
     required this.data,
     this.position = Offset.zero,
+    this.size = Size.zero,
+    this.renderPosition = Offset.zero,
     this.hideNodes = false,
   });
 

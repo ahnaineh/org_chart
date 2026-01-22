@@ -43,13 +43,18 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// Cache for generation level calculations
   final Map<String, int> _levelCache = {};
 
+  /// Cached max size per generation level (main axis)
+  final Map<int, double> _levelSizes = {};
+
+  /// Cached offsets per generation level (main axis)
+  final Map<int, double> _levelOffsets = {};
+
   /// Spacing between spouses in a couple group
   late double spouseSpacing;
 
   /// Creates a genogram controller with the specified parameters
   ///
   /// [items]: List of data items to display in the genogram
-  /// [boxSize]: Size of each node box (default: 150x150)
   /// [spacing]: Horizontal spacing between adjacent nodes (default: 30)
   /// [runSpacing]: Vertical spacing between generations (default: 60)
   /// [idProvider]: Function to extract a unique identifier from each data item
@@ -60,11 +65,14 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// [orientation]: Initial layout orientation (default: topToBottom)
   GenogramController({
     required super.items,
-    super.boxSize = GenogramConstants.defaultBoxSize,
     super.spacing = GenogramConstants.defaultSpacing,
     super.runSpacing = GenogramConstants.defaultRunSpacing,
     super.orientation = GraphOrientation.topToBottom,
     required super.idProvider,
+    super.sizeChangeAction = SizeChangeAction.ignore,
+    super.sizeChangeThreshold = 0.0,
+    super.preserveManualPositionsOnSizeChange = false,
+    super.collisionSettings,
     required this.fatherProvider,
     required this.motherProvider,
     required this.spousesProvider,
@@ -72,7 +80,7 @@ class GenogramController<E> extends BaseGraphController<E> {
     double? spouseSpacing,
   }) {
     this.spouseSpacing = spouseSpacing ?? spacing;
-    // Calculate initial positions after construction
+    // Request initial layout after construction
     calculatePosition();
   }
 
@@ -84,19 +92,7 @@ class GenogramController<E> extends BaseGraphController<E> {
   // }
 
   @override
-  Size getSize({Size size = const Size(0, 0)}) {
-    for (Node<E> node in nodes) {
-      size = Size(
-        size.width > node.position.dx + boxSize.width
-            ? size.width
-            : node.position.dx + boxSize.width,
-        size.height > node.position.dy + boxSize.height
-            ? size.height
-            : node.position.dy + boxSize.height,
-      );
-    }
-    return size;
-  }
+  Size getSize() => contentSize;
 
   /// Clears all internal caches
   void _clearCaches() {
@@ -287,8 +283,42 @@ class GenogramController<E> extends BaseGraphController<E> {
   /// [center]: Whether to center the graph after layout (default: true)
   @override
   void calculatePosition({bool center = true}) {
+    requestLayout(center: center);
+  }
+
+  double _levelOffsetFor(int level) => _levelOffsets[level] ?? 0;
+
+  void _buildLevelMetrics() {
+    _levelSizes.clear();
+    _levelOffsets.clear();
+
+    int maxLevel = 0;
+    for (final node in nodes) {
+      final int level = getLevel(node);
+      final double mainSize = orientation == GraphOrientation.topToBottom
+          ? node.size.height
+          : node.size.width;
+      final double current = _levelSizes[level] ?? 0;
+      if (mainSize > current) {
+        _levelSizes[level] = mainSize;
+      }
+      if (level > maxLevel) {
+        maxLevel = level;
+      }
+    }
+
+    double offset = 0;
+    for (int level = 1; level <= maxLevel; level++) {
+      _levelOffsets[level] = offset;
+      offset += (_levelSizes[level] ?? 0) + runSpacing;
+    }
+  }
+
+  @override
+  void performLayout() {
     // Clear caches before recalculating positions
     _clearCaches();
+    _buildLevelMetrics();
 
     // Track nodes that have been positioned to avoid duplicates
     final Set<Node<E>> laidOut = <Node<E>>{};
@@ -297,21 +327,12 @@ class GenogramController<E> extends BaseGraphController<E> {
     // to prevent overlaps
     final Map<int, double> levelEdges = {};
 
-    // Minimum position to ensure nothing goes negative
-    final double minPos = spacing * 2;
+    // Minimum position to ensure nothing goes negative.
+    // Keep this decoupled from spacing so spacing only affects gaps.
+    const double minPos = 0;
 
-    /// Internal helper: Gets all children of a given couple group
-    ///
-    /// A couple group is a list of nodes that form a family unit (husband, wife/wives)
-    /// This function finds all children whose father or mother is in the couple group.
-    ///
-    /// [parents]: List of parent nodes forming a couple group
-    /// Returns all nodes that have a parent in the input list
     List<Node<E>> getChildrenForGroup(List<Node<E>> parents) {
-      // Extract IDs from all parents in the couple group
       final parentIds = parents.map((p) => idProvider(p.data)).toSet();
-
-      // Return all nodes whose father or mother ID is in the parent set
       return nodes
           .where((child) =>
               parentIds.contains(fatherProvider(child.data)) ||
@@ -319,58 +340,27 @@ class GenogramController<E> extends BaseGraphController<E> {
           .toList();
     }
 
-    /// Recursive function to layout a family subtree
-    ///
-    /// This function positions a node, its spouses, and all descendants.
-    /// Returns the total width (or height for leftToRight) required for this subtree.
-    ///
-    /// [node]: Current node being positioned
-    /// [x]: Starting x-coordinate for this node
-    /// [y]: Y-coordinate for this node
-    /// [level]: Current generation level (0 = roots)
-    double layoutFamily(Node<E> node, double x, double y, int level) {
-      final double generationStep = orientation == GraphOrientation.topToBottom
-          ? boxSize.height + runSpacing
-          : boxSize.width + runSpacing;
+    double layoutFamily(Node<E> node, double crossAxisPos, int level) {
+      crossAxisPos = max(crossAxisPos, minPos);
 
-      // Ensure starting position is never less than minimum
-      if (orientation == GraphOrientation.topToBottom) {
-        x = max(x, minPos);
-      } else {
-        y = max(y, minPos);
-      }
-
-      // Skip if this node has already been positioned
       if (laidOut.contains(node)) {
-        return 0; // No additional space required
+        return 0;
       }
 
-      // Build the couple group (a husband and his wife/wives, or just a single individual)
       final List<Node<E>> coupleGroup = <Node<E>>[];
 
-      // Handle male nodes - include the man and all his spouses in the group
       if (isMale(node.data)) {
-        // Add the male node first
         coupleGroup.add(node);
         laidOut.add(node);
 
-        // Get all spouses, regardless of whether they've been positioned
         final List<Node<E>> spouses = getSpouseList(node.data);
-
-        // For any spouse that has been positioned already, remove from laidOut
-        // so they can be repositioned with this husband
         for (final spouse in spouses) {
           laidOut.remove(spouse);
         }
 
-        // Add all wives to the right/below of the husband depending on orientation
         coupleGroup.addAll(spouses);
         laidOut.addAll(spouses);
-      }
-      // Handle female nodes - if processing a female directly, she forms her own group
-      else {
-        // Check if this woman is a spouse of a male we'll process later
-        // If so, skip her as she'll be positioned with her husband
+      } else {
         final bool willBeSpouseOfLaterMale = nodes
             .where((n) => !laidOut.contains(n))
             .where((n) => isMale(n.data))
@@ -385,132 +375,83 @@ class GenogramController<E> extends BaseGraphController<E> {
         }
       }
 
-      // If no nodes in couple group (might happen if we skip a female spouse), return 0
       if (coupleGroup.isEmpty) {
         return 0;
       }
 
-      // Align couple generation based on the deepest ancestry within the group
       final int groupLevel = coupleGroup
           .map(getLevel)
           .fold<int>(1, (current, next) => max(current, next));
       final int desiredLevel = max(level + 1, groupLevel);
-      if (desiredLevel > level + 1) {
-        final double levelShift = (desiredLevel - (level + 1)) * generationStep;
-        if (orientation == GraphOrientation.topToBottom) {
-          y += levelShift;
-        } else {
-          x += levelShift;
-        }
-        level = desiredLevel - 1;
-      }
+      level = desiredLevel - 1;
 
-      // Check if we need to adjust position to avoid overlapping with existing nodes
+      final double mainAxisPos = _levelOffsetFor(desiredLevel);
+
       if (levelEdges.containsKey(level)) {
-        if (orientation == GraphOrientation.topToBottom) {
-          // Ensure we start after the rightmost node at this level plus spacing
-          x = max(x, levelEdges[level]! + spacing);
-        } else {
-          // For leftToRight, ensure we start after the bottommost node plus spacing
-          y = max(y, levelEdges[level]! + spacing);
-        }
+        crossAxisPos = max(crossAxisPos, levelEdges[level]! + spacing);
       } else {
-        levelEdges[level] = orientation == GraphOrientation.topToBottom ? x : y;
+        levelEdges[level] = crossAxisPos;
       }
 
-      // Calculate the total width or height needed for this couple group
       final int groupCount = coupleGroup.length;
       final double groupSpacing = groupCount > 1 ? spouseSpacing : spacing;
-      final double groupSize = groupCount *
-              (orientation == GraphOrientation.topToBottom
-                  ? boxSize.width
-                  : boxSize.height) +
-          (groupCount - 1) * groupSpacing;
+      double groupSize = 0;
 
-      // Position each person in the couple group in a row or column depending on orientation
       for (int i = 0; i < groupCount; i++) {
-        final double offset = i *
-            (orientation == GraphOrientation.topToBottom
-                ? boxSize.width + groupSpacing
-                : boxSize.height + groupSpacing);
-
-        if (orientation == GraphOrientation.topToBottom) {
-          final double nodeX = x + offset;
-          coupleGroup[i].position = Offset(nodeX, y);
-        } else {
-          final double nodeY = y + offset;
-          coupleGroup[i].position = Offset(x, nodeY);
+        final Node<E> person = coupleGroup[i];
+        final double crossSize = orientation == GraphOrientation.topToBottom
+            ? person.size.width
+            : person.size.height;
+        groupSize += crossSize;
+        if (i < groupCount - 1) {
+          groupSize += groupSpacing;
         }
       }
 
-      // Get all children for this couple group that haven't been positioned yet
+      double runningOffset = 0;
+      for (int i = 0; i < groupCount; i++) {
+        final Node<E> person = coupleGroup[i];
+        final double crossSize = orientation == GraphOrientation.topToBottom
+            ? person.size.width
+            : person.size.height;
+
+        if (orientation == GraphOrientation.topToBottom) {
+          person.position = Offset(crossAxisPos + runningOffset, mainAxisPos);
+        } else {
+          person.position = Offset(mainAxisPos, crossAxisPos + runningOffset);
+        }
+        runningOffset += crossSize + groupSpacing;
+      }
+
       List<Node<E>> children = getChildrenForGroup(coupleGroup)
           .where((child) => !laidOut.contains(child))
           .toList();
 
-      // Sort children using the dedicated method
       sortChildrenBySiblingGroups(children, coupleGroup);
 
-      // If no children, this subtree is just the couple group with no descendants
       if (children.isEmpty) {
-        // Update the edge for this level
-        levelEdges[level] = orientation == GraphOrientation.topToBottom
-            ? x + groupSize
-            : y + groupSize;
+        levelEdges[level] = crossAxisPos + groupSize;
         return groupSize;
       }
 
-      // Distance for children from parent
-      final double childDistance = generationStep;
+      double childrenTotalSize = 0;
+      double childPos = crossAxisPos;
 
-      // Position coordinates for children based on orientation
-      final double childrenX =
-          orientation == GraphOrientation.topToBottom ? x : x + childDistance;
-
-      final double childrenY =
-          orientation == GraphOrientation.topToBottom ? y + childDistance : y;
-
-      double childrenTotalSize =
-          0; // Track total width/height required for all children
-      double childPos =
-          orientation == GraphOrientation.topToBottom ? childrenX : childrenY;
-
-      // Position each child and their descendants recursively
       for (final child in children) {
-        // For each child, calculate the size of their entire subtree
-        final double subtreeSize = orientation == GraphOrientation.topToBottom
-            ? layoutFamily(child, childPos, childrenY, level + 1)
-            : layoutFamily(child, childrenX, childPos, level + 1);
-
-        // Add this subtree's size to the running total
+        final double subtreeSize = layoutFamily(child, childPos, level + 1);
         childrenTotalSize += subtreeSize;
-
-        // Move the next child's position, adding extra spacing
         childPos += subtreeSize + spacing * 1.5;
       }
 
-      // Calculate true children size by removing the extra spacing after the last child
       final double trueChildrenSize = children.isNotEmpty
-          ? childrenTotalSize -
-              spacing * 0.5 // Remove extra spacing from last child
+          ? childrenTotalSize - spacing * 0.5
           : 0;
 
-      // Center the parent couple group above/before their children to make the tree visually balanced
-      double parentCenter, childrenCenter, shift;
+      final double parentCenter = crossAxisPos + groupSize / 2;
+      final double childrenCenter = crossAxisPos + trueChildrenSize / 2;
+      final double shift = childrenCenter - parentCenter;
 
-      if (orientation == GraphOrientation.topToBottom) {
-        parentCenter = x + groupSize / 2;
-        childrenCenter = x + trueChildrenSize / 2;
-      } else {
-        parentCenter = y + groupSize / 2;
-        childrenCenter = y + trueChildrenSize / 2;
-      }
-
-      shift = childrenCenter - parentCenter;
-
-      // Only apply shifts when there are actually children and their size is greater than parents
       if (children.isNotEmpty && trueChildrenSize > groupSize) {
-        // Apply the shift to each parent in the couple group
         for (final parent in coupleGroup) {
           if (orientation == GraphOrientation.topToBottom) {
             parent.position =
@@ -522,50 +463,23 @@ class GenogramController<E> extends BaseGraphController<E> {
         }
       }
 
-      // The total size of this subtree is the maximum of:
-      // - couple group size (parents)
-      // - total size of all children subtrees
-      final totalSize = max(groupSize, trueChildrenSize);
-
-      // Update the edge for this level
-      levelEdges[level] = orientation == GraphOrientation.topToBottom
-          ? x + totalSize
-          : y + totalSize;
-
-      // Return the total size needed for this entire family subtree
+      final double totalSize = max(groupSize, trueChildrenSize);
+      levelEdges[level] = crossAxisPos + totalSize;
       return totalSize;
     }
 
-    // Prioritize processing male nodes first among roots
     List<Node<E>> sortedRoots = [...roots];
     sortedRoots.sort((a, b) {
-      // Males come first
       if (isMale(a.data) && !isMale(b.data)) return -1;
       if (!isMale(a.data) && isMale(b.data)) return 1;
-
-      // Otherwise sort by ID for consistency
       return idProvider(a.data).compareTo(idProvider(b.data));
     });
 
-    // Process each root node (individuals with no parents)
-    double currentPos = minPos; // Start with minimum position value
-
+    double currentPos = minPos;
     for (final root in sortedRoots) {
-      if (laidOut.contains(root)) continue; // Skip if already positioned
-
-      // Layout this root's entire family tree and get its size
-      final double subtreeSize = orientation == GraphOrientation.topToBottom
-          ? layoutFamily(root, currentPos, 0, 0)
-          : layoutFamily(root, 0, currentPos, 0);
-
-      // Move to the position for the next root, adding extra spacing
+      if (laidOut.contains(root)) continue;
+      final double subtreeSize = layoutFamily(root, currentPos, 0);
       currentPos += subtreeSize + spacing * 3;
-    }
-
-    setState?.call(() {});
-    // Center the graph if requested
-    if (center) {
-      centerGraph?.call();
     }
   }
 

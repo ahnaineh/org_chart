@@ -31,7 +31,9 @@ export 'src/genogram/marriage_style.dart'
     show MarriageStyle, MarriageLineStyle, MarriageDecorator, DivorceDecorator;
 export 'src/genogram/genogram_enums.dart' show Gender, MarriageStatus;
 export 'src/base/base_controller.dart'
-    show BaseGraphController, GraphOrientation;
+    show BaseGraphController, GraphOrientation, SizeChangeAction;
+export 'src/base/collision_avoidance.dart'
+    show CollisionAvoidance, CollisionAvoidanceSettings;
 export 'package:custom_interactive_viewer/custom_interactive_viewer.dart'
     show
         CustomInteractiveViewerController,
