@@ -1,3 +1,30 @@
+## [6.0.0-beta]
+
+### Added
+1. Render-object layout pipeline (`GraphLayout`/`RenderGraphLayout`) to measure node widgets and compute sizes/positions in a single layout pass.
+2. Global collision avoidance utility with controller settings (`sizeChangeAction`, `sizeChangeThreshold`, `collisionSettings`, `preserveManualPositionsOnSizeChange`).
+3. Render-position animation path to keep edges and nodes in sync during layout changes.
+4. Manual drag position tracking to preserve pinned nodes during collision resolution.
+
+### Changed
+1. Node sizing is now inferred from actual widget size; fixed box sizes are no longer the default path.
+2. Initial centering now uses the viewer size resolver and runs post-frame for safer layout timing.
+3. Edge repaint notifications now use `ValueNotifier` ticks for analyzer-safe updates.
+4. Genogram layout minimum position is decoupled from spacing to avoid left-offset drift.
+
+### Fixed
+1. Animated positioning and edge repaint synchronization during layout updates.
+2. Quadtree updates after layout/collision changes to keep spatial queries correct.
+3. Example widgets and tests updated to reflect intrinsic sizing and new layout flow.
+
+### Removed
+1. Auto-reflow on size change (replaced by explicit collision avoidance when enabled).
+2. Legacy fixed box-size usage across org chart and genogram widgets/examples.
+
+### Breaking Changes
+1. `boxSize`-based sizing is removed; node widgets rely on intrinsic size.
+2. Auto-reflow behavior on size change is fully dropped; opt into `collisionAvoidance` via `sizeChangeAction` if needed.
+
 ## [5.2.0]
 1. Bump `custom_interactive_viewer` to version 0.0.9
 2. Add RTL support across org chart and genogram layouts (nodes, edges, labels).
@@ -30,7 +57,7 @@
 
 
 ## [5.0.0]
-1. Stable
+ - Stable
 
 
 ## [5.0.0-alpha.5]
