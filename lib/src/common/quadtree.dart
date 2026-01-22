@@ -352,7 +352,8 @@ class QuadTree<E> {
     final double distanceX = center.dx - closestX;
     final double distanceY = center.dy - closestY;
 
-    final double distanceSquared = distanceX * distanceX + distanceY * distanceY;
+    final double distanceSquared =
+        distanceX * distanceX + distanceY * distanceY;
     return distanceSquared <= radiusSquared;
   }
 }

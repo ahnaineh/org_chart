@@ -145,7 +145,9 @@ abstract class BaseGraphController<E> {
       nodes: nodes,
       idProvider: idProvider,
       pinnedIds: pinnedIds ??
-          (preserveManualPositionsOnSizeChange ? manualPositionIds : <String>{}),
+          (preserveManualPositionsOnSizeChange
+              ? manualPositionIds
+              : <String>{}),
       settings: settings ?? collisionSettings,
     );
 

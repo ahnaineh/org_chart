@@ -732,9 +732,7 @@ class EdgePainterUtils {
                 defaultSegmentPadding);
     end = end +
         Offset(
-          (nodesTooClose ? 1 : -1) *
-              horizontalDir *
-              (endSize.width / 2),
+          (nodesTooClose ? 1 : -1) * horizontalDir * (endSize.width / 2),
           0,
         );
 

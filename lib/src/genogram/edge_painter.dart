@@ -55,7 +55,7 @@ class GenogramEdgePainter<E> extends CustomPainter {
     this.edgeStyleProvider,
     this.textDirection = TextDirection.ltr,
     super.repaint,
-  })  : utils = EdgePainterUtils(
+  }) : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,

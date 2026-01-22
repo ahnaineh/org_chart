@@ -44,12 +44,10 @@ class CollisionAvoidance {
 
           if (!rectA.overlaps(rectB)) continue;
 
-          final double overlapX =
-              mathMin(rectA.right, rectB.right) -
-                  mathMax(rectA.left, rectB.left);
-          final double overlapY =
-              mathMin(rectA.bottom, rectB.bottom) -
-                  mathMax(rectA.top, rectB.top);
+          final double overlapX = mathMin(rectA.right, rectB.right) -
+              mathMax(rectA.left, rectB.left);
+          final double overlapY = mathMin(rectA.bottom, rectB.bottom) -
+              mathMax(rectA.top, rectB.top);
 
           if (overlapX <= 0 || overlapY <= 0) continue;
 

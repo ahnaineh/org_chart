@@ -82,10 +82,8 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
   List<Widget> buildGraphElements(BuildContext context) {
     final List<Widget> nodeWidgets = buildNodes(context);
     nodeWidgets.sort((a, b) {
-      final bool aDragged =
-          a is GraphNode<E> ? a.isBeingDragged : false;
-      final bool bDragged =
-          b is GraphNode<E> ? b.isBeingDragged : false;
+      final bool aDragged = a is GraphNode<E> ? a.isBeingDragged : false;
+      final bool bDragged = b is GraphNode<E> ? b.isBeingDragged : false;
       if (aDragged == bDragged) return 0;
       return aDragged ? 1 : -1;
     });
@@ -179,7 +177,6 @@ class OrgChartState<E> extends BaseGraphState<E, OrgChart<E>> {
               maintainState: true,
               child: GestureDetector(
                 onTapDown: handleTapDown,
-                // TODO Implement onSecondaryTap
                 onSecondaryTap: () => showNodeMenu(context, node),
                 onLongPress: () => showNodeMenu(context, node),
                 onPanStart:

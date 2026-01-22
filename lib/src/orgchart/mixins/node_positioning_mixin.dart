@@ -119,8 +119,7 @@ mixin NodePositioningMixin<E> {
         subNodes.length < leafColumns ? subNodes.length : leafColumns;
     final int rowCount = (subNodes.length / columnCount).ceil();
 
-    final List<double> columnWidths =
-        List<double>.filled(columnCount, 0);
+    final List<double> columnWidths = List<double>.filled(columnCount, 0);
     final List<double> rowHeights = List<double>.filled(rowCount, 0);
 
     for (var i = 0; i < subNodes.length; i++) {
@@ -227,8 +226,7 @@ mixin NodePositioningMixin<E> {
         subNodes.length < leafColumns ? subNodes.length : leafColumns;
     final int columnCount = (subNodes.length / rowCount).ceil();
 
-    final List<double> columnWidths =
-        List<double>.filled(columnCount, 0);
+    final List<double> columnWidths = List<double>.filled(columnCount, 0);
     final List<double> rowHeights = List<double>.filled(rowCount, 0);
 
     for (var i = 0; i < subNodes.length; i++) {

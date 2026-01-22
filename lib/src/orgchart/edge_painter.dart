@@ -24,7 +24,7 @@ class OrgChartEdgePainter<E> extends CustomPainter {
     this.edgeStyleProvider,
     this.textDirection = TextDirection.ltr,
     super.repaint,
-  })  : utils = EdgePainterUtils(
+  }) : utils = EdgePainterUtils(
           linePaint: linePaint,
           cornerRadius: cornerRadius,
           arrowStyle: arrowStyle,
@@ -83,8 +83,7 @@ class OrgChartEdgePainter<E> extends CustomPainter {
           if (allChildrenAreLeaves) {
             end = getNodeCenter(subNode);
           } else {
-            end = getNodeCenter(subNode) -
-                Offset(subNode.size.width / 2, 0);
+            end = getNodeCenter(subNode) - Offset(subNode.size.width / 2, 0);
           }
         } else {
           start = getNodeCenter(node) + Offset(0, node.size.height / 2);
@@ -92,8 +91,7 @@ class OrgChartEdgePainter<E> extends CustomPainter {
           if (allChildrenAreLeaves) {
             end = getNodeCenter(subNode);
           } else {
-            end = getNodeCenter(subNode) -
-                Offset(0, subNode.size.height / 2);
+            end = getNodeCenter(subNode) - Offset(0, subNode.size.height / 2);
           }
         }
 

@@ -93,10 +93,8 @@ class GenogramState<E> extends BaseGraphState<E, Genogram<E>> {
   List<Widget> buildGraphElements(BuildContext context) {
     final List<Widget> nodeWidgets = buildNodes(context);
     nodeWidgets.sort((a, b) {
-      final bool aDragged =
-          a is GraphNode<E> ? a.isBeingDragged : false;
-      final bool bDragged =
-          b is GraphNode<E> ? b.isBeingDragged : false;
+      final bool aDragged = a is GraphNode<E> ? a.isBeingDragged : false;
+      final bool bDragged = b is GraphNode<E> ? b.isBeingDragged : false;
       if (aDragged == bDragged) return 0;
       return aDragged ? 1 : -1;
     });

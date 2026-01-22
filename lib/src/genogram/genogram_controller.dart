@@ -443,9 +443,8 @@ class GenogramController<E> extends BaseGraphController<E> {
         childPos += subtreeSize + spacing * 1.5;
       }
 
-      final double trueChildrenSize = children.isNotEmpty
-          ? childrenTotalSize - spacing * 0.5
-          : 0;
+      final double trueChildrenSize =
+          children.isNotEmpty ? childrenTotalSize - spacing * 0.5 : 0;
 
       final double parentCenter = crossAxisPos + groupSize / 2;
       final double childrenCenter = crossAxisPos + trueChildrenSize / 2;
