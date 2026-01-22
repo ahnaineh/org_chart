@@ -1,4 +1,4 @@
-## [6.0.0-beta]
+## [6.0.0-beta.1]
 
 ### Added
 1. Render-object layout pipeline (`GraphLayout`/`RenderGraphLayout`) to measure node widgets and compute sizes/positions in a single layout pass.
